@@ -4,10 +4,12 @@
   "description": "Real-time 2-player Hangman web game",
   "main": "server.js",
   "scripts": {
-    "dev": "node server.js",
+    "dev": "next dev",
     "build": "next build",
-    "start": "node server.js",
-    "next:dev": "next dev"
+    "start": "next start",
+    "server": "node server.js",
+    "server:dev": "nodemon server.js",
+    "start:server": "node server.js"
   },
   "dependencies": {
     "an-array-of-english-words": "^2.0.0",

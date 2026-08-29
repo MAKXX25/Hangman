@@ -1008,7 +1008,11 @@ export default function HangmanDuelApp() {
   // ── Setup Socket.io Event Listeners ───────────────────────────────────────
   const ensureSocket = useCallback(() => {
     if (!socketRef.current) {
-      socketRef.current = io();
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+      socketRef.current = io(backendUrl, {
+        transports: ['websocket', 'polling'],
+        autoConnect: true,
+      });
 
       socketRef.current.on('connect', () => {
         setMyPlayerId(socketRef.current.id);

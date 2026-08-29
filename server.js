@@ -1,13 +1,22 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const next = require('next');
 const fs = require('fs');
 const path = require('path');
 
-const dev = process.env.NODE_ENV !== 'production';
-const nextApp = next({ dev });
-const handle = nextApp.getRequestHandler();
+// ─── CORS Allowed Origins ──────────────────────────────────────────────────────
+// In production on Render, set the ALLOWED_ORIGINS env var to your Vercel URL,
+// e.g. "https://your-hangman-app.vercel.app" (comma-separated for multiple).
+// Both http://localhost:3000 and http://localhost:3001 are always allowed for local dev.
+const PROD_ORIGINS = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
+  : [];
+
+const ALLOWED_ORIGINS = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  ...PROD_ORIGINS,
+];
 
 // ─── Local Dictionary Initialization (O(1) Memory Lookups) ────────────────────
 const DICTIONARY_SET = new Set();
@@ -206,15 +215,32 @@ function broadcastState(io, room, roomCode) {
   });
 }
 
-// ─── Start Next.js + Socket.io Server ──────────────────────────────────────────
-nextApp.prepare().then(() => {
+// ─── Start Standalone Socket.io + Express Server ──────────────────────────────
+// This file is the pure backend — it has NO dependency on Next.js.
+// The Next.js frontend is deployed separately on Vercel.
+(function startServer() {
   const app = express();
   const server = http.createServer(app);
   const io = new Server(server, {
-    cors: { origin: '*', methods: ['GET', 'POST'] }
+    cors: {
+      origin: (origin, callback) => {
+        // Allow requests with no Origin header (e.g. server-to-server, Render health checks)
+        if (!origin) return callback(null, true);
+        if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+        console.warn(`CORS blocked origin: ${origin}`);
+        return callback(new Error(`CORS policy: origin "${origin}" not allowed`));
+      },
+      methods: ['GET', 'POST'],
+      credentials: true,
+    },
   });
 
-  // REST endpoints for dictionary
+  // ── Health-check endpoint (required by Render free tier to keep the service alive)
+  app.get('/', (req, res) => {
+    res.json({ status: 'ok', service: 'hangman-socket-server', uptime: process.uptime() });
+  });
+
+  // REST endpoint for dictionary
   app.get('/api/dictionary', (req, res) => {
     res.json(DICTIONARY_ENTRIES);
   });
@@ -472,14 +498,11 @@ nextApp.prepare().then(() => {
     });
   });
 
-  // Next.js App Router Page Handler for all other requests
-  app.all('*', (req, res) => {
-    return handle(req, res);
-  });
 
-  const PORT = process.env.PORT || 3000;
+  const PORT = process.env.PORT || 3001;
   server.listen(PORT, (err) => {
     if (err) throw err;
-    console.log(`\n🎮  Hangman Duel Server (Next.js App Router + Socket.io) ready on http://localhost:${PORT}\n`);
+    console.log(`\n🎮  Hangman Socket.io Backend ready on http://localhost:${PORT}`);
+    console.log(`    Allowed CORS origins: ${ALLOWED_ORIGINS.join(', ')}\n`);
   });
-});
+})();
