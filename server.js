@@ -229,9 +229,16 @@ function broadcastState(io, room, roomCode) {
         // Allow requests with no Origin header (e.g. server-to-server, Render health checks)
         if (!origin) return callback(null, true);
         const cleanOrigin = origin.replace(/\/$/, '');
-        const isAllowed = ALLOWED_ORIGINS.some(
-          (o) => o === '*' || o.replace(/\/$/, '') === cleanOrigin
-        );
+        
+        // Auto-allow any vercel.app deployment preview or production domain
+        const isVercelDomain = cleanOrigin.endsWith('.vercel.app');
+
+        const isAllowed =
+          isVercelDomain ||
+          ALLOWED_ORIGINS.some(
+            (o) => o === '*' || o.replace(/\/$/, '') === cleanOrigin
+          );
+
         if (isAllowed) return callback(null, true);
         console.warn(`CORS blocked origin: ${origin}`);
         return callback(new Error(`CORS policy: origin "${origin}" not allowed`));

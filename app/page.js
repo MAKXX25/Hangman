@@ -1008,7 +1008,9 @@ export default function HangmanDuelApp() {
   // ── Setup Socket.io Event Listeners ───────────────────────────────────────
   const ensureSocket = useCallback(() => {
     if (!socketRef.current) {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+      const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || (isLocal ? 'http://localhost:3001' : window.location.origin);
+      
       socketRef.current = io(backendUrl, {
         transports: ['websocket', 'polling'],
         autoConnect: true,
@@ -1016,12 +1018,20 @@ export default function HangmanDuelApp() {
 
       socketRef.current.on('connect', () => {
         setMyPlayerId(socketRef.current.id);
+        setLobbyError('');
       });
 
       socketRef.current.on('connect_error', (err) => {
         console.error('Socket connection error:', err.message);
-        showToast('⚠️ Cannot connect to backend server. Make sure server is running on port 3001.', 4000);
-        setLobbyError('Cannot connect to backend server. Make sure "npm run server" is running.');
+        if (!isLocal && !process.env.NEXT_PUBLIC_BACKEND_URL) {
+          const msg = 'Backend URL not set. Deploy server.js to Render and set NEXT_PUBLIC_BACKEND_URL in Vercel.';
+          showToast(`⚠️ ${msg}`, 5000);
+          setLobbyError(msg);
+        } else {
+          const msg = 'Cannot connect to backend server. Ensure server.js is running on port 3001.';
+          showToast(`⚠️ ${msg}`, 4000);
+          setLobbyError(msg);
+        }
       });
 
       socketRef.current.on('room_created', ({ roomCode }) => {
