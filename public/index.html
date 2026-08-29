@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hangman Duel — 2-Player Online</title>
+  <meta name="description" content="Real-time 2-player Hangman game. Create or join a private room with a code and play with a friend online." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ─── LOBBY SCREEN ─────────────────────────────────────────────────────── -->
+  <div id="screen-lobby" class="screen active">
+    <div class="lobby-bg-anim">
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="lobby-card glass">
+      <div class="logo">
+        <div class="logo-gallows" aria-hidden="true">
+          <svg viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <line x1="10" y1="115" x2="90" y2="115" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+            <line x1="30" y1="115" x2="30" y2="10" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+            <line x1="30" y1="10" x2="65" y2="10" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+            <line x1="65" y1="10" x2="65" y2="25" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="65" cy="35" r="10" stroke="currentColor" stroke-width="3"/>
+            <line x1="65" y1="45" x2="65" y2="75" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+            <line x1="65" y1="55" x2="50" y2="65" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+            <line x1="65" y1="55" x2="80" y2="65" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+            <line x1="65" y1="75" x2="52" y2="92" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+            <line x1="65" y1="75" x2="78" y2="92" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h1>Hangman <span class="accent">Duel</span></h1>
+        <p class="tagline">Real-time 2-player word guessing</p>
+      </div>
+
+      <div class="lobby-form">
+        <div class="input-group">
+          <label for="input-name">Your Name</label>
+          <input id="input-name" type="text" placeholder="Enter your name…" maxlength="20" autocomplete="off" />
+        </div>
+
+        <div class="lobby-actions">
+          <div class="create-section">
+            <button id="btn-create" class="btn btn-primary" aria-label="Create a new room">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+              Create Room
+            </button>
+
+            <!-- Host Settings — only visible to creator -->
+            <div class="host-settings-toggle">
+              <button id="btn-advanced" class="btn-advanced-toggle" aria-expanded="false" aria-controls="host-settings">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+                Advanced Settings
+                <svg class="chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+            </div>
+
+            <div id="host-settings" class="host-settings collapsed" aria-hidden="true">
+              <div class="host-settings-inner">
+                <div class="setting-row">
+                  <label for="select-timer" class="setting-label">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Word Pick Time Limit
+                  </label>
+                  <select id="select-timer" class="setting-select" aria-label="Word pick time limit">
+                    <option value="30">30 seconds</option>
+                    <option value="60" selected>60 seconds</option>
+                    <option value="90">90 seconds</option>
+                    <option value="120">120 seconds</option>
+                  </select>
+                </div>
+                <p class="setting-hint">If the Word Setter doesn't pick in time, a random word is chosen automatically.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="divider"><span>or</span></div>
+
+          <div class="join-row">
+            <input id="input-room-code" type="text" placeholder="Room Code" maxlength="6"
+              autocomplete="off" aria-label="Room code to join" />
+            <button id="btn-join" class="btn btn-secondary" aria-label="Join existing room">Join</button>
+          </div>
+
+          <div class="divider"><span>single player</span></div>
+
+          <button id="btn-pve" class="btn btn-pve" type="button" aria-label="Play vs Computer">
+            <span class="pve-icon">🤖</span>
+            <span class="pve-text">Play vs Computer</span>
+            <span class="pve-badge">PvE Mode</span>
+          </button>
+        </div>
+
+        <div id="lobby-error" class="error-banner hidden" role="alert"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── WAITING SCREEN (before 2nd player joins) ────────────────────────── -->
+  <div id="screen-waiting" class="screen">
+    <div class="waiting-card glass">
+      <div class="pulse-ring"></div>
+      <h2>Waiting for opponent…</h2>
+      <p>Share this code with your friend:</p>
+      <div class="room-code-display" id="display-room-code" role="textbox" aria-label="Room code" tabindex="0"></div>
+      <button id="btn-copy-code" class="btn btn-ghost" aria-label="Copy room code">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copy Code
+      </button>
+      <button id="btn-leave-waiting" class="btn btn-ghost btn-sm">Leave Room</button>
+    </div>
+  </div>
+
+  <!-- ─── GAME SCREEN ──────────────────────────────────────────────────────── -->
+  <div id="screen-game" class="screen">
+
+    <!-- Header bar -->
+    <header class="game-header">
+      <div class="header-brand">
+        <span class="header-logo">🎯</span>
+        <span class="header-title">Hangman <strong>Duel</strong></span>
+      </div>
+      <div id="scoreboard" class="scoreboard" aria-live="polite">
+        <div class="score-player" id="score-p1">
+          <span class="score-name" id="score-name-p1">—</span>
+          <span class="score-val" id="score-val-p1">0</span>
+        </div>
+        <div class="score-divider">:</div>
+        <div class="score-player score-player-right" id="score-p2">
+          <span class="score-val" id="score-val-p2">0</span>
+          <span class="score-name" id="score-name-p2">—</span>
+        </div>
+      </div>
+      <div class="header-room">
+        <span id="header-room-code"></span>
+        <button id="btn-leave-game" class="btn btn-ghost btn-sm" aria-label="Leave game">Leave</button>
+      </div>
+    </header>
+
+    <main class="game-main">
+
+      <!-- Role banner -->
+      <div id="role-banner" class="role-banner" aria-live="polite"></div>
+
+      <!-- ── WORD SETTER PANEL ───────────────────────────────────────────── -->
+      <section id="panel-word-setter" class="panel hidden">
+        <div class="panel-card glass setter-panel-card">
+
+          <!-- Circular countdown timer ring -->
+          <div class="setter-timer-ring" id="setter-timer-ring" aria-label="Time remaining">
+            <svg class="timer-svg" viewBox="0 0 100 100">
+              <circle class="timer-track" cx="50" cy="50" r="42"/>
+              <circle class="timer-fill" id="timer-ring-fill" cx="50" cy="50" r="42"
+                stroke-dasharray="263.9" stroke-dashoffset="0"/>
+            </svg>
+            <div class="timer-inner">
+              <span id="setter-timer-val" class="timer-val">60</span>
+              <span class="timer-unit">sec</span>
+            </div>
+          </div>
+
+          <h2 class="panel-title">Choose a Secret Word</h2>
+          <p class="panel-sub">Your opponent will try to guess it. No hints allowed!</p>
+
+          <div class="word-input-group">
+            <input id="input-word" type="text" placeholder="Enter a word…" maxlength="30"
+              autocomplete="off" aria-label="Secret word input" spellcheck="false" />
+            <button id="btn-submit-word" class="btn btn-primary" aria-label="Submit word">
+              Submit Word
+            </button>
+          </div>
+          <div id="word-validation-msg" class="validation-msg hidden" role="status" aria-live="polite"></div>
+
+          <!-- Word Suggestions Panel for Setter -->
+          <div class="word-suggestions-panel" id="word-suggestions-panel">
+            <div class="suggestions-header">
+              <div class="suggestions-title-group">
+                <span class="suggestions-badge">⚡ Instant Pick</span>
+                <span class="suggestions-title">Word Suggestions</span>
+              </div>
+              <button id="btn-refresh-suggestions" class="btn-refresh-suggestions" type="button" aria-label="Refresh word suggestions" title="Get new suggestions">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="refresh-icon">
+                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                </svg>
+                <span>New Words</span>
+              </button>
+            </div>
+            <p class="suggestions-sub">Click any word below to instantly select it, or type your own word above.</p>
+            <div id="word-suggestions-grid" class="word-suggestions-grid" role="group" aria-label="Word suggestions"></div>
+          </div>
+
+        </div>
+        <div class="setter-waiting hidden" id="setter-waiting-msg">
+          <div class="mini-pulse"></div>
+          <p>Word accepted! Waiting for the guesser…</p>
+        </div>
+      </section>
+
+      <!-- ── GUESSER WAITING PANEL (shown while setter picks a word) ────── -->
+      <section id="panel-guesser-waiting" class="panel hidden">
+        <div class="guesser-waiting-layout">
+
+          <!-- Particle canvas fills the background -->
+          <canvas id="particle-canvas" class="particle-canvas" aria-hidden="true"></canvas>
+
+          <div class="guesser-waiting-content glass">
+
+            <!-- Animated heading with scramble text -->
+            <div class="gw-icon">⏳</div>
+            <h2 class="gw-title">Opponent is choosing a word</h2>
+            <p id="scramble-text" class="gw-scramble" aria-live="polite"></p>
+
+            <!-- Timer sync display -->
+            <div class="gw-timer-bar">
+              <div class="gw-timer-label">Time remaining</div>
+              <div class="gw-timer-track">
+                <div class="gw-timer-fill" id="gw-timer-fill"></div>
+              </div>
+              <div id="gw-timer-val" class="gw-timer-val">—</div>
+            </div>
+
+            <!-- Random Facts Display for Guesser -->
+            <div class="facts-widget" id="facts-widget-guesser">
+              <div class="facts-header">
+                <span class="facts-icon">💡</span>
+                <span class="facts-title">Did You Know?</span>
+                <span class="facts-badge">Trivia</span>
+              </div>
+              <div class="fact-card">
+                <p id="random-fact-text" class="fact-text">Hangman was played during Victorian times under names like 'Gallows' and 'The Game of Hangin'.</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- ── GUESSER PANEL (active guessing) ───────────────────────────── -->
+      <section id="panel-guesser" class="panel hidden">
+        <div class="game-layout">
+
+          <!-- Hangman canvas -->
+          <div class="hangman-area">
+            <div class="canvas-wrapper" id="canvas-wrapper">
+              <canvas id="hangman-canvas" width="200" height="240" aria-label="Hangman figure"></canvas>
+            </div>
+            <div class="lives-display">
+              <span id="lives-left" class="lives-number">10</span>
+              <span class="lives-label">lives left</span>
+            </div>
+            <div id="wrong-letters" class="wrong-letters" aria-label="Incorrect guesses" aria-live="polite"></div>
+          </div>
+
+          <!-- Word / Keyboard area -->
+          <div class="guess-area">
+            <div id="word-display" class="word-display" aria-label="Word to guess" aria-live="polite"></div>
+            <div id="keyboard" class="keyboard" role="group" aria-label="Letter keyboard"></div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ── SETTER WATCHING PANEL (while guesser plays) ────────────────── -->
+      <section id="panel-watching" class="panel hidden">
+        <div class="game-layout game-layout-watch">
+
+          <div class="hangman-area">
+            <div class="canvas-wrapper" id="canvas-wrapper-watch">
+              <canvas id="hangman-canvas-watch" width="200" height="240" aria-label="Hangman figure for watcher"></canvas>
+            </div>
+            <div class="lives-display">
+              <span id="lives-left-watch" class="lives-number">10</span>
+              <span class="lives-label">lives left</span>
+            </div>
+            <div id="wrong-letters-watch" class="wrong-letters" aria-live="polite"></div>
+          </div>
+
+          <div class="guess-area">
+            <div class="watch-badge">
+              <span>👁</span> Watching — You set the word
+            </div>
+            <div id="word-display-watch" class="word-display" aria-live="polite"></div>
+            <div id="your-word-reveal" class="your-word-reveal hidden"></div>
+
+            <!-- Rotating Facts Widget for Word Setter (Watching Phase) -->
+            <div id="facts-widget-watching" class="facts-widget facts-widget-watch" aria-live="polite">
+              <div class="facts-header">
+                <span class="facts-icon">💡</span>
+                <span class="facts-title">Did You Know?</span>
+              </div>
+              <div class="fact-card">
+                <p id="random-fact-watch" class="fact-text">Loading interesting trivia…</p>
+              </div>
+            </div>
+
+            <div id="keyboard-watch" class="keyboard keyboard-disabled hidden" aria-hidden="true"></div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ── ROUND OVER OVERLAY ──────────────────────────────────────────── -->
+      <div id="overlay-roundover" class="overlay-roundover hidden" aria-live="assertive" role="dialog" aria-labelledby="roundover-title">
+        <div class="roundover-card glass">
+          <div id="roundover-icon" class="roundover-icon"></div>
+          <h2 id="roundover-title" class="roundover-title"></h2>
+          <p id="roundover-subtitle" class="roundover-subtitle"></p>
+          <div id="roundover-word" class="roundover-word"></div>
+          <div id="roundover-scores" class="roundover-scores"></div>
+          <button id="btn-next-round" class="btn btn-primary btn-lg" aria-label="Start next round">
+            Next Round ↩ Swap Roles
+          </button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ─── PVE DIFFICULTY SELECTION MODAL ────────────────────────────────────── -->
+  <div id="modal-difficulty" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="difficulty-title">
+    <div class="modal-card glass difficulty-card">
+      <div class="modal-header">
+        <div class="difficulty-icon-wrap">🤖</div>
+        <h2 id="difficulty-title">Choose Difficulty</h2>
+        <p class="modal-sub">The computer will pick a secret word for you to guess.</p>
+      </div>
+
+      <div class="difficulty-options">
+        <button class="diff-btn diff-easy" data-difficulty="easy" type="button">
+          <div class="diff-header">
+            <span class="diff-tag">Easy</span>
+            <span class="diff-length">4 – 5 Letters</span>
+          </div>
+          <p class="diff-desc">Short, approachable words for quick warm-ups.</p>
+        </button>
+
+        <button class="diff-btn diff-medium" data-difficulty="medium" type="button">
+          <div class="diff-header">
+            <span class="diff-tag">Medium</span>
+            <span class="diff-length">6 – 8 Letters</span>
+          </div>
+          <p class="diff-desc">Standard balanced challenge with everyday vocabulary.</p>
+        </button>
+
+        <button class="diff-btn diff-hard" data-difficulty="hard" type="button">
+          <div class="diff-header">
+            <span class="diff-tag">Hard</span>
+            <span class="diff-length">9+ Letters</span>
+          </div>
+          <p class="diff-desc">Complex, uncommon words for true vocabulary masters.</p>
+        </button>
+      </div>
+
+      <div class="modal-actions">
+        <button id="btn-cancel-pve" class="btn btn-ghost" type="button">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast notification -->
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <script src="client.js"></script>
+</body>
+</html>
