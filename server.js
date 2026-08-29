@@ -15,6 +15,8 @@ const PROD_ORIGINS = process.env.ALLOWED_ORIGINS
 const ALLOWED_ORIGINS = [
   'http://localhost:3000',
   'http://localhost:3001',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:3001',
   ...PROD_ORIGINS,
 ];
 
@@ -226,7 +228,11 @@ function broadcastState(io, room, roomCode) {
       origin: (origin, callback) => {
         // Allow requests with no Origin header (e.g. server-to-server, Render health checks)
         if (!origin) return callback(null, true);
-        if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+        const cleanOrigin = origin.replace(/\/$/, '');
+        const isAllowed = ALLOWED_ORIGINS.some(
+          (o) => o === '*' || o.replace(/\/$/, '') === cleanOrigin
+        );
+        if (isAllowed) return callback(null, true);
         console.warn(`CORS blocked origin: ${origin}`);
         return callback(new Error(`CORS policy: origin "${origin}" not allowed`));
       },

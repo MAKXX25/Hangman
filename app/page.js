@@ -1018,6 +1018,12 @@ export default function HangmanDuelApp() {
         setMyPlayerId(socketRef.current.id);
       });
 
+      socketRef.current.on('connect_error', (err) => {
+        console.error('Socket connection error:', err.message);
+        showToast('⚠️ Cannot connect to backend server. Make sure server is running on port 3001.', 4000);
+        setLobbyError('Cannot connect to backend server. Make sure "npm run server" is running.');
+      });
+
       socketRef.current.on('room_created', ({ roomCode }) => {
         setRoomCode(roomCode);
         setScreen('waiting');
