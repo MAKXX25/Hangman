@@ -1661,9 +1661,9 @@ export default function HangmanDuelApp() {
 
       {/* ─── WAITING SCREEN ───────────────────────────────────────────────── */}
       <div id="screen-waiting" className={`screen ${screen === 'waiting' ? 'active' : ''}`}>
-        <div className="waiting-card glass">
-          <div className="pulse-ring"></div>
-          <h2>Waiting for opponent…</h2>
+        <div className="waiting-card glass flex flex-col items-center gap-4">
+          <div className="pulse-ring mb-2" aria-label="Waiting status indicator"></div>
+          <h2 className="text-xl font-bold tracking-wide">Waiting for opponent…</h2>
           <p>Share this code with your friend:</p>
           <div
             className="room-code-display"
