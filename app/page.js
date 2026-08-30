@@ -1,11 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { io } from 'socket.io-client';
 import confetti from 'canvas-confetti';
-import { createServerlessSocket } from '../lib/serverlessSocket.js';
-import { DICTIONARY_LIST, getRandomWord, isValidWord, getRandomSuggestions } from '../lib/dictionary.js';
-import { RANDOM_FACTS, getRandomFact } from '../lib/facts.js';
+import { usePusherChannel } from '../lib/usePusherChannel.js';
+import { getRandomWord, isValidWord, getRandomSuggestions } from '../lib/dictionary.js';
+import { getRandomFact } from '../lib/facts.js';
 import {
   MAX_LIVES,
   DEFAULT_WORD_PICK_TIME,
@@ -13,6 +12,17 @@ import {
   processGuess,
   getRandomPerformanceDialogue
 } from '../lib/gameLogic.js';
+
+// Generate a stable per-session player ID (persisted in sessionStorage so
+// page refreshes keep the same ID within the same tab session).
+function getOrCreatePlayerId() {
+  if (typeof window === 'undefined') return 'p_ssr';
+  const stored = sessionStorage.getItem('hangman_player_id');
+  if (stored) return stored;
+  const id = 'p_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now().toString(36);
+  sessionStorage.setItem('hangman_player_id', id);
+  return id;
+}
 
 // Keyboard layout
 const KEYBOARD_ROWS = [
@@ -59,7 +69,15 @@ export default function HangmanDuelApp() {
   const [pveScore, setPveScore] = useState({ human: 0, bot: 0 });
 
   // Multiplayer Game State
-  const [myPlayerId, setMyPlayerId] = useState('');
+  // myPlayerId is stable for the lifetime of the browser tab session.
+  const myPlayerIdRef = useRef(null);
+  if (!myPlayerIdRef.current && typeof window !== 'undefined') {
+    myPlayerIdRef.current = getOrCreatePlayerId();
+  }
+  const [myPlayerId, setMyPlayerId] = useState(() => {
+    if (typeof window !== 'undefined') return getOrCreatePlayerId();
+    return '';
+  });
   const [gameState, setGameState] = useState('waiting'); // waiting | setting | guessing | roundover
   const [players, setPlayers] = useState([]);
   const [game, setGame] = useState(null);
@@ -110,7 +128,6 @@ export default function HangmanDuelApp() {
   const specialAnimIdRef = useRef(null);
 
   // Auxiliary Refs
-  const socketRef = useRef(null);
   const toastTimeoutRef = useRef(null);
   const particleCanvasRef = useRef(null);
   const particleAnimRef = useRef(null);
@@ -118,6 +135,8 @@ export default function HangmanDuelApp() {
   const factsIntervalRef = useRef(null);
   const watchFactsIntervalRef = useRef(null);
   const currentRoundTokenRef = useRef(0);
+  // Track in-flight fetch calls to prevent duplicate rapid submissions
+  const pendingFetchRef = useRef(false);
 
   // Show Toast Helper
   const showToast = useCallback((msg, duration = 2500) => {
@@ -1006,62 +1025,54 @@ export default function HangmanDuelApp() {
     }
   }, []);
 
-  // ── Setup Socket.io / Serverless Event Listeners ──────────────────────────
-  const bindSocketListeners = useCallback((socket) => {
-    if (!socket) return;
-
-    socket.on('connect', () => {
-      setMyPlayerId(socket.id);
-      setLobbyError('');
-    });
-
-    socket.on('room_created', ({ roomCode }) => {
-      setRoomCode(roomCode);
-      setScreen('waiting');
-      setGameState('waiting');
-    });
-
-    // ── game_start: Server-authoritative signal that the room is full.
-    //    Both the Host (stuck on 'waiting' screen) AND the Joiner receive
-    //    this event simultaneously and transition to the game board.
-    socket.on('game_start', ({ roomCode: code, wordSetterId, guesserId, players: roomPlayers }) => {
-      setRoomCode(code);
+  // ── Pusher Real-time Channel Subscription ────────────────────────────────
+  // Subscribes to `room-${roomCode}` and binds all game events.
+  // The hook automatically unsubscribes when roomCode changes or component unmounts.
+  usePusherChannel(roomCode, {
+    // Server confirmed room is full — both players transition to game board.
+    game_start: ({ roomCode: code, wordSetterId, guesserId, players: roomPlayers }) => {
+      if (code) setRoomCode(code);
       if (roomPlayers) setPlayers(roomPlayers);
       setScreen('game');
       setGameState('setting');
-    });
+    },
 
-    socket.on('state_update', (roomState) => {
-      if (roomState && roomState.state && roomState.state !== 'lobby') {
+    // Authoritative full state from server — apply to all local React state.
+    state_update: (roomState) => {
+      if (roomState?.state && roomState.state !== 'lobby') {
         setScreen('game');
       }
       applyState(roomState);
-    });
+    },
 
-    socket.on('timer_tick', ({ secondsLeft, total }) => {
+    // Server-side timer countdown tick.
+    timer_tick: ({ secondsLeft, total }) => {
       setTimerSecondsLeft(secondsLeft);
       setTimerTotal(total);
-    });
+    },
 
-    socket.on('timer_expired', () => {
+    // Server auto-selected a word because the timer expired.
+    timer_expired: () => {
       showToast('⏱ Time is up! Random word chosen automatically.', 3500);
-    });
+    },
 
-    socket.on('round_started', () => {
+    // Guessing phase starts — reset all round-specific UI.
+    round_started: () => {
       forceResetRoundState();
-    });
+    },
 
-    socket.on('round_transitioning', () => {
+    // Next round has been initiated — immediately clear round-over modal.
+    round_transitioning: () => {
       forceResetRoundState();
-    });
+    },
 
-    socket.on('word_suggestions', ({ suggestions }) => {
-      if (suggestions && suggestions.length) {
-        setSuggestions(suggestions);
-      }
-    });
+    // Fresh word suggestions for the word setter.
+    word_suggestions: ({ suggestions }) => {
+      if (suggestions?.length) setSuggestions(suggestions);
+    },
 
-    socket.on('word_validation', ({ valid, reason }) => {
+    // Server validated (or rejected) the submitted word.
+    word_validation: ({ valid, reason }) => {
       if (!valid) {
         setWordValidationMsg(reason || 'Invalid word.');
         setSetterWordSubmitted(false);
@@ -1069,68 +1080,22 @@ export default function HangmanDuelApp() {
         setWordValidationMsg('');
         setSetterWordSubmitted(true);
       }
-    });
+    },
 
-    socket.on('error_msg', (msg) => {
-      showToast(`⚠️ ${msg}`, 3000);
-      setLobbyError(msg);
-    });
-
-    socket.on('opponent_left', () => {
+    // Opponent disconnected — return to waiting screen.
+    opponent_left: () => {
       showToast('⚠️ Opponent left the game.', 4000);
       setGameState('lobby');
       setScreen('waiting');
-    });
-  }, [applyState, forceResetRoundState, showToast]);
+    },
 
-  const ensureSocket = useCallback(() => {
-    if (!socketRef.current) {
-      const customBackendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-
-      if (customBackendUrl) {
-        try {
-          const socket = io(customBackendUrl, {
-            transports: ['websocket', 'polling'],
-            autoConnect: true,
-            timeout: 5000,
-          });
-
-          socketRef.current = socket;
-          bindSocketListeners(socket);
-
-          socket.on('connect_error', () => {
-            // If custom backend unreachable, smoothly fallback to serverless
-            if (socketRef.current === socket) {
-              try { socket.disconnect(); } catch {}
-              const serverless = createServerlessSocket();
-              socketRef.current = serverless;
-              bindSocketListeners(serverless);
-            }
-          });
-        } catch {
-          const serverless = createServerlessSocket();
-          socketRef.current = serverless;
-          bindSocketListeners(serverless);
-        }
-      } else {
-        // Native Serverless P2P Realtime Engine (Zero Backend Setup Needed)
-        const serverless = createServerlessSocket();
-        socketRef.current = serverless;
-        bindSocketListeners(serverless);
-      }
-    }
-    return socketRef.current;
-  }, [bindSocketListeners]);
-
-  // Clean up socket on unmount
-  useEffect(() => {
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current = null;
-      }
-    };
-  }, []);
+    // Server-sent error message (e.g. room full, invalid action).
+    error_msg: (msg) => {
+      const text = typeof msg === 'string' ? msg : (msg?.message || 'An error occurred.');
+      showToast(`⚠️ ${text}`, 3000);
+      setLobbyError(text);
+    },
+  });
 
   // ── Load Initial Suggestions and Facts ────────────────────────────────────
   useEffect(() => {
@@ -1250,8 +1215,8 @@ export default function HangmanDuelApp() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   });
 
-  // ── 1. Create Room (Multiplayer via Socket.io) ─────────────────────────────
-  const handleCreateRoom = () => {
+  // ── 1. Create Room (Multiplayer via Pusher + fetch) ──────────────────────────
+  const handleCreateRoom = async () => {
     const name = playerName.trim();
     if (!name) {
       setLobbyError('Please enter your name first.');
@@ -1259,14 +1224,31 @@ export default function HangmanDuelApp() {
     }
     setLobbyError('');
     setIsPveMode(false);
-
-    const socket = ensureSocket();
-    socket.emit('create_room', { playerName: name, wordPickTime });
     showToast('Creating room… 🎮');
+
+    try {
+      const res = await fetch('/api/room/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerName: name, wordPickTime, playerId: myPlayerId }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setLobbyError(data.error || 'Failed to create room.');
+        return;
+      }
+      // Store assigned playerId from server (may differ from our generated one)
+      if (data.playerId) setMyPlayerId(data.playerId);
+      setRoomCode(data.roomCode);
+      setScreen('waiting');
+      setGameState('waiting');
+    } catch (err) {
+      setLobbyError('Network error. Please try again.');
+    }
   };
 
-  // ── 2. Join Room (Multiplayer via Socket.io) ───────────────────────────────
-  const handleJoinRoom = () => {
+  // ── 2. Join Room (Multiplayer via Pusher + fetch) ─────────────────────────
+  const handleJoinRoom = async () => {
     const name = playerName.trim();
     // Sanitize room code input: strip all whitespace and convert to uppercase
     const code = (joinCode || '').replace(/\s+/g, '').trim().toUpperCase();
@@ -1280,14 +1262,28 @@ export default function HangmanDuelApp() {
     }
     setLobbyError('');
     setIsPveMode(false);
-
-    const socket = ensureSocket();
-    socket.emit('join_room', { roomCode: code, playerName: name });
-    // NOTE: Do NOT call setScreen('game') here.
-    // The server will emit 'game_start' to the ENTIRE room (both Host and Joiner)
-    // once 2 players are seated. Both clients then transition simultaneously
-    // via the 'game_start' socket listener in ensureSocket().
     showToast('Joining game room… 🎯');
+
+    try {
+      const res = await fetch('/api/room/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomCode: code, playerName: name, playerId: myPlayerId }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setLobbyError(data.error || 'Failed to join room.');
+        showToast(`⚠️ ${data.error || 'Failed to join room.'}`, 3500);
+        return;
+      }
+      // Store assigned playerId and roomCode.
+      // Pusher will deliver 'game_start' to BOTH players simultaneously
+      // via the usePusherChannel subscription above.
+      if (data.playerId) setMyPlayerId(data.playerId);
+      setRoomCode(code);
+    } catch (err) {
+      setLobbyError('Network error. Please try again.');
+    }
   };
 
   // ── 3. Start PvE Single-Player vs Computer ────────────────────────────────
@@ -1343,8 +1339,8 @@ export default function HangmanDuelApp() {
     showToast(`Started PvE (${difficulty.toUpperCase()})! Guess the secret word.`);
   };
 
-  // ── 4. Submit Secret Word (Word Setter) ───────────────────────────────────
-  const handleSubmitWord = (customWord) => {
+  // ── 4. Submit Secret Word (Word Setter) ─────────────────────────────────────
+  const handleSubmitWord = async (customWord) => {
     const word = (customWord || secretWordInput).trim().toUpperCase();
     if (!word) {
       setWordValidationMsg('Please enter a word.');
@@ -1362,8 +1358,22 @@ export default function HangmanDuelApp() {
     setWordValidationMsg('');
     setSetterWordSubmitted(true);
 
-    if (socketRef.current) {
-      socketRef.current.emit('set_word', { word });
+    try {
+      const res = await fetch('/api/room/word', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomCode, word }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        // Server rejected the word (e.g. not in dictionary)
+        setWordValidationMsg(data.error || 'Word rejected by server.');
+        setSetterWordSubmitted(false);
+      }
+      // On success, Pusher delivers word_validation + round_started + state_update.
+    } catch (err) {
+      setWordValidationMsg('Network error. Please try again.');
+      setSetterWordSubmitted(false);
     }
   };
 
@@ -1387,29 +1397,57 @@ export default function HangmanDuelApp() {
       return;
     }
 
-    if (socketRef.current) {
-      socketRef.current.emit('guess_letter', { letter: l });
-    }
+    // Optimistic: send guess to server. Pusher delivers state_update to both.
+    if (pendingFetchRef.current) return; // Debounce rapid taps
+    pendingFetchRef.current = true;
+    fetch('/api/room/guess', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ roomCode, letter: l }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (!data.success) showToast(`⚠️ ${data.error}`, 2500);
+      })
+      .catch(() => showToast('Network error.', 2000))
+      .finally(() => { pendingFetchRef.current = false; });
   };
 
   // ── 6. Next Round ─────────────────────────────────────────────────────────
-  const handleNextRound = () => {
+  const handleNextRound = async () => {
     if (isPveMode) {
       startPveGame(pveDifficulty);
       return;
     }
 
     setIsWaitingOpponent(true);
-    if (socketRef.current) {
-      socketRef.current.emit('next_round');
+    try {
+      const res = await fetch('/api/room/next-round', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomCode }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        showToast(`⚠️ ${data.error}`, 2500);
+        setIsWaitingOpponent(false);
+      }
+      // On success, Pusher delivers round_transitioning + state_update.
+    } catch {
+      showToast('Network error. Please try again.', 2500);
+      setIsWaitingOpponent(false);
     }
   };
 
-  // ── 7. Leave Game ─────────────────────────────────────────────────────────
+  // ── 7. Leave Game ──────────────────────────────────────────────────────────
   const handleLeaveGame = () => {
-    if (socketRef.current) {
-      socketRef.current.disconnect();
-      socketRef.current = null;
+    // Notify server so the opponent gets the opponent_left Pusher event.
+    if (roomCode) {
+      fetch('/api/room/leave', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomCode, playerId: myPlayerId }),
+      }).catch(() => {}); // fire-and-forget
     }
 
     setScreen('lobby');
@@ -1427,13 +1465,19 @@ export default function HangmanDuelApp() {
   };
 
   // Refresh Suggestions Helper
-  const refreshSuggestions = () => {
-    if (socketRef.current) {
-      socketRef.current.emit('get_suggestions');
-    } else {
+  const refreshSuggestions = async () => {
+    showToast('Refreshed word suggestions 💡', 1500);
+    try {
+      const res = await fetch('/api/room/suggestions');
+      const data = await res.json();
+      if (data.success && data.suggestions?.length) {
+        setSuggestions(data.suggestions);
+      } else {
+        setSuggestions(getRandomSuggestions(12));
+      }
+    } catch {
       setSuggestions(getRandomSuggestions(12));
     }
-    showToast('Refreshed word suggestions 💡', 1500);
   };
 
   // Copy Room Code Helper

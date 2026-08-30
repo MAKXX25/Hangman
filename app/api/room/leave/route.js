@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getRoom, deleteRoom, saveRoom } from '../../../../lib/roomsStore.js';
+import { triggerRoomEvent } from '../../../../lib/pusherServer.js';
 
 export async function POST(req) {
   try {
@@ -8,17 +9,22 @@ export async function POST(req) {
 
     const room = getRoom(cleanCode);
     if (!room) {
+      // Already gone — that's fine.
       return NextResponse.json({ success: true });
     }
 
-    // Filter out player
     room.players = room.players.filter(p => p.id !== playerId);
+
     if (room.players.length === 0) {
       deleteRoom(cleanCode);
     } else {
+      // Reset room to lobby state so the remaining player can wait for a new opponent.
       room.state = 'waiting';
-      room.game = null;
+      room.game  = null;
       saveRoom(cleanCode, room);
+
+      // ── Pusher: notify the remaining player their opponent left ──────────────
+      await triggerRoomEvent(cleanCode, 'opponent_left', { playerId });
     }
 
     return NextResponse.json({ success: true });
