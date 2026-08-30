@@ -247,17 +247,20 @@ const io = new Server(server, {
 
 // Health-check endpoints for Render / Railway / Uptime monitoring
 app.get('/', (req, res) => {
-  res.json({
-    status: 'ok',
-    service: 'hangman-socket-backend',
-    transport: 'pure-websocket',
-    activeRooms: Object.keys(rooms).length,
-    uptime: process.uptime(),
-  });
+  res.status(200).send('Hangman Server is running!');
 });
 
 app.get('/health', (req, res) => {
   res.status(200).send('OK');
+});
+
+app.get('/status', (req, res) => {
+  res.json({
+    status: 'ok',
+    service: 'hangman-socket-backend',
+    activeRooms: Object.keys(rooms).length,
+    uptime: process.uptime(),
+  });
 });
 
 // REST endpoint for dictionary entries

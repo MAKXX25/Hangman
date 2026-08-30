@@ -1039,8 +1039,6 @@ export default function HangmanDuelApp() {
           setConnectionStatus('waking_up');
         }
       }, 5000);
-    } else {
-      setConnectionStatus('connected');
     }
 
     // 3. Socket.io Event Listeners with Verbose Logging
@@ -1051,6 +1049,11 @@ export default function HangmanDuelApp() {
       setMyPlayerId(socket.id);
       setLobbyError('');
     };
+
+    // Immediate sync if already connected
+    if (socket.connected) {
+      onConnect();
+    }
 
     const onConnectError = (err) => {
       console.error('❌ [Socket Connect Error Details]:', {
