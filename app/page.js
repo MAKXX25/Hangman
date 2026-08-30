@@ -58,6 +58,10 @@ export default function HangmanDuelApp() {
   const [isPveMode, setIsPveMode] = useState(false);
   const [pveDifficulty, setPveDifficulty] = useState('medium');
   const [pveScore, setPveScore] = useState({ human: 0, bot: 0 });
+  const [pveRound, setPveRound] = useState(1);       // 1..PVE_TOTAL_ROUNDS
+  const [pveCountdown, setPveCountdown] = useState(null); // null | 3 | 2 | 1 | 0
+  const [frozenDialogue, setFrozenDialogue] = useState(''); // Fix: stable random text
+  const PVE_TOTAL_ROUNDS = 5;
 
   // Multiplayer Game State
   const [myPlayerId, setMyPlayerId] = useState('');
@@ -1341,13 +1345,23 @@ export default function HangmanDuelApp() {
   };
 
   // ── 3. Start PvE Single-Player vs Computer ────────────────────────────────
-  const startPveGame = (difficulty = 'medium') => {
+  const startPveGame = (difficulty = 'medium', roundNum = 1, scoreSnapshot = null) => {
     const name = playerName.trim() || 'You';
     setIsPveMode(true);
     setPveDifficulty(difficulty);
     setMyPlayerId('human');
     setShowPveModal(false);
     setLobbyError('');
+    setPveCountdown(null); // clear any running countdown
+    setFrozenDialogue(''); // clear previous round's dialogue
+
+    // When called from the lobby, reset round and scores
+    if (roundNum === 1) {
+      setPveRound(1);
+      setPveScore({ human: 0, bot: 0 });
+    }
+
+    const currentScore = scoreSnapshot || pveScore;
 
     const wordObj = getRandomWord(difficulty);
     const chosenWord = (typeof wordObj === 'string' ? wordObj : wordObj.word).toUpperCase();
@@ -1365,8 +1379,8 @@ export default function HangmanDuelApp() {
       roomCode: `SOLO-${difficulty.toUpperCase()}`,
       state: 'guessing',
       players: [
-        { id: 'human', name: name, score: pveScore.human, isYou: true },
-        { id: 'bot', name: 'Computer 🤖', score: pveScore.bot, isYou: false }
+        { id: 'human', name: name, score: currentScore.human, isYou: true },
+        { id: 'bot', name: 'Computer 🤖', score: currentScore.bot, isYou: false }
       ],
       game: {
         word: chosenWord,
@@ -1390,7 +1404,11 @@ export default function HangmanDuelApp() {
     setGameState('guessing');
     setScreen('game');
     setIsRoundOverModalOpen(false);
-    showToast(`Started PvE (${difficulty.toUpperCase()})! Guess the secret word.`);
+    if (roundNum === 1) {
+      showToast(`Match started! Best of ${PVE_TOTAL_ROUNDS} rounds. Guess the word. 🎮`);
+    } else {
+      showToast(`Round ${roundNum} of ${PVE_TOTAL_ROUNDS} — New word incoming! 🎯`);
+    }
   };
 
   // ── 4. Submit Secret Word (Word Setter) ───────────────────────────────────
@@ -1428,7 +1446,12 @@ export default function HangmanDuelApp() {
       const currentRoom = { state: gameState, players, game };
       const nextRoom = processGuess(currentRoom, l);
       if (nextRoom.state === 'roundover') {
-        if (nextRoom.game.roundResult === 'guesser_wins') {
+        const won = nextRoom.game.roundResult === 'guesser_wins';
+        // Fix #1: Freeze the random dialogue exactly once when the round ends
+        const mistakes = nextRoom.game.wrongGuesses?.length ?? 0;
+        setFrozenDialogue(getRandomPerformanceDialogue(mistakes, won));
+
+        if (won) {
           setPveScore(s => ({ ...s, human: s.human + 1 }));
         } else {
           setPveScore(s => ({ ...s, bot: s.bot + 1 }));
@@ -1447,7 +1470,10 @@ export default function HangmanDuelApp() {
   // ── 6. Next Round ─────────────────────────────────────────────────────────
   const handleNextRound = () => {
     if (isPveMode) {
-      startPveGame(pveDifficulty);
+      const nextRound = pveRound + 1;
+      setPveRound(nextRound);
+      // scoreSnapshot captured here so startPveGame sees the updated score
+      startPveGame(pveDifficulty, nextRound, null);
       return;
     }
 
@@ -1457,6 +1483,45 @@ export default function HangmanDuelApp() {
       socket.emit('next_round');
     }
   };
+
+  // ── PvE Auto-Continue Countdown (runs when modal opens in non-final rounds) ──
+  const pveCountdownRef = useRef(null);
+  useEffect(() => {
+    // Only run when modal is open in PvE mode, not the final round
+    if (!isRoundOverModalOpen || !isPveMode || pveRound >= PVE_TOTAL_ROUNDS) {
+      if (pveCountdownRef.current) clearInterval(pveCountdownRef.current);
+      setPveCountdown(null);
+      return;
+    }
+
+    let count = 3;
+    setPveCountdown(count);
+
+    pveCountdownRef.current = setInterval(() => {
+      count -= 1;
+      if (count <= 0) {
+        clearInterval(pveCountdownRef.current);
+        pveCountdownRef.current = null;
+        setPveCountdown(null);
+        // Capture updated score at this moment so it propagates correctly
+        setPveScore(latestScore => {
+          const nextRound = pveRound + 1;
+          setPveRound(nextRound);
+          startPveGame(pveDifficulty, nextRound, latestScore);
+          return latestScore;
+        });
+      } else {
+        setPveCountdown(count);
+      }
+    }, 1000);
+
+    return () => {
+      if (pveCountdownRef.current) {
+        clearInterval(pveCountdownRef.current);
+        pveCountdownRef.current = null;
+      }
+    };
+  }, [isRoundOverModalOpen, isPveMode, pveRound]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── 7. Leave Game ──────────────────────────────────────────────────────────
   const handleLeaveGame = () => {
@@ -1541,11 +1606,19 @@ export default function HangmanDuelApp() {
   const RING_CIRCUMFERENCE = 263.9;
   const timerRingOffset = RING_CIRCUMFERENCE * (1 - timerFraction);
 
-  // Determine POV theme for Roundover modal
+  // ── Determine POV theme for Roundover modal ────────────────────────────────
+  // Fix #1: use frozenDialogue (set once on round-end) instead of calling
+  // getRandomPerformanceDialogue() directly in render to stop flickering.
   let roundoverThemeClass = '';
   let roundoverIcon = '🎉';
   let roundoverTitle = '';
   let roundoverSubtitle = '';
+
+  // ── PvE Match-over detection ───────────────────────────────────────────────
+  const isPveMatchOver = isPveMode && pveRound >= PVE_TOTAL_ROUNDS && isRoundOverModalOpen;
+  const pveMatchWinner = isPveMatchOver
+    ? (p1.score > p2.score ? 'human' : p1.score < p2.score ? 'bot' : 'draw')
+    : null;
 
   if (game?.roundResult === 'setter_wins') {
     if (isWordSetter) {
@@ -1564,14 +1637,15 @@ export default function HangmanDuelApp() {
     if (!isWordSetter) {
       roundoverThemeClass = 'guesser-victory-theme victory-theme';
       roundoverIcon = mistakes === 0 ? '👑' : (mistakes >= 7 ? '😅' : '🎉');
-      roundoverTitle = getRandomPerformanceDialogue(mistakes, true);
+      // Fix #1: use frozenDialogue; fall back to live call only in multiplayer
+      roundoverTitle = isPveMode ? (frozenDialogue || getRandomPerformanceDialogue(mistakes, true)) : getRandomPerformanceDialogue(mistakes, true);
       roundoverSubtitle = isPveMode
         ? "You figured out Computer's secret word!"
         : `${game.guesserName || 'Guesser'} figured out ${game.setterName || 'Setter'}'s word!`;
     } else {
       roundoverThemeClass = 'setter-defeat-theme defeat-theme';
       roundoverIcon = mistakes >= 7 ? '💔' : '🏃💨';
-      roundoverTitle = getRandomPerformanceDialogue(mistakes, false);
+      roundoverTitle = isPveMode ? (frozenDialogue || getRandomPerformanceDialogue(mistakes, false)) : getRandomPerformanceDialogue(mistakes, false);
       roundoverSubtitle = `${game.guesserName || 'Guesser'} figured out your word!`;
     }
   }
@@ -2108,59 +2182,135 @@ export default function HangmanDuelApp() {
 
           {/* ─── ROUND OVER OVERLAY MODAL ─────────────────────────────────── */}
           {isRoundOverModalOpen && (
-            <div id="overlay-roundover" className={`overlay-roundover ${roundoverThemeClass}`}>
+            <div id="overlay-roundover" className={`overlay-roundover ${isPveMatchOver ? (pveMatchWinner === 'human' ? 'guesser-victory-theme victory-theme' : pveMatchWinner === 'draw' ? '' : 'defeat-theme') : roundoverThemeClass}`}>
               <div className="roundover-card glass">
-                <div id="roundover-icon" className="roundover-icon">{roundoverIcon}</div>
-                <h2 id="roundover-title" className="roundover-title">{roundoverTitle}</h2>
-                <p id="roundover-subtitle" className="roundover-subtitle">{roundoverSubtitle}</p>
 
-                <div className="roundover-word" id="roundover-word">
-                  {cleanWord.split('').map((ch, idx) => {
-                    let letterClass = 'word-letter-span ';
-                    const guesserWon = game?.roundResult === 'guesser_wins';
+                {/* ── PvE MATCH OVER SCREEN ───────────────────────────── */}
+                {isPveMatchOver ? (
+                  <>
+                    <div id="roundover-icon" className="roundover-icon">
+                      {pveMatchWinner === 'human' ? '🏆' : pveMatchWinner === 'draw' ? '🤝' : '💀'}
+                    </div>
+                    <h2 id="roundover-title" className="roundover-title" style={{ fontSize: '1.6rem' }}>
+                      {pveMatchWinner === 'human'
+                        ? '🏆 You beat the Computer!'
+                        : pveMatchWinner === 'draw'
+                        ? '🤝 It\'s a Draw!'
+                        : '💀 The Computer outsmarted you!'}
+                    </h2>
+                    <p id="roundover-subtitle" className="roundover-subtitle">
+                      {pveMatchWinner === 'human'
+                        ? `Final score: ${p1.score} – ${p2.score}. Impressive!`
+                        : pveMatchWinner === 'draw'
+                        ? `Both ended at ${p1.score} – ${p2.score}. Evenly matched!`
+                        : `Final score: ${p1.score} – ${p2.score}. Better luck next time!`}
+                    </p>
 
-                    if (guesserWon) {
-                      letterClass += !isWordSetter ? 'word-letter-unlocked' : 'word-letter-exposed';
-                    } else {
-                      letterClass += guessedSet.has(ch) ? 'word-letter-guessed' : 'word-letter-missed';
-                    }
+                    <div id="roundover-scores" className="roundover-scores" style={{ marginBottom: '1.5rem' }}>
+                      <div className="rs-player">
+                        <span className="rs-name">{p1.name}</span>
+                        <span className="rs-score" style={{ fontSize: '2rem' }}>{p1.score}</span>
+                      </div>
+                      <div className="rs-divider">–</div>
+                      <div className="rs-player">
+                        <span className="rs-name">{p2.name}</span>
+                        <span className="rs-score" style={{ fontSize: '2rem' }}>{p2.score}</span>
+                      </div>
+                    </div>
 
-                    return (
-                      <span
-                        key={idx}
-                        className={letterClass}
-                        style={{ '--index': idx }}
+                    <button
+                      id="btn-new-match"
+                      className="btn btn-primary btn-lg"
+                      onClick={() => startPveGame(pveDifficulty, 1, { human: 0, bot: 0 })}
+                    >
+                      🔄 Start New Match
+                    </button>
+                  </>
+                ) : (
+                  /* ── STANDARD ROUND OVER SCREEN ──────────────────────── */
+                  <>
+                    <div id="roundover-icon" className="roundover-icon">{roundoverIcon}</div>
+                    <h2 id="roundover-title" className="roundover-title">{roundoverTitle}</h2>
+                    <p id="roundover-subtitle" className="roundover-subtitle">{roundoverSubtitle}</p>
+
+                    {/* Round Progress Indicator (PvE only) */}
+                    {isPveMode && (
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', margin: '0.5rem 0 0.25rem' }}>
+                        {Array.from({ length: PVE_TOTAL_ROUNDS }).map((_, i) => (
+                          <span
+                            key={i}
+                            style={{
+                              width: 10, height: 10, borderRadius: '50%',
+                              background: i < pveRound ? 'var(--accent, #a78bfa)' : 'rgba(255,255,255,0.2)',
+                              display: 'inline-block',
+                              border: i === pveRound - 1 ? '2px solid #fff' : '2px solid transparent',
+                              transition: 'background 0.3s'
+                            }}
+                          />
+                        ))}
+                        <span style={{ fontSize: '0.8rem', opacity: 0.7, marginLeft: 6 }}>Round {pveRound} / {PVE_TOTAL_ROUNDS}</span>
+                      </div>
+                    )}
+
+                    <div className="roundover-word" id="roundover-word">
+                      {cleanWord.split('').map((ch, idx) => {
+                        let letterClass = 'word-letter-span ';
+                        const guesserWon = game?.roundResult === 'guesser_wins';
+                        if (guesserWon) {
+                          letterClass += !isWordSetter ? 'word-letter-unlocked' : 'word-letter-exposed';
+                        } else {
+                          letterClass += guessedSet.has(ch) ? 'word-letter-guessed' : 'word-letter-missed';
+                        }
+                        return (
+                          <span key={idx} className={letterClass} style={{ '--index': idx }}>{ch}</span>
+                        );
+                      })}
+                    </div>
+
+                    <div id="roundover-scores" className="roundover-scores">
+                      <div className="rs-player">
+                        <span className="rs-name">{p1.name}</span>
+                        <span className="rs-score">{p1.score}</span>
+                      </div>
+                      <div className="rs-divider">:</div>
+                      <div className="rs-player">
+                        <span className="rs-name">{p2.name}</span>
+                        <span className="rs-score">{p2.score}</span>
+                      </div>
+                    </div>
+
+                    {/* PvE: auto-countdown replaces manual button */}
+                    {isPveMode ? (
+                      <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+                        <p style={{ fontSize: '0.95rem', opacity: 0.75, marginBottom: '0.5rem' }}>
+                          {pveCountdown !== null
+                            ? `Next round starting in ${pveCountdown}…`
+                            : 'Starting next round…'}
+                        </p>
+                        <div style={{
+                          width: '100%', height: 4, borderRadius: 4,
+                          background: 'rgba(255,255,255,0.12)', overflow: 'hidden'
+                        }}>
+                          <div style={{
+                            height: '100%', borderRadius: 4,
+                            background: 'var(--accent, #a78bfa)',
+                            width: `${((3 - (pveCountdown ?? 0)) / 3) * 100}%`,
+                            transition: 'width 0.9s linear'
+                          }} />
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        id="btn-next-round"
+                        className="btn btn-primary btn-lg"
+                        disabled={isWaitingOpponent}
+                        onClick={handleNextRound}
                       >
-                        {ch}
-                      </span>
-                    );
-                  })}
-                </div>
-
-                <div id="roundover-scores" className="roundover-scores">
-                  <div className="rs-player">
-                    <span className="rs-name">{p1.name}</span>
-                    <span className="rs-score">{p1.score}</span>
-                  </div>
-                  <div className="rs-divider">:</div>
-                  <div className="rs-player">
-                    <span className="rs-name">{p2.name}</span>
-                    <span className="rs-score">{p2.score}</span>
-                  </div>
-                </div>
-
-                <button
-                  id="btn-next-round"
-                  className="btn btn-primary btn-lg"
-                  disabled={isWaitingOpponent}
-                  onClick={handleNextRound}
-                >
-                  {isWaitingOpponent
-                    ? 'Waiting for opponent…'
-                    : isPveMode
-                    ? 'Play Again ↻'
-                    : 'Next Round ↩ Swap Roles'}
-                </button>
+                        {isWaitingOpponent ? 'Waiting for opponent…' : 'Next Round ↩ Swap Roles'}
+                      </button>
+                    )}
+                  </>
+                )}
               </div>
             </div>
           )}
