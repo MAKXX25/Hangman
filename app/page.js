@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import confetti from 'canvas-confetti';
-import { getSocket, disconnectSocket } from '../lib/socket.js';
+import { createServerlessSocket } from '../lib/serverlessSocket.js';
 import { getRandomWord, isValidWord, getRandomSuggestions } from '../lib/dictionary.js';
 import { getRandomFact } from '../lib/facts.js';
 import {
@@ -44,6 +44,7 @@ export default function HangmanDuelApp() {
   const [roomCode, setRoomCode] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [lobbyError, setLobbyError] = useState('');
+  const [isConnecting, setIsConnecting] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
   const [toastKey, setToastKey] = useState(0);
 
@@ -109,6 +110,7 @@ export default function HangmanDuelApp() {
   const specialAnimIdRef = useRef(null);
 
   // Auxiliary Refs
+  const socketRef = useRef(null);
   const toastTimeoutRef = useRef(null);
   const particleCanvasRef = useRef(null);
   const particleAnimRef = useRef(null);
@@ -116,8 +118,6 @@ export default function HangmanDuelApp() {
   const factsIntervalRef = useRef(null);
   const watchFactsIntervalRef = useRef(null);
   const currentRoundTokenRef = useRef(0);
-  // Track in-flight fetch calls to prevent duplicate rapid submissions
-  const pendingFetchRef = useRef(false);
 
   // Show Toast Helper
   const showToast = useCallback((msg, duration = 2500) => {
@@ -1006,111 +1006,95 @@ export default function HangmanDuelApp() {
     }
   }, []);
 
-  // ── Standalone Socket.io Event Listeners (Pure WebSockets) ──────────────
-  useEffect(() => {
-    const socket = getSocket();
-    if (!socket) return;
+  // ── Setup Zero-Config Serverless Realtime Engine ────────────────────────
+  const ensureSocket = useCallback(() => {
+    if (!socketRef.current) {
+      const socket = createServerlessSocket();
+      socketRef.current = socket;
 
-    const onConnect = () => {
-      setMyPlayerId(socket.id);
-      setLobbyError('');
-    };
+      socket.on('connect', () => {
+        setMyPlayerId(socket.id);
+        setLobbyError('');
+      });
 
-    const onRoomCreated = ({ roomCode: code }) => {
-      setRoomCode(code);
-      setScreen('waiting');
-      setGameState('waiting');
-    };
+      socket.on('room_created', ({ roomCode: code }) => {
+        setIsConnecting(false);
+        setRoomCode(code);
+        setScreen('waiting');
+        setGameState('waiting');
+      });
 
-    const onGameStart = ({ roomCode: code, players: roomPlayers }) => {
-      if (code) setRoomCode(code);
-      if (roomPlayers) setPlayers(roomPlayers);
-      setScreen('game');
-      setGameState('setting');
-    };
-
-    const onStateUpdate = (roomState) => {
-      if (roomState?.state && roomState.state !== 'lobby') {
+      socket.on('game_start', ({ roomCode: code, players: roomPlayers }) => {
+        setIsConnecting(false);
+        if (code) setRoomCode(code);
+        if (roomPlayers) setPlayers(roomPlayers);
         setScreen('game');
-      }
-      applyState(roomState);
-    };
+        setGameState('setting');
+      });
 
-    const onTimerTick = ({ secondsLeft, total }) => {
-      setTimerSecondsLeft(secondsLeft);
-      setTimerTotal(total);
-    };
+      socket.on('state_update', (roomState) => {
+        if (roomState?.state && roomState.state !== 'lobby') {
+          setScreen('game');
+        }
+        applyState(roomState);
+      });
 
-    const onTimerExpired = () => {
-      showToast('⏱ Time is up! Random word chosen automatically.', 3500);
-    };
+      socket.on('timer_tick', ({ secondsLeft, total }) => {
+        setTimerSecondsLeft(secondsLeft);
+        setTimerTotal(total);
+      });
 
-    const onRoundStarted = () => {
-      forceResetRoundState();
-    };
+      socket.on('timer_expired', () => {
+        showToast('⏱ Time is up! Random word chosen automatically.', 3500);
+      });
 
-    const onRoundTransitioning = () => {
-      forceResetRoundState();
-    };
+      socket.on('round_started', () => {
+        forceResetRoundState();
+      });
 
-    const onWordSuggestions = ({ suggestions: list }) => {
-      if (list?.length) setSuggestions(list);
-    };
+      socket.on('round_transitioning', () => {
+        forceResetRoundState();
+      });
 
-    const onWordValidation = ({ valid, reason }) => {
-      if (!valid) {
-        setWordValidationMsg(reason || 'Invalid word.');
-        setSetterWordSubmitted(false);
-      } else {
-        setWordValidationMsg('');
-        setSetterWordSubmitted(true);
-      }
-    };
+      socket.on('word_suggestions', ({ suggestions: list }) => {
+        if (list?.length) setSuggestions(list);
+      });
 
-    const onOpponentLeft = () => {
-      showToast('⚠️ Opponent left the game.', 4000);
-      setGameState('lobby');
-      setScreen('waiting');
-    };
+      socket.on('word_validation', ({ valid, reason }) => {
+        if (!valid) {
+          setWordValidationMsg(reason || 'Invalid word.');
+          setSetterWordSubmitted(false);
+        } else {
+          setWordValidationMsg('');
+          setSetterWordSubmitted(true);
+        }
+      });
 
-    const onErrorMsg = (msg) => {
-      const text = typeof msg === 'string' ? msg : msg?.message || 'An error occurred.';
-      showToast(`⚠️ ${text}`, 3000);
-      setLobbyError(text);
-    };
+      socket.on('opponent_left', () => {
+        showToast('⚠️ Opponent left the game.', 4000);
+        setGameState('lobby');
+        setScreen('waiting');
+      });
 
-    socket.on('connect', onConnect);
-    socket.on('room_created', onRoomCreated);
-    socket.on('game_start', onGameStart);
-    socket.on('state_update', onStateUpdate);
-    socket.on('timer_tick', onTimerTick);
-    socket.on('timer_expired', onTimerExpired);
-    socket.on('round_started', onRoundStarted);
-    socket.on('round_transitioning', onRoundTransitioning);
-    socket.on('word_suggestions', onWordSuggestions);
-    socket.on('word_validation', onWordValidation);
-    socket.on('opponent_left', onOpponentLeft);
-    socket.on('error_msg', onErrorMsg);
-
-    if (socket.connected) {
-      setMyPlayerId(socket.id);
+      socket.on('error_msg', (msg) => {
+        setIsConnecting(false);
+        const text = typeof msg === 'string' ? msg : msg?.message || 'An error occurred.';
+        showToast(`⚠️ ${text}`, 3000);
+        setLobbyError(text);
+      });
     }
-
-    return () => {
-      socket.off('connect', onConnect);
-      socket.off('room_created', onRoomCreated);
-      socket.off('game_start', onGameStart);
-      socket.off('state_update', onStateUpdate);
-      socket.off('timer_tick', onTimerTick);
-      socket.off('timer_expired', onTimerExpired);
-      socket.off('round_started', onRoundStarted);
-      socket.off('round_transitioning', onRoundTransitioning);
-      socket.off('word_suggestions', onWordSuggestions);
-      socket.off('word_validation', onWordValidation);
-      socket.off('opponent_left', onOpponentLeft);
-      socket.off('error_msg', onErrorMsg);
-    };
+    return socketRef.current;
   }, [applyState, forceResetRoundState, showToast]);
+
+  useEffect(() => {
+    ensureSocket();
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+    };
+  }, [ensureSocket]);
 
   // ── Load Initial Suggestions and Facts ────────────────────────────────────
   useEffect(() => {
@@ -1230,7 +1214,7 @@ export default function HangmanDuelApp() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   });
 
-  // ── 1. Create Room (Multiplayer via Standalone Socket.io Backend) ─────────
+  // ── 1. Create Room (100% Vercel Zero-Config Multiplayer) ─────────────────
   const handleCreateRoom = () => {
     const name = playerName.trim();
     if (!name) {
@@ -1239,15 +1223,14 @@ export default function HangmanDuelApp() {
     }
     setLobbyError('');
     setIsPveMode(false);
+    setIsConnecting(true);
     showToast('Creating room… 🎮');
 
-    const socket = getSocket();
-    if (socket) {
-      socket.emit('create_room', { playerName: name, wordPickTime });
-    }
+    const socket = ensureSocket();
+    socket.emit('create_room', { playerName: name, wordPickTime });
   };
 
-  // ── 2. Join Room (Multiplayer via Standalone Socket.io Backend) ───────────
+  // ── 2. Join Room (100% Vercel Zero-Config Multiplayer) ───────────────────
   const handleJoinRoom = () => {
     const name = playerName.trim();
     const code = (joinCode || '').replace(/\s+/g, '').trim().toUpperCase();
@@ -1261,12 +1244,11 @@ export default function HangmanDuelApp() {
     }
     setLobbyError('');
     setIsPveMode(false);
+    setIsConnecting(true);
     showToast('Joining game room… 🎯');
 
-    const socket = getSocket();
-    if (socket) {
-      socket.emit('join_room', { roomCode: code, playerName: name });
-    }
+    const socket = ensureSocket();
+    socket.emit('join_room', { roomCode: code, playerName: name });
   };
 
   // ── 3. Start PvE Single-Player vs Computer ────────────────────────────────
@@ -1341,10 +1323,8 @@ export default function HangmanDuelApp() {
     setWordValidationMsg('');
     setSetterWordSubmitted(true);
 
-    const socket = getSocket();
-    if (socket) {
-      socket.emit('set_word', { word });
-    }
+    const socket = ensureSocket();
+    socket.emit('set_word', { word });
   };
 
   // ── 5. Guess Letter (Guesser) ─────────────────────────────────────────────
@@ -1367,10 +1347,8 @@ export default function HangmanDuelApp() {
       return;
     }
 
-    const socket = getSocket();
-    if (socket) {
-      socket.emit('guess_letter', { letter: l });
-    }
+    const socket = ensureSocket();
+    socket.emit('guess_letter', { letter: l });
   };
 
   // ── 6. Next Round ─────────────────────────────────────────────────────────
@@ -1381,14 +1359,17 @@ export default function HangmanDuelApp() {
     }
 
     setIsWaitingOpponent(true);
-    const socket = getSocket();
-    if (socket) {
-      socket.emit('next_round');
-    }
+    const socket = ensureSocket();
+    socket.emit('next_round');
   };
 
   // ── 7. Leave Game ──────────────────────────────────────────────────────────
   const handleLeaveGame = () => {
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
+
     setScreen('lobby');
     setRoomCode('');
     setJoinCode('');
@@ -1405,12 +1386,8 @@ export default function HangmanDuelApp() {
 
   // Refresh Suggestions Helper
   const refreshSuggestions = () => {
-    const socket = getSocket();
-    if (socket) {
-      socket.emit('get_suggestions');
-    } else {
-      setSuggestions(getRandomSuggestions(12));
-    }
+    const socket = ensureSocket();
+    socket.emit('get_suggestions');
     showToast('Refreshed word suggestions 💡', 1500);
   };
 
@@ -1558,14 +1535,15 @@ export default function HangmanDuelApp() {
               <div className="create-section">
                 <button
                   id="btn-create"
-                  className="btn btn-primary"
+                  className={`btn btn-primary ${isConnecting ? 'loading' : ''}`}
                   aria-label="Create a new room"
+                  disabled={isConnecting}
                   onClick={handleCreateRoom}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <path d="M12 5v14M5 12h14" />
                   </svg>
-                  Create Room
+                  {isConnecting ? 'Connecting to Server…' : 'Create Room'}
                 </button>
 
                 {/* Host Settings */}
