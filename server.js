@@ -225,27 +225,23 @@ function broadcastState(io, room, roomCode) {
 const app = express();
 const server = http.createServer(app);
 
-// Initialize Socket.io with WebSocket + Polling fallback for Render cold starts
+// Express CORS headers for health checks / REST endpoints
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
+// Initialize Socket.io with Wildcard CORS and WebSocket + Polling fallback
 const io = new Server(server, {
   transports: ['websocket', 'polling'],
   cors: {
-    origin: (origin, callback) => {
-      // Allow server-to-server, health checks, or curl with no origin header
-      if (!origin) return callback(null, true);
-      const cleanOrigin = origin.replace(/\/$/, '');
-
-      // Automatically allow any Vercel deployment preview or production domain
-      const isVercelDomain = cleanOrigin.endsWith('.vercel.app');
-      const isAllowed =
-        isVercelDomain ||
-        ALLOWED_ORIGINS.some((o) => o === '*' || o.replace(/\/$/, '') === cleanOrigin);
-
-      if (isAllowed) return callback(null, true);
-      console.warn(`[CORS Blocked] Origin: ${origin}`);
-      return callback(new Error(`CORS policy: origin "${origin}" not allowed`));
-    },
+    origin: '*', // Relaxed wildcard CORS to eliminate connection/origin mismatch issues
     methods: ['GET', 'POST'],
-    credentials: true,
   },
 });
 
