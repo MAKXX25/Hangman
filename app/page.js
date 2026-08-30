@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import confetti from 'canvas-confetti';
-import { createServerlessSocket } from '../lib/serverlessSocket.js';
+import { getSocket, isBackendConfigured, getBackendUrl } from '../lib/socket.js';
 import { getRandomWord, isValidWord, getRandomSuggestions } from '../lib/dictionary.js';
 import { getRandomFact } from '../lib/facts.js';
 import {
@@ -45,6 +45,7 @@ export default function HangmanDuelApp() {
   const [joinCode, setJoinCode] = useState('');
   const [lobbyError, setLobbyError] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState('connecting'); // 'connecting' | 'waking_up' | 'connected' | 'missing_env' | 'error'
   const [toastMsg, setToastMsg] = useState('');
   const [toastKey, setToastKey] = useState(0);
 
@@ -111,6 +112,7 @@ export default function HangmanDuelApp() {
 
   // Auxiliary Refs
   const socketRef = useRef(null);
+  const wakeUpTimerRef = useRef(null);
   const toastTimeoutRef = useRef(null);
   const particleCanvasRef = useRef(null);
   const particleAnimRef = useRef(null);
@@ -1006,95 +1008,159 @@ export default function HangmanDuelApp() {
     }
   }, []);
 
-  // ── Setup Zero-Config Serverless Realtime Engine ────────────────────────
-  const ensureSocket = useCallback(() => {
-    if (!socketRef.current) {
-      const socket = createServerlessSocket();
-      socketRef.current = socket;
-
-      socket.on('connect', () => {
-        setMyPlayerId(socket.id);
-        setLobbyError('');
-      });
-
-      socket.on('room_created', ({ roomCode: code }) => {
-        setIsConnecting(false);
-        setRoomCode(code);
-        setScreen('waiting');
-        setGameState('waiting');
-      });
-
-      socket.on('game_start', ({ roomCode: code, players: roomPlayers }) => {
-        setIsConnecting(false);
-        if (code) setRoomCode(code);
-        if (roomPlayers) setPlayers(roomPlayers);
-        setScreen('game');
-        setGameState('setting');
-      });
-
-      socket.on('state_update', (roomState) => {
-        if (roomState?.state && roomState.state !== 'lobby') {
-          setScreen('game');
-        }
-        applyState(roomState);
-      });
-
-      socket.on('timer_tick', ({ secondsLeft, total }) => {
-        setTimerSecondsLeft(secondsLeft);
-        setTimerTotal(total);
-      });
-
-      socket.on('timer_expired', () => {
-        showToast('⏱ Time is up! Random word chosen automatically.', 3500);
-      });
-
-      socket.on('round_started', () => {
-        forceResetRoundState();
-      });
-
-      socket.on('round_transitioning', () => {
-        forceResetRoundState();
-      });
-
-      socket.on('word_suggestions', ({ suggestions: list }) => {
-        if (list?.length) setSuggestions(list);
-      });
-
-      socket.on('word_validation', ({ valid, reason }) => {
-        if (!valid) {
-          setWordValidationMsg(reason || 'Invalid word.');
-          setSetterWordSubmitted(false);
-        } else {
-          setWordValidationMsg('');
-          setSetterWordSubmitted(true);
-        }
-      });
-
-      socket.on('opponent_left', () => {
-        showToast('⚠️ Opponent left the game.', 4000);
-        setGameState('lobby');
-        setScreen('waiting');
-      });
-
-      socket.on('error_msg', (msg) => {
-        setIsConnecting(false);
-        const text = typeof msg === 'string' ? msg : msg?.message || 'An error occurred.';
-        showToast(`⚠️ ${text}`, 3000);
-        setLobbyError(text);
-      });
-    }
-    return socketRef.current;
-  }, [applyState, forceResetRoundState, showToast]);
-
+  // ── Setup Socket.io Connection & Cold-Start LifeCycle ───────────────────
   useEffect(() => {
-    ensureSocket();
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current = null;
+    // 1. Environment variable validation
+    if (!isBackendConfigured()) {
+      setConnectionStatus('missing_env');
+      setLobbyError('Error: Backend URL not configured in Vercel. Please set NEXT_PUBLIC_BACKEND_URL in Vercel Environment Variables.');
+      return;
+    }
+
+    const socket = getSocket();
+    if (!socket) return;
+    socketRef.current = socket;
+
+    // 2. Cold Start Wake-up Timer (5-second threshold)
+    if (!socket.connected) {
+      setConnectionStatus('connecting');
+      wakeUpTimerRef.current = setTimeout(() => {
+        if (!socket.connected) {
+          console.warn('⏳ [Server Cold-Start] Backend server taking >5s to respond (Render/Railway free tier wake-up in progress).');
+          setConnectionStatus('waking_up');
+        }
+      }, 5000);
+    } else {
+      setConnectionStatus('connected');
+    }
+
+    // 3. Socket.io Event Listeners with Verbose Logging
+    const onConnect = () => {
+      console.log(`✅ [Socket Connected] Successfully connected to backend: ${getBackendUrl()} (ID: ${socket.id})`);
+      if (wakeUpTimerRef.current) clearTimeout(wakeUpTimerRef.current);
+      setConnectionStatus('connected');
+      setMyPlayerId(socket.id);
+      setLobbyError('');
+    };
+
+    const onConnectError = (err) => {
+      console.error('❌ [Socket Connect Error Details]:', {
+        message: err.message,
+        description: err.description,
+        context: err.context,
+        targetUrl: getBackendUrl(),
+      });
+      // Keep 'waking_up' if already triggered after 5s
+      setConnectionStatus((prev) => (prev === 'waking_up' ? 'waking_up' : 'connecting'));
+    };
+
+    const onDisconnect = (reason) => {
+      console.warn(`🔌 [Socket Disconnected] Reason: ${reason}`);
+      setConnectionStatus('connecting');
+      if (reason === 'io server disconnect') {
+        socket.connect();
       }
     };
-  }, [ensureSocket]);
+
+    const onRoomCreated = ({ roomCode: code }) => {
+      setIsConnecting(false);
+      setRoomCode(code);
+      setScreen('waiting');
+      setGameState('waiting');
+    };
+
+    const onGameStart = ({ roomCode: code, players: roomPlayers }) => {
+      setIsConnecting(false);
+      if (code) setRoomCode(code);
+      if (roomPlayers) setPlayers(roomPlayers);
+      setScreen('game');
+      setGameState('setting');
+    };
+
+    const onStateUpdate = (roomState) => {
+      if (roomState?.state && roomState.state !== 'lobby') {
+        setScreen('game');
+      }
+      applyState(roomState);
+    };
+
+    const onTimerTick = ({ secondsLeft, total }) => {
+      setTimerSecondsLeft(secondsLeft);
+      setTimerTotal(total);
+    };
+
+    const onTimerExpired = () => {
+      showToast('⏱ Time is up! Random word chosen automatically.', 3500);
+    };
+
+    const onRoundStarted = () => {
+      forceResetRoundState();
+    };
+
+    const onRoundTransitioning = () => {
+      forceResetRoundState();
+    };
+
+    const onWordSuggestions = ({ suggestions: list }) => {
+      if (list?.length) setSuggestions(list);
+    };
+
+    const onWordValidation = ({ valid, reason }) => {
+      if (!valid) {
+        setWordValidationMsg(reason || 'Invalid word.');
+        setSetterWordSubmitted(false);
+      } else {
+        setWordValidationMsg('');
+        setSetterWordSubmitted(true);
+      }
+    };
+
+    const onOpponentLeft = () => {
+      showToast('⚠️ Opponent left the game.', 4000);
+      setGameState('lobby');
+      setScreen('waiting');
+    };
+
+    const onErrorMsg = (msg) => {
+      setIsConnecting(false);
+      const text = typeof msg === 'string' ? msg : msg?.message || 'An error occurred.';
+      showToast(`⚠️ ${text}`, 3000);
+      setLobbyError(text);
+    };
+
+    socket.on('connect', onConnect);
+    socket.on('connect_error', onConnectError);
+    socket.on('disconnect', onDisconnect);
+    socket.on('room_created', onRoomCreated);
+    socket.on('game_start', onGameStart);
+    socket.on('state_update', onStateUpdate);
+    socket.on('timer_tick', onTimerTick);
+    socket.on('timer_expired', onTimerExpired);
+    socket.on('round_started', onRoundStarted);
+    socket.on('round_transitioning', onRoundTransitioning);
+    socket.on('word_suggestions', onWordSuggestions);
+    socket.on('word_validation', onWordValidation);
+    socket.on('opponent_left', onOpponentLeft);
+    socket.on('error_msg', onErrorMsg);
+
+    return () => {
+      if (wakeUpTimerRef.current) clearTimeout(wakeUpTimerRef.current);
+      socket.off('connect', onConnect);
+      socket.off('connect_error', onConnectError);
+      socket.off('disconnect', onDisconnect);
+      socket.off('room_created', onRoomCreated);
+      socket.off('game_start', onGameStart);
+      socket.off('state_update', onStateUpdate);
+      socket.off('timer_tick', onTimerTick);
+      socket.off('timer_expired', onTimerExpired);
+      socket.off('round_started', onRoundStarted);
+      socket.off('round_transitioning', onRoundTransitioning);
+      socket.off('word_suggestions', onWordSuggestions);
+      socket.off('word_validation', onWordValidation);
+      socket.off('opponent_left', onOpponentLeft);
+      socket.off('error_msg', onErrorMsg);
+    };
+  }, [applyState, forceResetRoundState, showToast]);
 
   // ── Load Initial Suggestions and Facts ────────────────────────────────────
   useEffect(() => {
@@ -1214,8 +1280,12 @@ export default function HangmanDuelApp() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   });
 
-  // ── 1. Create Room (100% Vercel Zero-Config Multiplayer) ─────────────────
+  // ── 1. Create Room (Socket.io Backend) ──────────────────────────────────
   const handleCreateRoom = () => {
+    if (connectionStatus === 'missing_env') {
+      setLobbyError('Error: Backend URL not configured in Vercel.');
+      return;
+    }
     const name = playerName.trim();
     if (!name) {
       setLobbyError('Please enter your name first.');
@@ -1226,12 +1296,24 @@ export default function HangmanDuelApp() {
     setIsConnecting(true);
     showToast('Creating room… 🎮');
 
-    const socket = ensureSocket();
-    socket.emit('create_room', { playerName: name, wordPickTime });
+    const socket = getSocket();
+    if (socket) {
+      if (!socket.connected) socket.connect();
+      socket.emit('create_room', { playerName: name, wordPickTime });
+    }
+
+    // Safety timeout to reset loading state if server is sleeping
+    setTimeout(() => {
+      setIsConnecting(false);
+    }, 10000);
   };
 
-  // ── 2. Join Room (100% Vercel Zero-Config Multiplayer) ───────────────────
+  // ── 2. Join Room (Socket.io Backend) ────────────────────────────────────
   const handleJoinRoom = () => {
+    if (connectionStatus === 'missing_env') {
+      setLobbyError('Error: Backend URL not configured in Vercel.');
+      return;
+    }
     const name = playerName.trim();
     const code = (joinCode || '').replace(/\s+/g, '').trim().toUpperCase();
     if (!name) {
@@ -1247,8 +1329,15 @@ export default function HangmanDuelApp() {
     setIsConnecting(true);
     showToast('Joining game room… 🎯');
 
-    const socket = ensureSocket();
-    socket.emit('join_room', { roomCode: code, playerName: name });
+    const socket = getSocket();
+    if (socket) {
+      if (!socket.connected) socket.connect();
+      socket.emit('join_room', { roomCode: code, playerName: name });
+    }
+
+    setTimeout(() => {
+      setIsConnecting(false);
+    }, 10000);
   };
 
   // ── 3. Start PvE Single-Player vs Computer ────────────────────────────────
@@ -1323,8 +1412,10 @@ export default function HangmanDuelApp() {
     setWordValidationMsg('');
     setSetterWordSubmitted(true);
 
-    const socket = ensureSocket();
-    socket.emit('set_word', { word });
+    const socket = getSocket();
+    if (socket) {
+      socket.emit('set_word', { word });
+    }
   };
 
   // ── 5. Guess Letter (Guesser) ─────────────────────────────────────────────
@@ -1347,8 +1438,10 @@ export default function HangmanDuelApp() {
       return;
     }
 
-    const socket = ensureSocket();
-    socket.emit('guess_letter', { letter: l });
+    const socket = getSocket();
+    if (socket) {
+      socket.emit('guess_letter', { letter: l });
+    }
   };
 
   // ── 6. Next Round ─────────────────────────────────────────────────────────
@@ -1359,17 +1452,14 @@ export default function HangmanDuelApp() {
     }
 
     setIsWaitingOpponent(true);
-    const socket = ensureSocket();
-    socket.emit('next_round');
+    const socket = getSocket();
+    if (socket) {
+      socket.emit('next_round');
+    }
   };
 
   // ── 7. Leave Game ──────────────────────────────────────────────────────────
   const handleLeaveGame = () => {
-    if (socketRef.current) {
-      socketRef.current.disconnect();
-      socketRef.current = null;
-    }
-
     setScreen('lobby');
     setRoomCode('');
     setJoinCode('');
@@ -1386,8 +1476,12 @@ export default function HangmanDuelApp() {
 
   // Refresh Suggestions Helper
   const refreshSuggestions = () => {
-    const socket = ensureSocket();
-    socket.emit('get_suggestions');
+    const socket = getSocket();
+    if (socket) {
+      socket.emit('get_suggestions');
+    } else {
+      setSuggestions(getRandomSuggestions(12));
+    }
     showToast('Refreshed word suggestions 💡', 1500);
   };
 
@@ -1535,15 +1629,23 @@ export default function HangmanDuelApp() {
               <div className="create-section">
                 <button
                   id="btn-create"
-                  className={`btn btn-primary ${isConnecting ? 'loading' : ''}`}
+                  className={`btn btn-primary ${connectionStatus !== 'connected' || isConnecting ? 'loading' : ''}`}
                   aria-label="Create a new room"
-                  disabled={isConnecting}
+                  disabled={connectionStatus !== 'connected' || isConnecting}
                   onClick={handleCreateRoom}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <path d="M12 5v14M5 12h14" />
                   </svg>
-                  {isConnecting ? 'Connecting to Server…' : 'Create Room'}
+                  {connectionStatus === 'missing_env'
+                    ? 'Backend URL Missing in Vercel'
+                    : isConnecting
+                    ? 'Creating Room… 🎮'
+                    : connectionStatus === 'waking_up'
+                    ? 'Waking up free server (may take 45s)… ⏳'
+                    : connectionStatus === 'connecting'
+                    ? 'Connecting to Server…'
+                    : 'Create Room'}
                 </button>
 
                 {/* Host Settings */}

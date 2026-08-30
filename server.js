@@ -225,9 +225,9 @@ function broadcastState(io, room, roomCode) {
 const app = express();
 const server = http.createServer(app);
 
-// Initialize Socket.io with Pure WebSocket Transport (NO HTTP Long-Polling)
+// Initialize Socket.io with WebSocket + Polling fallback for Render cold starts
 const io = new Server(server, {
-  transports: ['websocket'], // FORCED PURE WEBSOCKETS
+  transports: ['websocket', 'polling'],
   cors: {
     origin: (origin, callback) => {
       // Allow server-to-server, health checks, or curl with no origin header
