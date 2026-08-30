@@ -1007,108 +1007,120 @@ export default function HangmanDuelApp() {
   }, []);
 
   // ── Setup Socket.io / Serverless Event Listeners ──────────────────────────
+  const bindSocketListeners = useCallback((socket) => {
+    if (!socket) return;
+
+    socket.on('connect', () => {
+      setMyPlayerId(socket.id);
+      setLobbyError('');
+    });
+
+    socket.on('room_created', ({ roomCode }) => {
+      setRoomCode(roomCode);
+      setScreen('waiting');
+      setGameState('waiting');
+    });
+
+    // ── game_start: Server-authoritative signal that the room is full.
+    //    Both the Host (stuck on 'waiting' screen) AND the Joiner receive
+    //    this event simultaneously and transition to the game board.
+    socket.on('game_start', ({ roomCode: code, wordSetterId, guesserId, players: roomPlayers }) => {
+      setRoomCode(code);
+      if (roomPlayers) setPlayers(roomPlayers);
+      setScreen('game');
+      setGameState('setting');
+    });
+
+    socket.on('state_update', (roomState) => {
+      if (roomState && roomState.state && roomState.state !== 'lobby') {
+        setScreen('game');
+      }
+      applyState(roomState);
+    });
+
+    socket.on('timer_tick', ({ secondsLeft, total }) => {
+      setTimerSecondsLeft(secondsLeft);
+      setTimerTotal(total);
+    });
+
+    socket.on('timer_expired', () => {
+      showToast('⏱ Time is up! Random word chosen automatically.', 3500);
+    });
+
+    socket.on('round_started', () => {
+      forceResetRoundState();
+    });
+
+    socket.on('round_transitioning', () => {
+      forceResetRoundState();
+    });
+
+    socket.on('word_suggestions', ({ suggestions }) => {
+      if (suggestions && suggestions.length) {
+        setSuggestions(suggestions);
+      }
+    });
+
+    socket.on('word_validation', ({ valid, reason }) => {
+      if (!valid) {
+        setWordValidationMsg(reason || 'Invalid word.');
+        setSetterWordSubmitted(false);
+      } else {
+        setWordValidationMsg('');
+        setSetterWordSubmitted(true);
+      }
+    });
+
+    socket.on('error_msg', (msg) => {
+      showToast(`⚠️ ${msg}`, 3000);
+      setLobbyError(msg);
+    });
+
+    socket.on('opponent_left', () => {
+      showToast('⚠️ Opponent left the game.', 4000);
+      setGameState('lobby');
+      setScreen('waiting');
+    });
+  }, [applyState, forceResetRoundState, showToast]);
+
   const ensureSocket = useCallback(() => {
     if (!socketRef.current) {
-      const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-      const customBackendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || (isLocal ? 'http://localhost:3001' : null);
-      
+      const customBackendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+
       if (customBackendUrl) {
-        // Force direct WebSockets immediately to bypass sticky-session HTTP polling failures
-        socketRef.current = io(customBackendUrl, {
-          transports: ['websocket'],
-          upgrade: false,
-          autoConnect: true,
-        });
+        try {
+          const socket = io(customBackendUrl, {
+            transports: ['websocket', 'polling'],
+            autoConnect: true,
+            timeout: 5000,
+          });
 
-        socketRef.current.on('connect_error', (err) => {
-          console.warn('Socket connection error:', err.message);
-          showToast('⚠️ Backend connection failed. Falling back to serverless mode.', 4000);
-        });
+          socketRef.current = socket;
+          bindSocketListeners(socket);
+
+          socket.on('connect_error', () => {
+            // If custom backend unreachable, smoothly fallback to serverless
+            if (socketRef.current === socket) {
+              try { socket.disconnect(); } catch {}
+              const serverless = createServerlessSocket();
+              socketRef.current = serverless;
+              bindSocketListeners(serverless);
+            }
+          });
+        } catch {
+          const serverless = createServerlessSocket();
+          socketRef.current = serverless;
+          bindSocketListeners(serverless);
+        }
       } else {
-        // 100% Serverless Realtime Engine (Native on Vercel without any separate backend server)
-        socketRef.current = createServerlessSocket();
+        // Native Serverless P2P Realtime Engine (Zero Backend Setup Needed)
+        const serverless = createServerlessSocket();
+        socketRef.current = serverless;
+        bindSocketListeners(serverless);
       }
-
-      socketRef.current.on('connect', () => {
-        setMyPlayerId(socketRef.current.id);
-        setLobbyError('');
-      });
-
-      socketRef.current.on('room_created', ({ roomCode }) => {
-        setRoomCode(roomCode);
-        setScreen('waiting');
-        setGameState('waiting');
-      });
-
-      // ── game_start: Server-authoritative signal that the room is full.
-      //    Both the Host (stuck on 'waiting' screen) AND the Joiner receive
-      //    this event simultaneously and transition to the game board.
-      socketRef.current.on('game_start', ({ roomCode: code, wordSetterId, guesserId, players: roomPlayers }) => {
-        // Merge in room players & role metadata immediately so the
-        // subsequent state_update renders the correct panel on first paint.
-        setRoomCode(code);
-        if (roomPlayers) setPlayers(roomPlayers);
-        // Transition BOTH clients out of lobby/waiting into the game board.
-        setScreen('game');
-        setGameState('setting');
-      });
-
-      socketRef.current.on('state_update', (roomState) => {
-        // Always accept state_update to sync timers, game data, etc.
-        // If we're still on the lobby/waiting screen when this fires, also
-        // push the player into the game (belt-and-suspenders guard).
-        if (roomState.state && roomState.state !== 'lobby') {
-          setScreen('game');
-        }
-        applyState(roomState);
-      });
-
-      socketRef.current.on('timer_tick', ({ secondsLeft, total }) => {
-        setTimerSecondsLeft(secondsLeft);
-        setTimerTotal(total);
-      });
-
-      socketRef.current.on('timer_expired', () => {
-        showToast('⏱ Time is up! Random word chosen automatically.', 3500);
-      });
-
-      socketRef.current.on('round_started', () => {
-        forceResetRoundState();
-      });
-
-      socketRef.current.on('round_transitioning', () => {
-        forceResetRoundState();
-      });
-
-      socketRef.current.on('word_suggestions', ({ suggestions }) => {
-        if (suggestions && suggestions.length) {
-          setSuggestions(suggestions);
-        }
-      });
-
-      socketRef.current.on('word_validation', ({ valid, reason }) => {
-        if (!valid) {
-          setWordValidationMsg(reason || 'Invalid word.');
-          setSetterWordSubmitted(false);
-        } else {
-          setWordValidationMsg('');
-          setSetterWordSubmitted(true);
-        }
-      });
-
-      socketRef.current.on('error_msg', (msg) => {
-        showToast(`⚠️ ${msg}`, 3000);
-        setLobbyError(msg);
-      });
-
-      socketRef.current.on('opponent_left', () => {
-        showToast('⚠️ Opponent left the game.', 4000);
-        setGameState('lobby');
-        setScreen('waiting');
-      });
     }
     return socketRef.current;
-  }, [applyState, forceResetRoundState, showToast]);
+  }, [bindSocketListeners]);
 
   // Clean up socket on unmount
   useEffect(() => {
