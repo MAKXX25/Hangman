@@ -183,7 +183,25 @@ export default function HangmanDuelApp() {
     } catch {}
   }, []);
 
-  // ── Canvas Glow & Pen Spark Helpers ───────────────────────────────────────
+  // ── Canvas Glow & Speech Bubble Helpers ────────────────────────────────────
+  const PANIC_PHRASES = [
+    "Uh oh...",
+    "Please be careful!",
+    "Sweating here!",
+    "Don't mess up!",
+    "Think hard!",
+    "Help me!",
+    "Yikes!"
+  ];
+
+  const ESCAPE_PHRASES = [
+    "Phew, thanks!",
+    "I owe you one!",
+    "Not today, death!",
+    "You saved me! 🎉",
+    "Close call! Thanks!"
+  ];
+
   const applyGlow = (ctx, color, blur = 10) => {
     ctx.shadowColor = color;
     ctx.shadowBlur = blur;
@@ -200,6 +218,87 @@ export default function HangmanDuelApp() {
     ctx.beginPath();
     ctx.arc(x, y, 3.5, 0, Math.PI * 2);
     ctx.fill();
+    ctx.restore();
+  };
+
+  // Helper to draw a dynamically measured & clamped cartoon speech bubble on canvas
+  const drawSpeechBubble = (
+    ctx,
+    targetHeadX,
+    targetHeadY,
+    text,
+    side = 'left',
+    borderColor = 'rgba(168, 85, 247, 0.85)',
+    bgColor = 'rgba(15, 23, 42, 0.95)',
+    textColor = '#f8fafc'
+  ) => {
+    ctx.save();
+    ctx.font = 'bold 11px Outfit, Inter, system-ui, sans-serif';
+    const textMetrics = ctx.measureText(text);
+    const textWidth = textMetrics.width;
+    const bubbleWidth = Math.ceil(textWidth + 24);
+    const bubbleHeight = 26;
+    const radius = 7;
+    const canvasW = ctx.canvas ? ctx.canvas.width : 280;
+
+    let targetX;
+    let targetY = targetHeadY - 32;
+    let pointerX, pointerY;
+
+    if (side === 'left') {
+      // Draw to the left of the head (between pole and stickman)
+      targetX = targetHeadX - bubbleWidth - 12;
+      pointerX = targetHeadX - 4;
+      pointerY = targetHeadY - 6;
+    } else if (side === 'right') {
+      targetX = targetHeadX + 14;
+      pointerX = targetHeadX + 4;
+      pointerY = targetHeadY - 6;
+    } else { // top/center
+      targetX = targetHeadX - bubbleWidth / 2;
+      targetY = targetHeadY - 38;
+      pointerX = targetHeadX;
+      pointerY = targetHeadY - 14;
+    }
+
+    // Clamping: Ensure bubble stays strictly within [6, canvasW - bubbleWidth - 6]
+    const safeX = Math.max(6, Math.min(targetX, canvasW - bubbleWidth - 6));
+    const safeY = Math.max(6, targetY);
+
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 1.8;
+    ctx.strokeStyle = borderColor;
+    ctx.fillStyle = bgColor;
+
+    ctx.beginPath();
+    ctx.moveTo(safeX + radius, safeY);
+    ctx.lineTo(safeX + bubbleWidth - radius, safeY);
+    ctx.quadraticCurveTo(safeX + bubbleWidth, safeY, safeX + bubbleWidth, safeY + radius);
+    ctx.lineTo(safeX + bubbleWidth, safeY + bubbleHeight - radius);
+    ctx.quadraticCurveTo(safeX + bubbleWidth, safeY + bubbleHeight, safeX + bubbleWidth - radius, safeY + bubbleHeight);
+
+    // Pointer tail to head
+    const tailBaseX = Math.max(safeX + 8, Math.min(safeX + bubbleWidth - 24, pointerX - 10));
+    ctx.lineTo(tailBaseX + 16, safeY + bubbleHeight);
+    ctx.lineTo(pointerX, pointerY);
+    ctx.lineTo(tailBaseX, safeY + bubbleHeight);
+
+    ctx.lineTo(safeX + radius, safeY + bubbleHeight);
+    ctx.quadraticCurveTo(safeX, safeY + bubbleHeight, safeX, safeY + bubbleHeight - radius);
+    ctx.lineTo(safeX, safeY + radius);
+    ctx.quadraticCurveTo(safeX, safeY, safeX + radius, safeY);
+    ctx.closePath();
+
+    applyGlow(ctx, borderColor, 8);
+    ctx.fill();
+    ctx.stroke();
+    clearGlow(ctx);
+
+    ctx.fillStyle = textColor;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, safeX + bubbleWidth / 2, safeY + bubbleHeight / 2);
     ctx.restore();
   };
 
@@ -394,6 +493,45 @@ export default function HangmanDuelApp() {
     drawProgressiveStep(ctx, stepIndex, 1.0, isDead, false);
   }, [drawProgressiveStep]);
 
+  // ── Panic Face & Mid-Game Dialogue Bubble (Mistakes >= 5) ──────────────────
+  const drawPanicOverlays = useCallback((ctx, totalSteps, isDead) => {
+    if (totalSteps < 5 || isDead) return;
+
+    ctx.save();
+    // 1. Wide Nervous Eyes
+    ctx.fillStyle = NEON_BODY;
+    applyGlow(ctx, NEON_BODY, 8);
+    ctx.beginPath();
+    ctx.arc(139, 61, 2.2, 0, Math.PI * 2);
+    ctx.arc(151, 61, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Nervous Wavy Mouth
+    ctx.strokeStyle = NEON_BODY;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(138, 73);
+    ctx.quadraticCurveTo(145, 69, 152, 73);
+    ctx.stroke();
+
+    // 3. Cyan Sweat Bead (Mistakes >= 6)
+    if (totalSteps >= 6) {
+      ctx.fillStyle = '#06b6d4';
+      applyGlow(ctx, 'rgba(6,182,212,0.8)', 6);
+      ctx.beginPath();
+      ctx.arc(162, 54, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    clearGlow(ctx);
+    ctx.restore();
+
+    // 4. Floating Panic Speech Bubble (Lives <= 5, left-aligned to avoid canvas cut-off)
+    if (totalSteps >= 5 && totalSteps < 10) {
+      const phrase = PANIC_PHRASES[(totalSteps - 5) % PANIC_PHRASES.length];
+      drawSpeechBubble(ctx, 145, 64, phrase, 'left', 'rgba(168, 85, 247, 0.85)', 'rgba(15, 23, 42, 0.95)', '#f8fafc');
+    }
+  }, [PANIC_PHRASES]);
+
   // ── Animated Stroke-by-Stroke Drawing Engine (400ms per mistake) ──────────
   const animateHangmanDrawing = useCallback((canvas, animStateRef, livesLeft, maxLives = 10, animate = true) => {
     if (!canvas) return;
@@ -417,6 +555,7 @@ export default function HangmanDuelApp() {
         for (let i = 0; i < targetSteps; i++) {
           drawStaticStep(ctx, i, isDead);
         }
+        drawPanicOverlays(ctx, targetSteps, isDead);
         ctx.restore();
       }
       state.drawnSteps = targetSteps;
@@ -439,6 +578,7 @@ export default function HangmanDuelApp() {
         for (let i = 0; i < targetSteps; i++) {
           drawStaticStep(ctx, i, isDead);
         }
+        drawPanicOverlays(ctx, targetSteps, isDead);
         ctx.restore();
         return;
       }
@@ -448,25 +588,27 @@ export default function HangmanDuelApp() {
 
       function stepFrame(now) {
         const elapsed = now - startTime;
-        const rawProgress = Math.min(1, elapsed / STEP_DURATION);
-        const progress = 1 - Math.pow(1 - rawProgress, 3); // cubic ease-out
+        const p = Math.min(1, elapsed / STEP_DURATION);
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.save();
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
 
-        // 1. Static completed lines
+        // Draw completed previous steps
         for (let i = 0; i < stepIdx; i++) {
           drawStaticStep(ctx, i, isDead);
         }
+        // Draw current progressive step
+        drawProgressiveStep(ctx, stepIdx, p, isDead, true);
 
-        // 2. Active line being traced with glowing pen tip spark
-        drawProgressiveStep(ctx, stepIdx, progress, isDead, true);
+        if (stepIdx >= 4 && p > 0.5) {
+          drawPanicOverlays(ctx, stepIdx + 1, isDead);
+        }
 
         ctx.restore();
 
-        if (rawProgress < 1) {
+        if (p < 1) {
           state.animId = requestAnimationFrame(stepFrame);
         } else {
           currentStep++;
@@ -478,7 +620,7 @@ export default function HangmanDuelApp() {
     }
 
     animateNextStep();
-  }, [drawProgressiveStep, drawStaticStep]);
+  }, [drawStaticStep, drawProgressiveStep, drawPanicOverlays]);
 
 
   // ── 5-Stage Physics Death Sequence Animation (~3.5s total) ────────────────
@@ -728,15 +870,16 @@ export default function HangmanDuelApp() {
     specialAnimIdRef.current = requestAnimationFrame(animate);
   }, []);
 
-  // ── "The Great Escape" Victory Sequence Animation (~1.8s) ─────────────────
+  // ── "The Great Escape" Multi-Phase Victory Sequence Animation (~2.8s) ──────
   const runEscapeAnimation = useCallback((canvas, livesLeft, maxLives, callback) => {
     if (!canvas) { callback?.(); return; }
     const ctx = canvas.getContext('2d');
     const wrongGuessesCount = maxLives - livesLeft;
     const startTime = performance.now();
-    const DURATION = 1800;
+    const DURATION = 2800; // 2.8s multi-phase sequence
     const dustParticles = [];
     const token = currentRoundTokenRef.current;
+    const escapePhrase = ESCAPE_PHRASES[Math.floor(Math.random() * ESCAPE_PHRASES.length)];
 
     function animate(now) {
       if (token !== currentRoundTokenRef.current) return;
@@ -785,33 +928,45 @@ export default function HangmanDuelApp() {
       ctx.moveTo(0, 225); ctx.lineTo(canvas.width, 225);
       ctx.stroke();
 
-      // 2. Kinematics & running stick figure
-      let figX = 145;
+      // 2. Kinematics across 3 Timed Phases:
+      // Phase 1 (0ms - 350ms): Drop to floor
+      // Phase 2 (350ms - 1700ms): Pause & Speak (1.35s grateful pause with happy face & bubble)
+      // Phase 3 (1700ms - 2800ms): Escape Sprint off-screen
       const groundY = 225;
+      let figX = 145;
       let hipY = 178;
       let legCycle = 0;
       let isRunning = false;
+      let showSpeechBubble = false;
 
       if (elapsed < 350) {
+        // Phase 1: Drop
         const dropP = elapsed / 350;
         hipY = 135 + dropP * dropP * 43;
+      } else if (elapsed < 1700) {
+        // Phase 2: Pause & Speak
+        hipY = 178;
+        figX = 145;
+        showSpeechBubble = true;
       } else {
+        // Phase 3: Escape Sprint
         isRunning = true;
-        const runElapsed = elapsed - 350;
-        figX = 145 + runElapsed * (0.18 + (runElapsed / 1000) * 0.22);
-        legCycle = runElapsed * 0.022;
+        showSpeechBubble = false;
+        const runElapsed = elapsed - 1700;
+        figX = 145 + runElapsed * (0.24 + (runElapsed / 1000) * 0.28);
+        legCycle = runElapsed * 0.024;
         hipY = 176 + Math.sin(legCycle * 2) * 3.5;
       }
 
-      // Dust particles kick-up
-      if (isRunning && Math.random() < 0.35 && dustParticles.length < 12) {
+      // Dust particles kick-up during sprint
+      if (isRunning && Math.random() < 0.4 && dustParticles.length < 16) {
         dustParticles.push({
           x: figX - 8 + (Math.random() - 0.5) * 6,
           y: groundY - 2 + Math.random() * 4,
-          vx: -(1 + Math.random() * 2),
+          vx: -(1.5 + Math.random() * 2.5),
           vy: -(0.5 + Math.random()),
-          alpha: 0.8,
-          radius: 1.5 + Math.random() * 2
+          alpha: 0.85,
+          radius: 1.5 + Math.random() * 2.5
         });
       }
 
@@ -820,7 +975,7 @@ export default function HangmanDuelApp() {
         d.y += d.vy;
         d.alpha -= 0.035;
         if (d.alpha > 0) {
-          ctx.fillStyle = `rgba(168, 85, 247, ${d.alpha * 0.6})`;
+          ctx.fillStyle = `rgba(16, 185, 129, ${d.alpha * 0.6})`;
           ctx.beginPath();
           ctx.arc(d.x, d.y, d.radius, 0, Math.PI * 2);
           ctx.fill();
@@ -830,9 +985,9 @@ export default function HangmanDuelApp() {
       // 3. Draw Victorious Green Stick Figure
       const NEON_WIN_BODY = '#10b981';
       ctx.strokeStyle = NEON_WIN_BODY;
-      applyGlow(ctx, NEON_GALLOWS_GLOW, 14);
+      applyGlow(ctx, 'rgba(16, 185, 129, 0.6)', 14);
 
-      const forwardTilt = isRunning ? 5 : 0;
+      const forwardTilt = isRunning ? 6 : 0;
       const neckY = hipY - 42;
       const headCy = neckY - 18;
 
@@ -848,26 +1003,53 @@ export default function HangmanDuelApp() {
       ctx.arc(figX + forwardTilt, headCy, 18, 0, Math.PI * 2);
       ctx.stroke();
 
-      // Happy Smiling Face
-      ctx.fillStyle = NEON_WIN_BODY;
-      ctx.beginPath();
-      ctx.arc(figX + forwardTilt - 5, headCy - 3, 2, 0, Math.PI * 2);
-      ctx.arc(figX + forwardTilt + 5, headCy - 3, 2, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(figX + forwardTilt, headCy + 2, 8, 0.15 * Math.PI, 0.85 * Math.PI, false);
-      ctx.stroke();
+      // Happy Smiling Face (^ ^ and :D)
+      ctx.lineWidth = 2.2;
+      ctx.strokeStyle = NEON_WIN_BODY;
+      if (showSpeechBubble || !isRunning) {
+        // Happy ^ ^ eyes
+        ctx.beginPath();
+        ctx.moveTo(figX + forwardTilt - 8, headCy - 2);
+        ctx.lineTo(figX + forwardTilt - 4, headCy - 6);
+        ctx.lineTo(figX + forwardTilt, headCy - 2);
 
-      // Running / Raised Arms
+        ctx.moveTo(figX + forwardTilt, headCy - 2);
+        ctx.lineTo(figX + forwardTilt + 4, headCy - 6);
+        ctx.lineTo(figX + forwardTilt + 8, headCy - 2);
+        ctx.stroke();
+
+        // Big smile
+        ctx.beginPath();
+        ctx.arc(figX + forwardTilt, headCy + 2, 8, 0.1 * Math.PI, 0.9 * Math.PI, false);
+        ctx.stroke();
+      } else {
+        // Running eyes & smile
+        ctx.fillStyle = NEON_WIN_BODY;
+        ctx.beginPath();
+        ctx.arc(figX + forwardTilt + 2, headCy - 3, 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(figX + forwardTilt, headCy + 2, 7, 0.1 * Math.PI, 0.9 * Math.PI, false);
+        ctx.stroke();
+      }
+
+      // Arms
       const shoulderY = neckY + 10;
       ctx.lineWidth = 3.5;
-      if (!isRunning) {
+      if (showSpeechBubble) {
+        // Cheering / raised arms in gratitude (\o/)
         ctx.beginPath();
         ctx.moveTo(figX + forwardTilt, shoulderY);
-        ctx.lineTo(figX - 18, shoulderY - 18);
+        ctx.lineTo(figX - 18, shoulderY - 20);
         ctx.moveTo(figX + forwardTilt, shoulderY);
-        ctx.lineTo(figX + 18, shoulderY - 18);
+        ctx.lineTo(figX + 18, shoulderY - 20);
+        ctx.stroke();
+      } else if (!isRunning) {
+        ctx.beginPath();
+        ctx.moveTo(figX + forwardTilt, shoulderY);
+        ctx.lineTo(figX - 14, shoulderY + 18);
+        ctx.moveTo(figX + forwardTilt, shoulderY);
+        ctx.lineTo(figX + 14, shoulderY + 18);
         ctx.stroke();
       } else {
         const arm1Angle = Math.sin(legCycle + Math.PI);
@@ -880,7 +1062,7 @@ export default function HangmanDuelApp() {
         ctx.stroke();
       }
 
-      // Running / Landing Legs
+      // Legs
       if (!isRunning) {
         ctx.beginPath();
         ctx.moveTo(figX, hipY); ctx.lineTo(figX - 12, groundY);
@@ -902,6 +1084,11 @@ export default function HangmanDuelApp() {
       clearGlow(ctx);
       ctx.restore();
 
+      // Phase 2 Grateful Speech Bubble (dynamic text width & boundary clamped)
+      if (showSpeechBubble) {
+        drawSpeechBubble(ctx, figX, headCy, escapePhrase, 'left', 'rgba(16, 185, 129, 0.85)', 'rgba(6, 78, 59, 0.95)', '#ecfdf5');
+      }
+
       if (progress < 1) {
         specialAnimIdRef.current = requestAnimationFrame(animate);
       } else {
@@ -910,7 +1097,7 @@ export default function HangmanDuelApp() {
     }
 
     specialAnimIdRef.current = requestAnimationFrame(animate);
-  }, []);
+  }, [ESCAPE_PHRASES]);
 
   // ── Apply Room State Updates ──────────────────────────────────────────────
   const applyState = useCallback((roomData) => {
@@ -1283,21 +1470,26 @@ export default function HangmanDuelApp() {
     };
   }, [gameState, game, myPlayerId]);
 
-  // ── Physical Keyboard Listener for Guesser ────────────────────────────────
+  // ── 1. Clear Ghost Canvas on Round Reset / New Game ──────────────────────
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (gameState !== 'guessing' || !game) return;
-      if (game.wordSetterId === myPlayerId && !isPveMode) return;
-      if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
-      const key = e.key.toUpperCase();
-      if (/^[A-Z]$/.test(key)) {
-        handleGuessLetter(key);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  });
+    if (
+      gameState === 'setting' ||
+      gameState === 'waiting' ||
+      gameState === 'lobby' ||
+      !game ||
+      game.livesLeft === MAX_LIVES ||
+      (game.wrongGuesses && game.wrongGuesses.length === 0)
+    ) {
+      [hangmanCanvasRef.current, hangmanWatchCanvasRef.current].forEach((canvas) => {
+        if (canvas) {
+          const ctx = canvas.getContext('2d');
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+      });
+      canvasAnimStateRef.current = { drawnSteps: 0, animId: null };
+      watchCanvasAnimStateRef.current = { drawnSteps: 0, animId: null };
+    }
+  }, [gameState, game?.word, game?.livesLeft, pveRound]);
 
   // ── 1. Create Room (Socket.io Backend) ──────────────────────────────────
   const handleCreateRoom = () => {
@@ -1601,6 +1793,42 @@ export default function HangmanDuelApp() {
   const livesLeft = game ? game.livesLeft : MAX_LIVES;
   const wrongGuesses = game ? (game.wrongGuesses || []) : [];
   const hiddenWordChars = (game?.hiddenWord || '').split(' ').filter(Boolean);
+
+  // ── Physical Keyboard Support for Guesser ─────────────────────────────────
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Don't intercept if user is typing in an active input field or modal
+      const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+      if (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select') {
+        return;
+      }
+
+      // Only allow guessing during active guessing phase
+      if (gameState !== 'guessing' || !game || isRoundOverModalOpen || showPveModal) {
+        return;
+      }
+
+      // For multiplayer: Only the guesser can guess (setter is watching)
+      if (!isPveMode && isWordSetter) {
+        return;
+      }
+
+      if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) {
+        return;
+      }
+
+      // Validate single alphabetical character
+      if (/^[a-zA-Z]$/.test(e.key)) {
+        const key = e.key.toUpperCase();
+        if (!game.guessedLetters.includes(key)) {
+          handleGuessLetter(key);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [gameState, game, myPlayerId, isPveMode, isWordSetter, isRoundOverModalOpen, showPveModal, handleGuessLetter]);
 
   // Scoreboard display
   const p1 = players[0] || { name: 'Player 1', score: 0 };

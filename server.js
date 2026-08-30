@@ -236,9 +236,9 @@ app.use((req, res, next) => {
   next();
 });
 
-// Initialize Socket.io with Wildcard CORS and WebSocket + Polling fallback
+// Initialize Socket.io with Wildcard CORS and Polling + WebSocket fallback
 const io = new Server(server, {
-  transports: ['websocket', 'polling'],
+  transports: ['polling', 'websocket'], // Polling handshake first to bypass firewalls
   cors: {
     origin: '*', // Relaxed wildcard CORS to eliminate connection/origin mismatch issues
     methods: ['GET', 'POST'],
@@ -252,6 +252,19 @@ app.get('/', (req, res) => {
 
 app.get('/health', (req, res) => {
   res.status(200).send('OK');
+});
+
+// Diagnostic endpoint for browser verification
+app.get('/test', (req, res) => {
+  res.status(200).json({
+    status: 'online',
+    message: 'Hangman WebSocket & HTTP Server is running!',
+    service: 'hangman-socket-backend',
+    timestamp: new Date().toISOString(),
+    port: PORT,
+    activeRooms: Object.keys(rooms).length,
+    uptime: `${Math.floor(process.uptime())}s`,
+  });
 });
 
 app.get('/status', (req, res) => {
