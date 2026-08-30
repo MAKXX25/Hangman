@@ -1205,71 +1205,28 @@ export default function HangmanDuelApp() {
     }
   }, []);
 
-  // ── Setup Socket.io Connection & Cold-Start LifeCycle ───────────────────
-  useEffect(() => {
-    console.log("Connecting to:", process.env.NEXT_PUBLIC_BACKEND_URL);
+  // ── Setup Reusable Event Listeners Binding Helper ────────────────────────
+  const attachSocketListeners = useCallback((sock) => {
+    if (!sock) return () => {};
 
-    let socket;
-
-    if (!isBackendConfigured()) {
-      // ── No backend configured: use built-in P2P/serverless mode ──────────
-      if (!socketRef.current) {
-        console.log('ℹ️ [Mode: P2P] No NEXT_PUBLIC_BACKEND_URL set. Using serverless P2P mode.');
-        socket = new ServerlessSocket();
-        socketRef.current = socket;
-      } else {
-        socket = socketRef.current;
-      }
-      setConnectionStatus('connected');
-      setLobbyError('');
-    } else {
-      // ── Backend configured: connect via Socket.io ─────────────────────────
-      socket = getSocket();
-      if (!socket) return;
-      socketRef.current = socket;
-
-      // Cold Start Wake-up Timer (5-second threshold)
-      if (!socket.connected) {
-        setConnectionStatus('connecting');
-        wakeUpTimerRef.current = setTimeout(() => {
-          if (!socket.connected) {
-            console.warn('⏳ [Server Cold-Start] Backend server taking >5s to respond (Render/Railway free tier wake-up in progress).');
-            setConnectionStatus('waking_up');
-          }
-        }, 5000);
-      }
-    }
-
-    // 3. Socket.io Event Listeners with Verbose Logging
     const onConnect = () => {
-      console.log(`✅ [Socket Connected] Successfully connected to backend: ${getBackendUrl()} (ID: ${socket.id})`);
+      console.log(`✅ [Socket Connected] Successfully connected to backend: ${getBackendUrl()} (ID: ${sock.id})`);
       if (wakeUpTimerRef.current) clearTimeout(wakeUpTimerRef.current);
       setConnectionStatus('connected');
-      setMyPlayerId(socket.id);
+      setMyPlayerId(sock.id);
       setLobbyError('');
     };
 
-    // Immediate sync if already connected
-    if (socket.connected) {
-      onConnect();
-    }
-
     const onConnectError = (err) => {
-      console.error('❌ [Socket Connect Error Details]:', {
-        message: err.message,
-        description: err.description,
-        context: err.context,
-        targetUrl: getBackendUrl(),
-      });
-      // Keep 'waking_up' if already triggered after 5s
-      setConnectionStatus((prev) => (prev === 'waking_up' ? 'waking_up' : 'connecting'));
+      console.warn('ℹ️ [Socket.io Handshake Notice]: Backend taking time to respond or waking up.', err.message);
+      setConnectionStatus('waking_up');
     };
 
     const onDisconnect = (reason) => {
       console.warn(`🔌 [Socket Disconnected] Reason: ${reason}`);
       setConnectionStatus('connecting');
-      if (reason === 'io server disconnect') {
-        socket.connect();
+      if (reason === 'io server disconnect' && typeof sock.connect === 'function') {
+        sock.connect();
       }
     };
 
@@ -1339,39 +1296,100 @@ export default function HangmanDuelApp() {
       setLobbyError(text);
     };
 
-    socket.on('connect', onConnect);
-    socket.on('connect_error', onConnectError);
-    socket.on('disconnect', onDisconnect);
-    socket.on('room_created', onRoomCreated);
-    socket.on('game_start', onGameStart);
-    socket.on('state_update', onStateUpdate);
-    socket.on('timer_tick', onTimerTick);
-    socket.on('timer_expired', onTimerExpired);
-    socket.on('round_started', onRoundStarted);
-    socket.on('round_transitioning', onRoundTransitioning);
-    socket.on('word_suggestions', onWordSuggestions);
-    socket.on('word_validation', onWordValidation);
-    socket.on('opponent_left', onOpponentLeft);
-    socket.on('error_msg', onErrorMsg);
+    // Immediate sync if already connected
+    if (sock.connected) {
+      onConnect();
+    }
+
+    sock.on('connect', onConnect);
+    sock.on('connect_error', onConnectError);
+    sock.on('disconnect', onDisconnect);
+    sock.on('room_created', onRoomCreated);
+    sock.on('game_start', onGameStart);
+    sock.on('state_update', onStateUpdate);
+    sock.on('timer_tick', onTimerTick);
+    sock.on('timer_expired', onTimerExpired);
+    sock.on('round_started', onRoundStarted);
+    sock.on('round_transitioning', onRoundTransitioning);
+    sock.on('word_suggestions', onWordSuggestions);
+    sock.on('word_validation', onWordValidation);
+    sock.on('opponent_left', onOpponentLeft);
+    sock.on('error_msg', onErrorMsg);
+
+    return () => {
+      sock.off('connect', onConnect);
+      sock.off('connect_error', onConnectError);
+      sock.off('disconnect', onDisconnect);
+      sock.off('room_created', onRoomCreated);
+      sock.off('game_start', onGameStart);
+      sock.off('state_update', onStateUpdate);
+      sock.off('timer_tick', onTimerTick);
+      sock.off('timer_expired', onTimerExpired);
+      sock.off('round_started', onRoundStarted);
+      sock.off('round_transitioning', onRoundTransitioning);
+      sock.off('word_suggestions', onWordSuggestions);
+      sock.off('word_validation', onWordValidation);
+      sock.off('opponent_left', onOpponentLeft);
+      sock.off('error_msg', onErrorMsg);
+    };
+  }, [applyState, forceResetRoundState, showToast]);
+
+  // ── Setup Socket.io Connection & Cold-Start LifeCycle ───────────────────
+  useEffect(() => {
+    // 1. Send fast HTTP GET wake-up ping to Render backend if configured
+    const backendUrl = getBackendUrl();
+    if (backendUrl) {
+      console.log('📡 Pinging backend health endpoint:', `${backendUrl}/health`);
+      fetch(`${backendUrl}/health`, { mode: 'cors' })
+        .then((res) => {
+          if (res.ok) console.log('✅ Backend HTTP health check OK');
+        })
+        .catch((err) => {
+          console.log('ℹ️ Backend health check ping sent (server warming up):', err.message);
+        });
+    }
+
+    let socket;
+
+    if (!isBackendConfigured()) {
+      // ── No backend configured: use built-in P2P/serverless mode ──────────
+      if (!socketRef.current) {
+        console.log('ℹ️ [Mode: P2P] No NEXT_PUBLIC_BACKEND_URL set. Using serverless P2P mode.');
+        socket = new ServerlessSocket();
+        socketRef.current = socket;
+      } else {
+        socket = socketRef.current;
+      }
+      setConnectionStatus('connected');
+      setMyPlayerId(socket.id);
+      setLobbyError('');
+    } else {
+      // ── Backend configured: connect via Socket.io ─────────────────────────
+      socket = getSocket();
+      if (!socket) return;
+      socketRef.current = socket;
+
+      if (socket.connected) {
+        setConnectionStatus('connected');
+        setMyPlayerId(socket.id);
+      } else {
+        setConnectionStatus('connecting');
+        wakeUpTimerRef.current = setTimeout(() => {
+          if (!socket.connected) {
+            console.warn('⏳ [Server Cold-Start] Backend server taking >4s to respond (instant P2P fallback active).');
+            setConnectionStatus('waking_up');
+          }
+        }, 4000);
+      }
+    }
+
+    const cleanup = attachSocketListeners(socket);
 
     return () => {
       if (wakeUpTimerRef.current) clearTimeout(wakeUpTimerRef.current);
-      socket.off('connect', onConnect);
-      socket.off('connect_error', onConnectError);
-      socket.off('disconnect', onDisconnect);
-      socket.off('room_created', onRoomCreated);
-      socket.off('game_start', onGameStart);
-      socket.off('state_update', onStateUpdate);
-      socket.off('timer_tick', onTimerTick);
-      socket.off('timer_expired', onTimerExpired);
-      socket.off('round_started', onRoundStarted);
-      socket.off('round_transitioning', onRoundTransitioning);
-      socket.off('word_suggestions', onWordSuggestions);
-      socket.off('word_validation', onWordValidation);
-      socket.off('opponent_left', onOpponentLeft);
-      socket.off('error_msg', onErrorMsg);
+      cleanup();
     };
-  }, [applyState, forceResetRoundState, showToast]);
+  }, [attachSocketListeners]);
 
   // ── Load Initial Suggestions and Facts (Shuffle Bag) ──────────────────────
   useEffect(() => {
@@ -1503,7 +1521,7 @@ export default function HangmanDuelApp() {
     }
   }, [gameState, game?.word, game?.livesLeft, pveRound]);
 
-  // ── 1. Create Room ────────────────────────────────────────────────────────
+  // ── 1. Create Room (Resilient with Instant P2P Fallback) ──────────────────
   const handleCreateRoom = () => {
     const name = playerName.trim();
     if (!name) {
@@ -1512,33 +1530,39 @@ export default function HangmanDuelApp() {
       return;
     }
 
-    const socket = socketRef.current || getSocket();
-    if (!socket || (isBackendConfigured() && socket.connected === false)) {
-      setLobbyError('Server is waking up or unreachable. Please wait...');
-      showToast('Server is currently unreachable. ⏳', 3000);
-      setIsConnecting(false);
-      return;
-    }
-
     setLobbyError('');
     setIsPveMode(false);
     setIsConnecting(true);
     showToast('Creating room… 🎮');
 
-    if (socket.connected === false && typeof socket.connect === 'function') {
-      console.log('🔄 Manually triggering socket connect before create_room...');
-      socket.connect();
+    // 1. If backend Socket.io is connected, emit directly
+    const currentSock = socketRef.current || (isBackendConfigured() ? getSocket() : null);
+    if (currentSock && currentSock.connected) {
+      currentSock.emit('create_room', { playerName: name, wordPickTime });
+      setTimeout(() => { setIsConnecting(false); }, 15000);
+      return;
     }
 
-    socket.emit('create_room', { playerName: name, wordPickTime });
+    // 2. If already using ServerlessSocket, emit directly
+    if (currentSock && typeof currentSock.isHost !== 'undefined') {
+      currentSock.emit('create_room', { playerName: name, wordPickTime });
+      setTimeout(() => { setIsConnecting(false); }, 15000);
+      return;
+    }
 
-    // Safety timeout — resets spinner if server never responds
-    setTimeout(() => {
-      setIsConnecting(false);
-    }, 20000);
+    // 3. Fallback: Instantiate ServerlessSocket P2P mode instantly
+    console.log('⚡ [Instant P2P Mode] Creating room via decentralized WebRTC P2P engine...');
+    const p2pSocket = new ServerlessSocket();
+    socketRef.current = p2pSocket;
+    setConnectionStatus('connected');
+    setMyPlayerId(p2pSocket.id);
+
+    attachSocketListeners(p2pSocket);
+    p2pSocket.emit('create_room', { playerName: name, wordPickTime });
+    setTimeout(() => { setIsConnecting(false); }, 15000);
   };
 
-  // ── 2. Join Room ──────────────────────────────────────────────────────────
+  // ── 2. Join Room (Resilient with Instant P2P Fallback) ────────────────────
   const handleJoinRoom = () => {
     const name = playerName.trim();
     const code = (joinCode || '').replace(/\s+/g, '').trim().toUpperCase();
@@ -1553,29 +1577,33 @@ export default function HangmanDuelApp() {
       return;
     }
 
-    const socket = socketRef.current || getSocket();
-    if (!socket || (isBackendConfigured() && socket.connected === false)) {
-      setLobbyError('Server is waking up or unreachable. Please wait...');
-      showToast('Server is currently unreachable. ⏳', 3000);
-      setIsConnecting(false);
-      return;
-    }
-
     setLobbyError('');
     setIsPveMode(false);
     setIsConnecting(true);
     showToast('Joining game room… 🎯');
 
-    if (socket.connected === false && typeof socket.connect === 'function') {
-      console.log('🔄 Manually triggering socket connect before join_room...');
-      socket.connect();
+    const currentSock = socketRef.current || (isBackendConfigured() ? getSocket() : null);
+    if (currentSock && currentSock.connected) {
+      currentSock.emit('join_room', { roomCode: code, playerName: name });
+      setTimeout(() => { setIsConnecting(false); }, 15000);
+      return;
     }
 
-    socket.emit('join_room', { roomCode: code, playerName: name });
+    if (currentSock && typeof currentSock.isHost !== 'undefined') {
+      currentSock.emit('join_room', { roomCode: code, playerName: name });
+      setTimeout(() => { setIsConnecting(false); }, 15000);
+      return;
+    }
 
-    setTimeout(() => {
-      setIsConnecting(false);
-    }, 20000);
+    console.log(`⚡ [Instant P2P Mode] Joining room ${code} via decentralized WebRTC P2P engine...`);
+    const p2pSocket = new ServerlessSocket();
+    socketRef.current = p2pSocket;
+    setConnectionStatus('connected');
+    setMyPlayerId(p2pSocket.id);
+
+    attachSocketListeners(p2pSocket);
+    p2pSocket.emit('join_room', { roomCode: code, playerName: name });
+    setTimeout(() => { setIsConnecting(false); }, 15000);
   };
 
   // ── 3. Start PvE Single-Player vs Computer (Authentic Difficulty + Anti-Repetition) ─
@@ -1677,7 +1705,7 @@ export default function HangmanDuelApp() {
     setWordValidationMsg('');
     setSetterWordSubmitted(true);
 
-    const socket = getSocket();
+    const socket = socketRef.current || getSocket();
     if (socket) {
       socket.emit('set_word', { word });
     }
@@ -1708,7 +1736,7 @@ export default function HangmanDuelApp() {
       return;
     }
 
-    const socket = getSocket();
+    const socket = socketRef.current || getSocket();
     if (socket) {
       socket.emit('guess_letter', { letter: l });
     }
@@ -1724,7 +1752,7 @@ export default function HangmanDuelApp() {
     }
 
     setIsWaitingOpponent(true);
-    const socket = getSocket();
+    const socket = socketRef.current || getSocket();
     if (socket) {
       socket.emit('next_round');
     }
@@ -1798,7 +1826,7 @@ export default function HangmanDuelApp() {
 
   // Refresh Suggestions Helper
   const refreshSuggestions = () => {
-    const socket = getSocket();
+    const socket = socketRef.current || getSocket();
     if (socket) {
       socket.emit('get_suggestions');
     } else {
@@ -1998,17 +2026,13 @@ export default function HangmanDuelApp() {
                   id="btn-create"
                   className={`btn btn-primary ${isConnecting ? 'loading' : ''}`}
                   aria-label="Create a new room"
-                  disabled={isConnecting || connectionStatus === 'connecting' || connectionStatus === 'error'}
+                  disabled={isConnecting}
                   onClick={handleCreateRoom}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <path d="M12 5v14M5 12h14" />
                   </svg>
-                  {isConnecting
-                    ? 'Creating Room… 🎮'
-                    : connectionStatus === 'waking_up'
-                    ? 'Waking Server… (Click to Create)'
-                    : 'Create Room'}
+                  {isConnecting ? 'Creating Room… 🎮' : 'Create Room'}
                 </button>
 
                 {/* Host Settings */}
@@ -2076,10 +2100,10 @@ export default function HangmanDuelApp() {
                 <button 
                   id="btn-join" 
                   className="btn btn-secondary" 
-                  disabled={isConnecting || connectionStatus === 'connecting' || connectionStatus === 'error'}
+                  disabled={isConnecting}
                   onClick={handleJoinRoom}
                 >
-                  Join
+                  {isConnecting ? 'Joining… 🎯' : 'Join'}
                 </button>
               </div>
 
