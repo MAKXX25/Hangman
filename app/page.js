@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import confetti from 'canvas-confetti';
 import { getSocket, isBackendConfigured, getBackendUrl } from '../lib/socket.js';
+import { ServerlessSocket } from '../lib/serverlessSocket.js';
 import { getRandomWord, isValidWord, getRandomSuggestions } from '../lib/dictionary.js';
 import { getRandomFact } from '../lib/facts.js';
 import {
@@ -1208,26 +1209,35 @@ export default function HangmanDuelApp() {
   useEffect(() => {
     console.log("Connecting to:", process.env.NEXT_PUBLIC_BACKEND_URL);
 
-    // 1. Environment variable validation
+    let socket;
+
     if (!isBackendConfigured()) {
-      setConnectionStatus('missing_env');
-      setLobbyError('Error: Backend URL not configured in Vercel. Please set NEXT_PUBLIC_BACKEND_URL in Vercel Environment Variables.');
-      return;
-    }
+      // ── No backend configured: use built-in P2P/serverless mode ──────────
+      if (!socketRef.current) {
+        console.log('ℹ️ [Mode: P2P] No NEXT_PUBLIC_BACKEND_URL set. Using serverless P2P mode.');
+        socket = new ServerlessSocket();
+        socketRef.current = socket;
+      } else {
+        socket = socketRef.current;
+      }
+      setConnectionStatus('connected');
+      setLobbyError('');
+    } else {
+      // ── Backend configured: connect via Socket.io ─────────────────────────
+      socket = getSocket();
+      if (!socket) return;
+      socketRef.current = socket;
 
-    const socket = getSocket();
-    if (!socket) return;
-    socketRef.current = socket;
-
-    // 2. Cold Start Wake-up Timer (5-second threshold)
-    if (!socket.connected) {
-      setConnectionStatus('connecting');
-      wakeUpTimerRef.current = setTimeout(() => {
-        if (!socket.connected) {
-          console.warn('⏳ [Server Cold-Start] Backend server taking >5s to respond (Render/Railway free tier wake-up in progress).');
-          setConnectionStatus('waking_up');
-        }
-      }, 5000);
+      // Cold Start Wake-up Timer (5-second threshold)
+      if (!socket.connected) {
+        setConnectionStatus('connecting');
+        wakeUpTimerRef.current = setTimeout(() => {
+          if (!socket.connected) {
+            console.warn('⏳ [Server Cold-Start] Backend server taking >5s to respond (Render/Railway free tier wake-up in progress).');
+            setConnectionStatus('waking_up');
+          }
+        }, 5000);
+      }
     }
 
     // 3. Socket.io Event Listeners with Verbose Logging
@@ -1493,7 +1503,7 @@ export default function HangmanDuelApp() {
     }
   }, [gameState, game?.word, game?.livesLeft, pveRound]);
 
-  // ── 1. Create Room (Socket.io Backend) ──────────────────────────────────
+  // ── 1. Create Room ────────────────────────────────────────────────────────
   const handleCreateRoom = () => {
     const name = playerName.trim();
     if (!name) {
@@ -1502,9 +1512,11 @@ export default function HangmanDuelApp() {
       return;
     }
 
-    if (!isBackendConfigured()) {
-      setLobbyError('Multiplayer requires NEXT_PUBLIC_BACKEND_URL in Vercel. Set your Render URL in Vercel settings, or play vs Computer below!');
-      showToast('Backend not configured in Vercel. Try PvE Mode! 🤖', 4000);
+    const socket = socketRef.current || getSocket();
+    if (!socket || (isBackendConfigured() && socket.connected === false)) {
+      setLobbyError('Server is waking up or unreachable. Please wait...');
+      showToast('Server is currently unreachable. ⏳', 3000);
+      setIsConnecting(false);
       return;
     }
 
@@ -1513,22 +1525,20 @@ export default function HangmanDuelApp() {
     setIsConnecting(true);
     showToast('Creating room… 🎮');
 
-    const socket = getSocket();
-    if (socket) {
-      if (!socket.connected) {
-        console.log('🔄 Manually initiating socket connection on Create Room click...');
-        socket.connect();
-      }
-      socket.emit('create_room', { playerName: name, wordPickTime });
+    if (socket.connected === false && typeof socket.connect === 'function') {
+      console.log('🔄 Manually triggering socket connect before create_room...');
+      socket.connect();
     }
 
-    // Safety timeout to reset loading state if server takes long to wake
+    socket.emit('create_room', { playerName: name, wordPickTime });
+
+    // Safety timeout — resets spinner if server never responds
     setTimeout(() => {
       setIsConnecting(false);
-    }, 15000);
+    }, 20000);
   };
 
-  // ── 2. Join Room (Socket.io Backend) ────────────────────────────────────
+  // ── 2. Join Room ──────────────────────────────────────────────────────────
   const handleJoinRoom = () => {
     const name = playerName.trim();
     const code = (joinCode || '').replace(/\s+/g, '').trim().toUpperCase();
@@ -1543,9 +1553,11 @@ export default function HangmanDuelApp() {
       return;
     }
 
-    if (!isBackendConfigured()) {
-      setLobbyError('Multiplayer requires NEXT_PUBLIC_BACKEND_URL in Vercel. Set your Render URL in Vercel settings, or play vs Computer below!');
-      showToast('Backend not configured in Vercel. Try PvE Mode! 🤖', 4000);
+    const socket = socketRef.current || getSocket();
+    if (!socket || (isBackendConfigured() && socket.connected === false)) {
+      setLobbyError('Server is waking up or unreachable. Please wait...');
+      showToast('Server is currently unreachable. ⏳', 3000);
+      setIsConnecting(false);
       return;
     }
 
@@ -1554,18 +1566,16 @@ export default function HangmanDuelApp() {
     setIsConnecting(true);
     showToast('Joining game room… 🎯');
 
-    const socket = getSocket();
-    if (socket) {
-      if (!socket.connected) {
-        console.log('🔄 Manually initiating socket connection on Join Room click...');
-        socket.connect();
-      }
-      socket.emit('join_room', { roomCode: code, playerName: name });
+    if (socket.connected === false && typeof socket.connect === 'function') {
+      console.log('🔄 Manually triggering socket connect before join_room...');
+      socket.connect();
     }
+
+    socket.emit('join_room', { roomCode: code, playerName: name });
 
     setTimeout(() => {
       setIsConnecting(false);
-    }, 15000);
+    }, 20000);
   };
 
   // ── 3. Start PvE Single-Player vs Computer (Authentic Difficulty + Anti-Repetition) ─
@@ -1988,7 +1998,7 @@ export default function HangmanDuelApp() {
                   id="btn-create"
                   className={`btn btn-primary ${isConnecting ? 'loading' : ''}`}
                   aria-label="Create a new room"
-                  disabled={isConnecting}
+                  disabled={isConnecting || connectionStatus === 'connecting' || connectionStatus === 'error'}
                   onClick={handleCreateRoom}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -2063,7 +2073,12 @@ export default function HangmanDuelApp() {
                   onChange={(e) => setJoinCode(e.target.value.replace(/\s+/g, '').toUpperCase())}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleJoinRoom(); }}
                 />
-                <button id="btn-join" className="btn btn-secondary" onClick={handleJoinRoom}>
+                <button 
+                  id="btn-join" 
+                  className="btn btn-secondary" 
+                  disabled={isConnecting || connectionStatus === 'connecting' || connectionStatus === 'error'}
+                  onClick={handleJoinRoom}
+                >
                   Join
                 </button>
               </div>
