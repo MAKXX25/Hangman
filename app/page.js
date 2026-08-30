@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import confetti from 'canvas-confetti';
+import { createServerlessSocket } from '../lib/serverlessSocket.js';
 import { DICTIONARY_LIST, getRandomWord, isValidWord, getRandomSuggestions } from '../lib/dictionary.js';
 import { RANDOM_FACTS, getRandomFact } from '../lib/facts.js';
 import {
@@ -1005,33 +1006,29 @@ export default function HangmanDuelApp() {
     }
   }, []);
 
-  // ── Setup Socket.io Event Listeners ───────────────────────────────────────
+  // ── Setup Socket.io / Serverless Event Listeners ──────────────────────────
   const ensureSocket = useCallback(() => {
     if (!socketRef.current) {
-      const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || (isLocal ? 'http://localhost:3001' : window.location.origin);
+      const customBackendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
       
-      socketRef.current = io(backendUrl, {
-        transports: ['websocket', 'polling'],
-        autoConnect: true,
-      });
+      if (customBackendUrl) {
+        socketRef.current = io(customBackendUrl, {
+          transports: ['websocket', 'polling'],
+          autoConnect: true,
+        });
+
+        socketRef.current.on('connect_error', (err) => {
+          console.warn('Socket connection error:', err.message);
+          showToast('⚠️ Backend connection failed. Falling back to serverless mode.', 4000);
+        });
+      } else {
+        // 100% Serverless Realtime Engine (Native on Vercel without any separate backend server)
+        socketRef.current = createServerlessSocket();
+      }
 
       socketRef.current.on('connect', () => {
         setMyPlayerId(socketRef.current.id);
         setLobbyError('');
-      });
-
-      socketRef.current.on('connect_error', (err) => {
-        console.error('Socket connection error:', err.message);
-        if (!isLocal && !process.env.NEXT_PUBLIC_BACKEND_URL) {
-          const msg = 'Backend URL not set. Deploy server.js to Render and set NEXT_PUBLIC_BACKEND_URL in Vercel.';
-          showToast(`⚠️ ${msg}`, 5000);
-          setLobbyError(msg);
-        } else {
-          const msg = 'Cannot connect to backend server. Ensure server.js is running on port 3001.';
-          showToast(`⚠️ ${msg}`, 4000);
-          setLobbyError(msg);
-        }
       });
 
       socketRef.current.on('room_created', ({ roomCode }) => {
