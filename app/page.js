@@ -58,10 +58,10 @@ export default function HangmanDuelApp() {
   const [isPveMode, setIsPveMode] = useState(false);
   const [pveDifficulty, setPveDifficulty] = useState('medium');
   const [pveScore, setPveScore] = useState({ human: 0, bot: 0 });
-  const [pveRound, setPveRound] = useState(1);       // 1..PVE_TOTAL_ROUNDS
+  const [pveRound, setPveRound] = useState(1);
+  const [pveMaxRounds, setPveMaxRounds] = useState(5); // 3 | 5 | 10
   const [pveCountdown, setPveCountdown] = useState(null); // null | 3 | 2 | 1 | 0
-  const [frozenDialogue, setFrozenDialogue] = useState(''); // Fix: stable random text
-  const PVE_TOTAL_ROUNDS = 5;
+  const [frozenDialogue, setFrozenDialogue] = useState(''); // Stable random text per round
 
   // Multiplayer Game State
   const [myPlayerId, setMyPlayerId] = useState('');
@@ -124,6 +124,11 @@ export default function HangmanDuelApp() {
   const factsIntervalRef = useRef(null);
   const watchFactsIntervalRef = useRef(null);
   const currentRoundTokenRef = useRef(0);
+
+  // Anti-Repetition Shuffle Bag Tracking
+  const usedWordsRef = useRef([]);
+  const usedGuesserFactsRef = useRef([]);
+  const usedWatchFactsRef = useRef([]);
 
   // Show Toast Helper
   const showToast = useCallback((msg, duration = 2500) => {
@@ -1166,24 +1171,31 @@ export default function HangmanDuelApp() {
     };
   }, [applyState, forceResetRoundState, showToast]);
 
-  // ── Load Initial Suggestions and Facts ────────────────────────────────────
+  // ── Load Initial Suggestions and Facts (Shuffle Bag) ──────────────────────
   useEffect(() => {
     setSuggestions(getRandomSuggestions(12));
-    setCurrentGuesserFact(getRandomFact());
-    setCurrentWatchFact(getRandomFact());
+    const initialGuesserFact = getRandomFact(usedGuesserFactsRef.current);
+    usedGuesserFactsRef.current.push(initialGuesserFact);
+    setCurrentGuesserFact(initialGuesserFact);
+
+    const initialWatchFact = getRandomFact(usedWatchFactsRef.current);
+    usedWatchFactsRef.current.push(initialWatchFact);
+    setCurrentWatchFact(initialWatchFact);
   }, []);
 
-  // ── Guesser Waiting Animations (Particles, Scramble, Facts) ───────────────
+  // ── Guesser Waiting Animations (Particles, Scramble, Facts with Shuffle Bag) 
   useEffect(() => {
     const isGuesserWaiting = gameState === 'setting' && game && game.wordSetterId !== myPlayerId;
     const isWatcher = (gameState === 'guessing' || gameState === 'roundover') && game && game.wordSetterId === myPlayerId;
 
     if (isGuesserWaiting) {
-      // 1. Rotating Trivia Facts with smooth fade every 7 seconds
+      // 1. Rotating Trivia Facts with smooth fade every 7 seconds (Anti-Repetition)
       factsIntervalRef.current = setInterval(() => {
         setGuesserFactFade(true);
         setTimeout(() => {
-          setCurrentGuesserFact(getRandomFact());
+          const fact = getRandomFact(usedGuesserFactsRef.current);
+          usedGuesserFactsRef.current.push(fact);
+          setCurrentGuesserFact(fact);
           setGuesserFactFade(false);
         }, 450);
       }, 7000);
@@ -1344,28 +1356,41 @@ export default function HangmanDuelApp() {
     }, 10000);
   };
 
-  // ── 3. Start PvE Single-Player vs Computer ────────────────────────────────
-  const startPveGame = (difficulty = 'medium', roundNum = 1, scoreSnapshot = null) => {
+  // ── 3. Start PvE Single-Player vs Computer (Authentic Difficulty + Anti-Repetition) ─
+  const startPveGame = (difficulty = 'medium', roundNum = 1, scoreSnapshot = null, customMaxRounds = null) => {
     const name = playerName.trim() || 'You';
+    const targetMaxRounds = customMaxRounds || pveMaxRounds;
+    if (customMaxRounds) setPveMaxRounds(customMaxRounds);
     setIsPveMode(true);
     setPveDifficulty(difficulty);
     setMyPlayerId('human');
     setShowPveModal(false);
     setLobbyError('');
-    setPveCountdown(null); // clear any running countdown
-    setFrozenDialogue(''); // clear previous round's dialogue
+    setPveCountdown(null);
+    setFrozenDialogue('');
 
-    // When called from the lobby, reset round and scores
+    // Reset countdown timer ref if running
+    if (pveCountdownRef.current) {
+      clearInterval(pveCountdownRef.current);
+      pveCountdownRef.current = null;
+    }
+
+    // When starting a new match (Round 1), reset score & used words shuffle bag
     if (roundNum === 1) {
       setPveRound(1);
       setPveScore({ human: 0, bot: 0 });
+      usedWordsRef.current = [];
     }
 
-    const currentScore = scoreSnapshot || pveScore;
+    const currentScore = scoreSnapshot || (roundNum === 1 ? { human: 0, bot: 0 } : pveScore);
 
-    const wordObj = getRandomWord(difficulty);
+    // Pick authentic word using Scrabble letter rarity & shuffle bag
+    const wordObj = getRandomWord(difficulty, usedWordsRef.current);
     const chosenWord = (typeof wordObj === 'string' ? wordObj : wordObj.word).toUpperCase();
     const meaning = (typeof wordObj === 'object' && wordObj.meaning) ? wordObj.meaning : '';
+
+    // Add selected word to shuffle bag tracker
+    usedWordsRef.current.push(chosenWord);
 
     // Reset canvas drawn states
     canvasAnimStateRef.current = { drawnSteps: 0, animId: null };
@@ -1405,9 +1430,9 @@ export default function HangmanDuelApp() {
     setScreen('game');
     setIsRoundOverModalOpen(false);
     if (roundNum === 1) {
-      showToast(`Match started! Best of ${PVE_TOTAL_ROUNDS} rounds. Guess the word. 🎮`);
+      showToast(`Match started! Best of ${targetMaxRounds} rounds (${difficulty.toUpperCase()}). 🎮`);
     } else {
-      showToast(`Round ${roundNum} of ${PVE_TOTAL_ROUNDS} — New word incoming! 🎯`);
+      showToast(`Round ${roundNum} of ${targetMaxRounds} — New word incoming! 🎯`);
     }
   };
 
@@ -1467,13 +1492,12 @@ export default function HangmanDuelApp() {
     }
   };
 
-  // ── 6. Next Round ─────────────────────────────────────────────────────────
+  // ── 6. Next Round & Skip Countdown ────────────────────────────────────────
   const handleNextRound = () => {
     if (isPveMode) {
       const nextRound = pveRound + 1;
       setPveRound(nextRound);
-      // scoreSnapshot captured here so startPveGame sees the updated score
-      startPveGame(pveDifficulty, nextRound, null);
+      startPveGame(pveDifficulty, nextRound, null, pveMaxRounds);
       return;
     }
 
@@ -1484,17 +1508,29 @@ export default function HangmanDuelApp() {
     }
   };
 
+  // Instant Skip for the 4-second Countdown
+  const handleSkipCountdown = () => {
+    if (pveCountdownRef.current) {
+      clearInterval(pveCountdownRef.current);
+      pveCountdownRef.current = null;
+    }
+    setPveCountdown(null);
+    const nextRound = pveRound + 1;
+    setPveRound(nextRound);
+    startPveGame(pveDifficulty, nextRound, pveScore, pveMaxRounds);
+  };
+
   // ── PvE Auto-Continue Countdown (runs when modal opens in non-final rounds) ──
   const pveCountdownRef = useRef(null);
   useEffect(() => {
     // Only run when modal is open in PvE mode, not the final round
-    if (!isRoundOverModalOpen || !isPveMode || pveRound >= PVE_TOTAL_ROUNDS) {
+    if (!isRoundOverModalOpen || !isPveMode || pveRound >= pveMaxRounds) {
       if (pveCountdownRef.current) clearInterval(pveCountdownRef.current);
       setPveCountdown(null);
       return;
     }
 
-    let count = 3;
+    let count = 4;
     setPveCountdown(count);
 
     pveCountdownRef.current = setInterval(() => {
@@ -1503,11 +1539,10 @@ export default function HangmanDuelApp() {
         clearInterval(pveCountdownRef.current);
         pveCountdownRef.current = null;
         setPveCountdown(null);
-        // Capture updated score at this moment so it propagates correctly
         setPveScore(latestScore => {
           const nextRound = pveRound + 1;
           setPveRound(nextRound);
-          startPveGame(pveDifficulty, nextRound, latestScore);
+          startPveGame(pveDifficulty, nextRound, latestScore, pveMaxRounds);
           return latestScore;
         });
       } else {
@@ -1521,7 +1556,7 @@ export default function HangmanDuelApp() {
         pveCountdownRef.current = null;
       }
     };
-  }, [isRoundOverModalOpen, isPveMode, pveRound]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isRoundOverModalOpen, isPveMode, pveRound, pveMaxRounds]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── 7. Leave Game ──────────────────────────────────────────────────────────
   const handleLeaveGame = () => {
@@ -1615,7 +1650,7 @@ export default function HangmanDuelApp() {
   let roundoverSubtitle = '';
 
   // ── PvE Match-over detection ───────────────────────────────────────────────
-  const isPveMatchOver = isPveMode && pveRound >= PVE_TOTAL_ROUNDS && isRoundOverModalOpen;
+  const isPveMatchOver = isPveMode && pveRound >= pveMaxRounds && isRoundOverModalOpen;
   const pveMatchWinner = isPveMatchOver
     ? (p1.score > p2.score ? 'human' : p1.score < p2.score ? 'bot' : 'draw')
     : null;
@@ -2221,7 +2256,7 @@ export default function HangmanDuelApp() {
                     <button
                       id="btn-new-match"
                       className="btn btn-primary btn-lg"
-                      onClick={() => startPveGame(pveDifficulty, 1, { human: 0, bot: 0 })}
+                      onClick={() => startPveGame(pveDifficulty, 1, { human: 0, bot: 0 }, pveMaxRounds)}
                     >
                       🔄 Start New Match
                     </button>
@@ -2235,8 +2270,8 @@ export default function HangmanDuelApp() {
 
                     {/* Round Progress Indicator (PvE only) */}
                     {isPveMode && (
-                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', margin: '0.5rem 0 0.25rem' }}>
-                        {Array.from({ length: PVE_TOTAL_ROUNDS }).map((_, i) => (
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', margin: '0.5rem 0 0.25rem', alignItems: 'center' }}>
+                        {Array.from({ length: pveMaxRounds }).map((_, i) => (
                           <span
                             key={i}
                             style={{
@@ -2248,7 +2283,7 @@ export default function HangmanDuelApp() {
                             }}
                           />
                         ))}
-                        <span style={{ fontSize: '0.8rem', opacity: 0.7, marginLeft: 6 }}>Round {pveRound} / {PVE_TOTAL_ROUNDS}</span>
+                        <span style={{ fontSize: '0.8rem', opacity: 0.7, marginLeft: 6 }}>Round {pveRound} / {pveMaxRounds}</span>
                       </div>
                     )}
 
@@ -2279,10 +2314,10 @@ export default function HangmanDuelApp() {
                       </div>
                     </div>
 
-                    {/* PvE: auto-countdown replaces manual button */}
+                    {/* PvE: auto-countdown + Instant Skip Button */}
                     {isPveMode ? (
-                      <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-                        <p style={{ fontSize: '0.95rem', opacity: 0.75, marginBottom: '0.5rem' }}>
+                      <div style={{ textAlign: 'center', marginTop: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.6rem', width: '100%' }}>
+                        <p style={{ fontSize: '0.95rem', opacity: 0.85, margin: 0 }}>
                           {pveCountdown !== null
                             ? `Next round starting in ${pveCountdown}…`
                             : 'Starting next round…'}
@@ -2294,10 +2329,28 @@ export default function HangmanDuelApp() {
                           <div style={{
                             height: '100%', borderRadius: 4,
                             background: 'var(--accent, #a78bfa)',
-                            width: `${((3 - (pveCountdown ?? 0)) / 3) * 100}%`,
+                            width: `${((4 - (pveCountdown ?? 0)) / 4) * 100}%`,
                             transition: 'width 0.9s linear'
                           }} />
                         </div>
+                        <button
+                          id="btn-skip-countdown"
+                          className="btn btn-secondary btn-sm"
+                          type="button"
+                          onClick={handleSkipCountdown}
+                          style={{
+                            marginTop: '0.25rem',
+                            padding: '0.5rem 1.25rem',
+                            fontSize: '0.9rem',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <span>Start Instantly</span>
+                          <span>⏩</span>
+                        </button>
                       </div>
                     ) : (
                       <button
@@ -2317,55 +2370,81 @@ export default function HangmanDuelApp() {
         </main>
       </div>
 
-      {/* ─── PVE DIFFICULTY SELECTION MODAL ───────────────────────────────── */}
+      {/* ─── PVE DIFFICULTY & MATCH LENGTH SELECTION MODAL ────────────────── */}
       {showPveModal && (
         <div id="modal-difficulty" className="modal-backdrop">
           <div className="modal-card glass difficulty-card">
             <div className="modal-header">
               <div className="difficulty-icon-wrap">🤖</div>
-              <h2 id="difficulty-title">Choose Difficulty</h2>
-              <p className="modal-sub">The computer will pick a secret word for you to guess.</p>
+              <h2 id="difficulty-title">Play vs Computer</h2>
+              <p className="modal-sub">Configure your match settings and letter difficulty.</p>
             </div>
 
+            {/* Match Length Selector */}
+            <div className="match-length-section" style={{ marginBottom: '1.25rem' }}>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted, #94a3b8)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Match Length
+              </label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+                {[3, 5, 10].map((rounds) => (
+                  <button
+                    key={rounds}
+                    type="button"
+                    className={`btn btn-sm ${pveMaxRounds === rounds ? 'btn-primary' : 'btn-ghost'}`}
+                    style={{
+                      padding: '0.5rem 0.75rem',
+                      fontSize: '0.85rem',
+                      fontWeight: 600,
+                      border: pveMaxRounds === rounds ? '1px solid var(--accent, #a78bfa)' : '1px solid rgba(255,255,255,0.1)'
+                    }}
+                    onClick={() => setPveMaxRounds(rounds)}
+                  >
+                    {rounds} Rounds
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Authentic Difficulty Options */}
             <div className="difficulty-options">
               <button
                 className="diff-btn diff-easy"
                 type="button"
-                onClick={() => startPveGame('easy')}
+                onClick={() => startPveGame('easy', 1, null, pveMaxRounds)}
               >
                 <div className="diff-header">
                   <span className="diff-tag">Easy</span>
-                  <span className="diff-length">4 – 5 Letters</span>
+                  <span className="diff-length">Common Letters</span>
                 </div>
-                <p className="diff-desc">Short, approachable words for quick warm-ups.</p>
+                <p className="diff-desc">Rich in standard vowels (A, E, I, O) and frequent letters (E, T, A, O, I, N, S, H, R).</p>
               </button>
 
               <button
                 className="diff-btn diff-medium"
                 type="button"
-                onClick={() => startPveGame('medium')}
+                onClick={() => startPveGame('medium', 1, null, pveMaxRounds)}
               >
                 <div className="diff-header">
                   <span className="diff-tag">Medium</span>
-                  <span className="diff-length">6 – 8 Letters</span>
+                  <span className="diff-length">Standard Mix</span>
                 </div>
-                <p className="diff-desc">Standard balanced challenge with everyday vocabulary.</p>
+                <p className="diff-desc">Everyday vocabulary with a balanced mix of common and intermediate consonants.</p>
               </button>
 
               <button
                 className="diff-btn diff-hard"
                 type="button"
-                onClick={() => startPveGame('hard')}
+                onClick={() => startPveGame('hard', 1, null, pveMaxRounds)}
               >
                 <div className="diff-header">
                   <span className="diff-tag">Hard</span>
-                  <span className="diff-length">9+ Letters</span>
+                  <span className="diff-length">Rare & Vowelless</span>
                 </div>
-                <p className="diff-desc">Complex, uncommon words for true vocabulary masters.</p>
+                <p className="diff-desc">High-penalty letters (Z, Q, X, J, K, V, W) or tricky vowel-sparse words (e.g. RHYTHM, JINX, AWKWARD).</p>
               </button>
             </div>
 
-            <div className="modal-actions">
+            <div className="modal-actions" style={{ marginTop: '1.25rem' }}>
               <button
                 id="btn-cancel-pve"
                 className="btn btn-ghost"
