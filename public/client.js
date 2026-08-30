@@ -3,7 +3,10 @@
  * Handles all Socket.io events and DOM interactions.
  */
 
-const socket = io();
+const socket = io({
+  transports: ['websocket'],
+  upgrade: false,
+});
 
 // ─── DOM References ─────────────────────────────────────────────────────────
 const screens = {

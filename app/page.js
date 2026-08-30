@@ -1009,11 +1009,14 @@ export default function HangmanDuelApp() {
   // ── Setup Socket.io / Serverless Event Listeners ──────────────────────────
   const ensureSocket = useCallback(() => {
     if (!socketRef.current) {
-      const customBackendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+      const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+      const customBackendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || (isLocal ? 'http://localhost:3001' : null);
       
       if (customBackendUrl) {
+        // Force direct WebSockets immediately to bypass sticky-session HTTP polling failures
         socketRef.current = io(customBackendUrl, {
-          transports: ['websocket', 'polling'],
+          transports: ['websocket'],
+          upgrade: false,
           autoConnect: true,
         });
 
@@ -1253,7 +1256,8 @@ export default function HangmanDuelApp() {
   // ── 2. Join Room (Multiplayer via Socket.io) ───────────────────────────────
   const handleJoinRoom = () => {
     const name = playerName.trim();
-    const code = joinCode.trim().toUpperCase();
+    // Sanitize room code input: strip all whitespace and convert to uppercase
+    const code = (joinCode || '').replace(/\s+/g, '').trim().toUpperCase();
     if (!name) {
       setLobbyError('Please enter your name first.');
       return;
@@ -1628,9 +1632,12 @@ export default function HangmanDuelApp() {
                   type="text"
                   placeholder="Room Code"
                   maxLength={6}
+                  autoCapitalize="characters"
+                  autoCorrect="off"
+                  spellCheck="false"
                   autoComplete="off"
                   value={joinCode}
-                  onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                  onChange={(e) => setJoinCode(e.target.value.replace(/\s+/g, '').toUpperCase())}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleJoinRoom(); }}
                 />
                 <button id="btn-join" className="btn btn-secondary" onClick={handleJoinRoom}>

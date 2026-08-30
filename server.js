@@ -224,6 +224,7 @@ function broadcastState(io, room, roomCode) {
   const app = express();
   const server = http.createServer(app);
   const io = new Server(server, {
+    transports: ['websocket'],
     cors: {
       origin: (origin, callback) => {
         // Allow requests with no Origin header (e.g. server-to-server, Render health checks)
