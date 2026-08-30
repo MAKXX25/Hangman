@@ -1495,15 +1495,19 @@ export default function HangmanDuelApp() {
 
   // ── 1. Create Room (Socket.io Backend) ──────────────────────────────────
   const handleCreateRoom = () => {
-    if (connectionStatus === 'missing_env') {
-      setLobbyError('Error: Backend URL not configured in Vercel.');
-      return;
-    }
     const name = playerName.trim();
     if (!name) {
       setLobbyError('Please enter your name first.');
+      showToast('Please enter your name first! ✏️');
       return;
     }
+
+    if (!isBackendConfigured()) {
+      setLobbyError('Multiplayer requires NEXT_PUBLIC_BACKEND_URL in Vercel. Set your Render URL in Vercel settings, or play vs Computer below!');
+      showToast('Backend not configured in Vercel. Try PvE Mode! 🤖', 4000);
+      return;
+    }
+
     setLobbyError('');
     setIsPveMode(false);
     setIsConnecting(true);
@@ -1511,32 +1515,40 @@ export default function HangmanDuelApp() {
 
     const socket = getSocket();
     if (socket) {
-      if (!socket.connected) socket.connect();
+      if (!socket.connected) {
+        console.log('🔄 Manually initiating socket connection on Create Room click...');
+        socket.connect();
+      }
       socket.emit('create_room', { playerName: name, wordPickTime });
     }
 
-    // Safety timeout to reset loading state if server is sleeping
+    // Safety timeout to reset loading state if server takes long to wake
     setTimeout(() => {
       setIsConnecting(false);
-    }, 10000);
+    }, 15000);
   };
 
   // ── 2. Join Room (Socket.io Backend) ────────────────────────────────────
   const handleJoinRoom = () => {
-    if (connectionStatus === 'missing_env') {
-      setLobbyError('Error: Backend URL not configured in Vercel.');
-      return;
-    }
     const name = playerName.trim();
     const code = (joinCode || '').replace(/\s+/g, '').trim().toUpperCase();
     if (!name) {
       setLobbyError('Please enter your name first.');
+      showToast('Please enter your name first! ✏️');
       return;
     }
     if (!code || code.length < 4) {
       setLobbyError('Enter a valid room code.');
+      showToast('Please enter a 5-6 letter room code! 🔑');
       return;
     }
+
+    if (!isBackendConfigured()) {
+      setLobbyError('Multiplayer requires NEXT_PUBLIC_BACKEND_URL in Vercel. Set your Render URL in Vercel settings, or play vs Computer below!');
+      showToast('Backend not configured in Vercel. Try PvE Mode! 🤖', 4000);
+      return;
+    }
+
     setLobbyError('');
     setIsPveMode(false);
     setIsConnecting(true);
@@ -1544,13 +1556,16 @@ export default function HangmanDuelApp() {
 
     const socket = getSocket();
     if (socket) {
-      if (!socket.connected) socket.connect();
+      if (!socket.connected) {
+        console.log('🔄 Manually initiating socket connection on Join Room click...');
+        socket.connect();
+      }
       socket.emit('join_room', { roomCode: code, playerName: name });
     }
 
     setTimeout(() => {
       setIsConnecting(false);
-    }, 10000);
+    }, 15000);
   };
 
   // ── 3. Start PvE Single-Player vs Computer (Authentic Difficulty + Anti-Repetition) ─
@@ -1971,22 +1986,18 @@ export default function HangmanDuelApp() {
               <div className="create-section">
                 <button
                   id="btn-create"
-                  className={`btn btn-primary ${connectionStatus !== 'connected' || isConnecting ? 'loading' : ''}`}
+                  className={`btn btn-primary ${isConnecting ? 'loading' : ''}`}
                   aria-label="Create a new room"
-                  disabled={connectionStatus !== 'connected' || isConnecting}
+                  disabled={isConnecting}
                   onClick={handleCreateRoom}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <path d="M12 5v14M5 12h14" />
                   </svg>
-                  {connectionStatus === 'missing_env'
-                    ? 'Backend URL Missing in Vercel'
-                    : isConnecting
+                  {isConnecting
                     ? 'Creating Room… 🎮'
                     : connectionStatus === 'waking_up'
-                    ? 'Waking up free server (may take 45s)… ⏳'
-                    : connectionStatus === 'connecting'
-                    ? 'Connecting to Server…'
+                    ? 'Waking Server… (Click to Create)'
                     : 'Create Room'}
                 </button>
 
