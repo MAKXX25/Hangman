@@ -1206,6 +1206,8 @@ export default function HangmanDuelApp() {
 
   // ── Setup Socket.io Connection & Cold-Start LifeCycle ───────────────────
   useEffect(() => {
+    console.log("Connecting to:", process.env.NEXT_PUBLIC_BACKEND_URL);
+
     // 1. Environment variable validation
     if (!isBackendConfigured()) {
       setConnectionStatus('missing_env');
