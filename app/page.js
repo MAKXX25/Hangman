@@ -2002,7 +2002,9 @@ export default function HangmanDuelApp() {
               </svg>
             </div>
             <h1>Hangman <span className="accent">Duel</span></h1>
-            <p className="tagline">Real-time 2-player word guessing</p>
+            <p className="tagline text-slate-400 font-medium tracking-wide">
+              Guess the word. Save the stickman. Win the duel.
+            </p>
           </div>
 
           <div className="lobby-form">
