@@ -2758,7 +2758,7 @@ export default function HangmanDuelApp() {
             
             {/* Stat 1: Duels Played */}
             <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md hover:border-cyan-500/30 transition-all duration-300">
-              <div className="font-pixel text-3xl sm:text-4xl font-extrabold text-cyan-400 drop-shadow-[0_0_15px_rgba(6,182,212,0.3)] mb-1">
+              <div className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-cyan-400 drop-shadow-[0_0_15px_rgba(6,182,212,0.3)] mb-1">
                 {(liveStats.duelsPlayed || 0).toLocaleString()}
               </div>
               <div className="text-xs sm:text-sm font-medium text-slate-400 uppercase tracking-wider">
@@ -2768,7 +2768,7 @@ export default function HangmanDuelApp() {
 
             {/* Stat 2: Active Players */}
             <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md hover:border-purple-500/30 transition-all duration-300">
-              <div className="font-pixel text-3xl sm:text-4xl font-extrabold text-purple-400 drop-shadow-[0_0_15px_rgba(168,85,247,0.3)] mb-1 flex items-center gap-2">
+              <div className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-purple-400 drop-shadow-[0_0_15px_rgba(168,85,247,0.3)] mb-1 flex items-center gap-2">
                 <span>{(liveStats.activePlayers || 1).toLocaleString()}</span>
                 <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" title="Live Online" />
               </div>
@@ -2779,7 +2779,7 @@ export default function HangmanDuelApp() {
 
             {/* Stat 3: Accuracy / Win Rate */}
             <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md hover:border-emerald-500/30 transition-all duration-300">
-              <div className="font-pixel text-3xl sm:text-4xl font-extrabold text-emerald-400 drop-shadow-[0_0_15px_rgba(16,185,129,0.3)] mb-1">
+              <div className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-emerald-400 drop-shadow-[0_0_15px_rgba(16,185,129,0.3)] mb-1">
                 {liveStats.winRate ?? 0}%
               </div>
               <div className="text-xs sm:text-sm font-medium text-slate-400 uppercase tracking-wider">
@@ -2789,7 +2789,7 @@ export default function HangmanDuelApp() {
 
             {/* Stat 4: Words Solved */}
             <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md hover:border-yellow-500/30 transition-all duration-300">
-              <div className="font-pixel text-3xl sm:text-4xl font-extrabold text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.3)] mb-1">
+              <div className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.3)] mb-1">
                 {(liveStats.wordsGuessed || 0).toLocaleString()}
               </div>
               <div className="text-xs sm:text-sm font-medium text-slate-400 uppercase tracking-wider">
@@ -3311,15 +3311,15 @@ export default function HangmanDuelApp() {
             {/* Player 1 Badge */}
             <div className={`flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl bg-cyan-500/15 border border-cyan-400/30 transition-all ${p1Scored ? 'scale-110 border-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.6)]' : ''}`}>
               <span className="text-[10px] sm:text-xs font-semibold text-cyan-200 max-w-[44px] sm:max-w-[85px] md:max-w-[120px] truncate">{p1.name}</span>
-              <span className="font-pixel text-xs sm:text-sm md:text-base font-extrabold text-cyan-400 min-w-[16px] sm:min-w-[20px] text-center bg-cyan-950/70 px-1 py-0.5 rounded border border-cyan-500/40 drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]">{p1.score}</span>
+              <span className="font-mono text-xs sm:text-sm md:text-base font-black text-cyan-400 min-w-[16px] sm:min-w-[20px] text-center bg-cyan-950/70 px-1 py-0.5 rounded border border-cyan-500/40 drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]">{p1.score}</span>
             </div>
 
             {/* Pulsing VS Divider */}
-            <span className="font-pixel text-[9px] sm:text-xs font-black text-purple-400/80 px-0.5 animate-pulse">VS</span>
+            <span className="font-mono text-[9px] sm:text-xs font-black text-purple-400/80 px-0.5 animate-pulse">VS</span>
 
             {/* Player 2 Badge */}
             <div className={`flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl bg-purple-500/15 border border-purple-400/30 transition-all ${p2Scored ? 'scale-110 border-purple-300 shadow-[0_0_12px_rgba(168,85,247,0.6)]' : ''}`}>
-              <span className="font-pixel text-xs sm:text-sm md:text-base font-extrabold text-purple-400 min-w-[16px] sm:min-w-[20px] text-center bg-purple-950/70 px-1 py-0.5 rounded border border-purple-500/40 drop-shadow-[0_0_8px_rgba(168,85,247,0.4)]">{p2.score}</span>
+              <span className="font-mono text-xs sm:text-sm md:text-base font-black text-purple-400 min-w-[16px] sm:min-w-[20px] text-center bg-purple-950/70 px-1 py-0.5 rounded border border-purple-500/40 drop-shadow-[0_0_8px_rgba(168,85,247,0.4)]">{p2.score}</span>
               <span className="text-[10px] sm:text-xs font-semibold text-purple-200 max-w-[44px] sm:max-w-[85px] md:max-w-[120px] truncate">{p2.name}</span>
             </div>
           </div>
@@ -3829,12 +3829,12 @@ export default function HangmanDuelApp() {
                     <div className="w-full max-w-xs mx-auto my-3 p-3 rounded-2xl bg-white/[0.04] border border-white/10 backdrop-blur-md flex items-center justify-around shadow-inner">
                       <div className="flex flex-col items-center">
                         <span className="text-xs font-semibold text-cyan-300 max-w-[90px] truncate">{p1.name}</span>
-                        <span className="font-pixel text-3xl font-extrabold text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.4)]">{p1.score}</span>
+                        <span className="font-display text-3xl sm:text-4xl font-black text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.4)]">{p1.score}</span>
                       </div>
-                      <span className="font-pixel text-xs font-black text-purple-400/80 animate-pulse">VS</span>
+                      <span className="font-mono text-xs font-black text-purple-400/80 animate-pulse">VS</span>
                       <div className="flex flex-col items-center">
                         <span className="text-xs font-semibold text-purple-300 max-w-[90px] truncate">{p2.name}</span>
-                        <span className="font-pixel text-3xl font-extrabold text-purple-400 drop-shadow-[0_0_10px_rgba(168,85,247,0.4)]">{p2.score}</span>
+                        <span className="font-display text-3xl sm:text-4xl font-black text-purple-400 drop-shadow-[0_0_10px_rgba(168,85,247,0.4)]">{p2.score}</span>
                       </div>
                     </div>
 
@@ -3908,12 +3908,12 @@ export default function HangmanDuelApp() {
                     <div className="w-full max-w-xs mx-auto my-2.5 p-2.5 sm:p-3 rounded-2xl bg-white/[0.04] border border-white/10 backdrop-blur-md flex items-center justify-around shadow-inner">
                       <div className="flex flex-col items-center">
                         <span className="text-[11px] sm:text-xs font-semibold text-cyan-300 max-w-[90px] truncate">{p1.name}</span>
-                        <span className="font-pixel text-2xl sm:text-3xl font-extrabold text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.4)]">{p1.score}</span>
+                        <span className="font-display text-2xl sm:text-3xl font-black text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.4)]">{p1.score}</span>
                       </div>
-                      <span className="font-pixel text-[10px] sm:text-xs font-black text-purple-400/80 animate-pulse">VS</span>
+                      <span className="font-mono text-[10px] sm:text-xs font-black text-purple-400/80 animate-pulse">VS</span>
                       <div className="flex flex-col items-center">
                         <span className="text-[11px] sm:text-xs font-semibold text-purple-300 max-w-[90px] truncate">{p2.name}</span>
-                        <span className="font-pixel text-2xl sm:text-3xl font-extrabold text-purple-400 drop-shadow-[0_0_10px_rgba(168,85,247,0.4)]">{p2.score}</span>
+                        <span className="font-display text-2xl sm:text-3xl font-black text-purple-400 drop-shadow-[0_0_10px_rgba(168,85,247,0.4)]">{p2.score}</span>
                       </div>
                     </div>
 
