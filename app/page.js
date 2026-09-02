@@ -2232,6 +2232,13 @@ export default function HangmanDuelApp() {
     }
   }, [screen, gameState, livesLeft, stickmanMood, game?.maxLives, drawAllStepsStatic]);
 
+  // Guessed set & collections
+  const guessedSet = new Set((game?.guessedLetters || []).map(l => l.toUpperCase()));
+  const wrongSet = new Set((game?.wrongGuesses || []).map(l => l.toUpperCase()));
+  const newGuessedSet = new Set(newlyGuessedLetters.map(l => l.toUpperCase()));
+  const newWrongSet = new Set(newlyWrongLetters.map(l => l.toUpperCase()));
+  const cleanWord = (game?.word || '').toUpperCase();
+
   return (
     <>
       {/* ─── LOBBY / LANDING PAGE SCREEN ─────────────────────────────────── */}
