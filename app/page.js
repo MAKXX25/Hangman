@@ -632,109 +632,89 @@ export default function HangmanDuelApp() {
     ctx.restore();
   }, [PANIC_PHRASES]);
 
-  // ── Animated Stroke-by-Stroke Drawing Engine (400ms per mistake) ──────────
+  // ── Helper to draw all steps statically on canvas ──────────────────────────
+  const drawAllStepsStatic = useCallback((canvas, steps, isDead) => {
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (steps > 0) {
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      for (let i = 0; i < steps; i++) {
+        drawStaticStep(ctx, i, isDead);
+      }
+      drawPanicOverlays(ctx, steps, isDead);
+      ctx.restore();
+    }
+  }, [drawStaticStep, drawPanicOverlays]);
+
+  // ── Robust Stroke-by-Stroke Drawing Engine ────────────────────────────────
   const animateHangmanDrawing = useCallback((canvas, animStateRef, livesLeft, maxLives = 10, animate = true) => {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
+    if (!ctx) return;
     const targetSteps = Math.min(Math.max(0, maxLives - livesLeft), 10);
     const isDead = livesLeft <= 0;
     const state = animStateRef.current;
 
+    // 1. Cancel any in-flight animation frame to prevent conflicting draw cycles
     if (state.animId) {
       cancelAnimationFrame(state.animId);
       state.animId = null;
     }
 
-    // Instant render if resetting or disabled
-    if (targetSteps === 0 || targetSteps < state.drawnSteps || !animate) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      if (targetSteps > 0) {
-        ctx.save();
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        for (let i = 0; i < targetSteps; i++) {
-          drawStaticStep(ctx, i, isDead);
-        }
-        drawPanicOverlays(ctx, targetSteps, isDead);
-        ctx.restore();
-      }
+    // 2. Instant static render if resetting, decreasing, or explicitly non-animated
+    if (targetSteps === 0 || targetSteps <= state.drawnSteps || !animate) {
+      drawAllStepsStatic(canvas, targetSteps, isDead);
       state.drawnSteps = targetSteps;
       return;
     }
 
-    if (targetSteps === state.drawnSteps) {
-      // Re-draw statically on re-render so HTML5 Canvas is never blank
+    // 3. Progressive animation for the newly added mistake:
+    // Instantly commit and draw all prior confirmed steps up to (targetSteps - 1),
+    // and smoothly animate ONLY the single latest step.
+    const latestStepIdx = targetSteps - 1;
+    state.drawnSteps = targetSteps; // Update immediately so state is never stale during fast clicks
+
+    const STEP_DURATION = 180; // Fast, snappy 180ms stroke animation
+    const startTime = performance.now();
+
+    function stepFrame(now) {
+      const elapsed = now - startTime;
+      const p = Math.min(1, elapsed / STEP_DURATION);
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      if (targetSteps > 0) {
-        ctx.save();
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        for (let i = 0; i < targetSteps; i++) {
-          drawStaticStep(ctx, i, isDead);
-        }
-        drawPanicOverlays(ctx, targetSteps, isDead);
-        ctx.restore();
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      // Always draw all completed prior steps statically (prevents previously drawn lines from vanishing)
+      for (let i = 0; i < latestStepIdx; i++) {
+        drawStaticStep(ctx, i, isDead);
       }
-      return;
-    }
 
-    let currentStep = state.drawnSteps;
-    const STEP_DURATION = 400; // ms per stroke
+      // Draw the single latest progressive step
+      drawProgressiveStep(ctx, latestStepIdx, p, isDead, p < 1);
 
-    function animateNextStep() {
-      if (currentStep >= targetSteps) {
-        state.drawnSteps = targetSteps;
+      if (targetSteps >= 5 && p > 0.4) {
+        drawPanicOverlays(ctx, targetSteps, isDead);
+      }
+
+      ctx.restore();
+
+      if (p < 1) {
+        state.animId = requestAnimationFrame(stepFrame);
+      } else {
         state.animId = null;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.save();
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        for (let i = 0; i < targetSteps; i++) {
-          drawStaticStep(ctx, i, isDead);
-        }
-        drawPanicOverlays(ctx, targetSteps, isDead);
-        ctx.restore();
-        return;
+        // Final complete static draw pass to guarantee crystal clear anti-aliased strokes
+        drawAllStepsStatic(canvas, targetSteps, isDead);
       }
-
-      const stepIdx = currentStep;
-      const startTime = performance.now();
-
-      function stepFrame(now) {
-        const elapsed = now - startTime;
-        const p = Math.min(1, elapsed / STEP_DURATION);
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.save();
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-
-        // Draw completed previous steps
-        for (let i = 0; i < stepIdx; i++) {
-          drawStaticStep(ctx, i, isDead);
-        }
-        // Draw current progressive step
-        drawProgressiveStep(ctx, stepIdx, p, isDead, true);
-
-        if (stepIdx >= 4 && p > 0.5) {
-          drawPanicOverlays(ctx, stepIdx + 1, isDead);
-        }
-
-        ctx.restore();
-
-        if (p < 1) {
-          state.animId = requestAnimationFrame(stepFrame);
-        } else {
-          currentStep++;
-          animateNextStep();
-        }
-      }
-
-      state.animId = requestAnimationFrame(stepFrame);
     }
 
-    animateNextStep();
-  }, [drawStaticStep, drawProgressiveStep, drawPanicOverlays]);
+    state.animId = requestAnimationFrame(stepFrame);
+  }, [drawStaticStep, drawProgressiveStep, drawPanicOverlays, drawAllStepsStatic]);
 
 
   // ── 5-Stage Physics Death Sequence Animation (~3.5s total) ────────────────
@@ -2236,12 +2216,21 @@ export default function HangmanDuelApp() {
     }
   }
 
-  // Guessed set
-  const guessedSet = new Set((game?.guessedLetters || []).map(l => l.toUpperCase()));
-  const wrongSet = new Set((game?.wrongGuesses || []).map(l => l.toUpperCase()));
-  const newGuessedSet = new Set(newlyGuessedLetters.map(l => l.toUpperCase()));
-  const newWrongSet = new Set(newlyWrongLetters.map(l => l.toUpperCase()));
-  const cleanWord = (game?.word || '').toUpperCase();
+  // ── Guaranteed Active Canvas Sync (Prevents disappearing lines on re-renders) ──
+  useEffect(() => {
+    if (screen !== 'game' || gameState !== 'guessing') return;
+    const mistakes = Math.min(Math.max(0, (game?.maxLives || MAX_LIVES) - livesLeft), 10);
+    const isDead = livesLeft <= 0;
+
+    if (hangmanCanvasRef.current && !canvasAnimStateRef.current.animId) {
+      drawAllStepsStatic(hangmanCanvasRef.current, mistakes, isDead);
+      canvasAnimStateRef.current.drawnSteps = mistakes;
+    }
+    if (hangmanWatchCanvasRef.current && !watchCanvasAnimStateRef.current.animId) {
+      drawAllStepsStatic(hangmanWatchCanvasRef.current, mistakes, isDead);
+      watchCanvasAnimStateRef.current.drawnSteps = mistakes;
+    }
+  }, [screen, gameState, livesLeft, stickmanMood, game?.maxLives, drawAllStepsStatic]);
 
   return (
     <>

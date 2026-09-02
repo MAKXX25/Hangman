@@ -757,8 +757,7 @@ function drawHangman(canvas, livesLeft, maxLives = 10, animate = true) {
     state.animId = null;
   }
 
-  // Reset or instantaneous render
-  if (targetSteps === 0 || targetSteps < state.drawnSteps || !animate) {
+  function drawAllStatic() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (targetSteps > 0) {
       ctx.save();
@@ -769,67 +768,50 @@ function drawHangman(canvas, livesLeft, maxLives = 10, animate = true) {
       }
       ctx.restore();
     }
+  }
+
+  // Reset or instantaneous render
+  if (targetSteps === 0 || targetSteps <= state.drawnSteps || !animate) {
+    drawAllStatic();
     state.drawnSteps = targetSteps;
     return;
   }
 
-  // Already drawn
-  if (targetSteps === state.drawnSteps) return;
+  const latestStepIdx = targetSteps - 1;
+  state.drawnSteps = targetSteps;
 
-  // Animate newly added steps one by one over ~400ms each
-  let currentStep = state.drawnSteps;
-  const STEP_DURATION = 400; // ms per step
+  const STEP_DURATION = 180; // ms per step
+  const startTime = performance.now();
 
-  function animateNextStep() {
-    if (currentStep >= targetSteps) {
-      state.drawnSteps = targetSteps;
+  function stepFrame(now) {
+    const elapsed = now - startTime;
+    const rawProgress = Math.min(1, elapsed / STEP_DURATION);
+    const progress = 1 - Math.pow(1 - rawProgress, 3); // ease-out cubic
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    // 1. Static completed lines up to latest step
+    for (let i = 0; i < latestStepIdx; i++) {
+      drawStaticStep(ctx, i, isDead);
+    }
+
+    // 2. Active line being traced with glowing pen tip
+    drawProgressiveStep(ctx, latestStepIdx, progress, isDead, rawProgress < 1);
+
+    ctx.restore();
+
+    if (rawProgress < 1) {
+      state.animId = requestAnimationFrame(stepFrame);
+    } else {
       state.animId = null;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.save();
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      for (let i = 0; i < targetSteps; i++) {
-        drawStaticStep(ctx, i, isDead);
-      }
-      ctx.restore();
-      return;
+      drawAllStatic();
     }
-
-    const stepIdx = currentStep;
-    const startTime = performance.now();
-
-    function stepFrame(now) {
-      const elapsed = now - startTime;
-      const rawProgress = Math.min(1, elapsed / STEP_DURATION);
-      const progress = 1 - Math.pow(1 - rawProgress, 3); // ease-out cubic
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.save();
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-
-      // 1. Static completed lines
-      for (let i = 0; i < stepIdx; i++) {
-        drawStaticStep(ctx, i, isDead);
-      }
-
-      // 2. Active line being traced with glowing pen tip
-      drawProgressiveStep(ctx, stepIdx, progress, isDead, true);
-
-      ctx.restore();
-
-      if (rawProgress < 1) {
-        state.animId = requestAnimationFrame(stepFrame);
-      } else {
-        currentStep++;
-        animateNextStep();
-      }
-    }
-
-    state.animId = requestAnimationFrame(stepFrame);
   }
 
-  animateNextStep();
+  state.animId = requestAnimationFrame(stepFrame);
 }
 
 /**
