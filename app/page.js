@@ -1551,26 +1551,46 @@ export default function HangmanDuelApp() {
         return;
       }
 
-      // Socket is still connecting (e.g. Render cold start)
-      showToast('Connecting to game server… Please wait ⏳', 4000);
+      // Socket is still connecting (Render free tier cold start takes ~20-35s)
+      showToast('Waking up game server… Please wait ⏳', 5000);
       setConnectionStatus('connecting');
 
       let timeoutId;
-      const onConnectEmit = () => {
+      let progressTimer1;
+      let progressTimer2;
+
+      const clearAllTimers = () => {
         if (timeoutId) clearTimeout(timeoutId);
+        if (progressTimer1) clearTimeout(progressTimer1);
+        if (progressTimer2) clearTimeout(progressTimer2);
+      };
+
+      const onConnectEmit = () => {
+        clearAllTimers();
         setConnectionStatus('connected');
         setMyPlayerId(sock.id);
+        showToast('Connected! Creating room… 🎮', 2000);
         sock.emit('create_room', { playerName: name, wordPickTime });
       };
 
       sock.once('connect', onConnectEmit);
 
-      // 8-second safety timeout if Render backend is unresponsive
+      // Progress toasts during Render cold boot
+      progressTimer1 = setTimeout(() => {
+        if (!sock.connected) showToast('Still waking up server… (~15s left) 🚀', 6000);
+      }, 10000);
+
+      progressTimer2 = setTimeout(() => {
+        if (!sock.connected) showToast('Almost ready, finalizing connection… ⚡', 6000);
+      }, 22000);
+
+      // 35-second safety timeout
       timeoutId = setTimeout(() => {
+        clearAllTimers();
         sock.off('connect', onConnectEmit);
         if (!sock.connected) {
-          console.warn('⚠️ Backend connection timed out. Falling back to local/P2P mode.');
-          showToast('⚠️ Backend server waking up or unreachable. Falling back to P2P mode…', 4000);
+          console.warn('⚠️ Backend connection timed out. Falling back to P2P mode.');
+          showToast(`⚠️ Could not reach server (${getBackendUrl()}). Falling back to P2P mode…`, 6000);
           const p2pSocket = new ServerlessSocket();
           socketRef.current = p2pSocket;
           setConnectionStatus('connected');
@@ -1578,9 +1598,9 @@ export default function HangmanDuelApp() {
           attachSocketListeners(p2pSocket);
           p2pSocket.emit('create_room', { playerName: name, wordPickTime });
         }
-      }, 8000);
+      }, 35000);
 
-      setTimeout(() => { setIsConnecting(false); }, 15000);
+      setTimeout(() => { setIsConnecting(false); }, 40000);
       return;
     }
 
@@ -1631,24 +1651,43 @@ export default function HangmanDuelApp() {
         return;
       }
 
-      showToast('Connecting to game server… Please wait ⏳', 4000);
+      showToast('Waking up game server… Please wait ⏳', 5000);
       setConnectionStatus('connecting');
 
       let timeoutId;
-      const onConnectJoin = () => {
+      let progressTimer1;
+      let progressTimer2;
+
+      const clearAllTimers = () => {
         if (timeoutId) clearTimeout(timeoutId);
+        if (progressTimer1) clearTimeout(progressTimer1);
+        if (progressTimer2) clearTimeout(progressTimer2);
+      };
+
+      const onConnectJoin = () => {
+        clearAllTimers();
         setConnectionStatus('connected');
         setMyPlayerId(sock.id);
+        showToast('Connected! Joining room… 🎯', 2000);
         sock.emit('join_room', { roomCode: code, playerName: name });
       };
 
       sock.once('connect', onConnectJoin);
 
+      progressTimer1 = setTimeout(() => {
+        if (!sock.connected) showToast('Still waking up server… (~15s left) 🚀', 6000);
+      }, 10000);
+
+      progressTimer2 = setTimeout(() => {
+        if (!sock.connected) showToast('Almost ready, finalizing connection… ⚡', 6000);
+      }, 22000);
+
       timeoutId = setTimeout(() => {
+        clearAllTimers();
         sock.off('connect', onConnectJoin);
         if (!sock.connected) {
-          console.warn('⚠️ Backend connection timed out. Falling back to local/P2P mode.');
-          showToast('⚠️ Backend server waking up or unreachable. Falling back to P2P mode…', 4000);
+          console.warn('⚠️ Backend connection timed out. Falling back to P2P mode.');
+          showToast(`⚠️ Could not reach server (${getBackendUrl()}). Falling back to P2P mode…`, 6000);
           const p2pSocket = new ServerlessSocket();
           socketRef.current = p2pSocket;
           setConnectionStatus('connected');
@@ -1656,9 +1695,9 @@ export default function HangmanDuelApp() {
           attachSocketListeners(p2pSocket);
           p2pSocket.emit('join_room', { roomCode: code, playerName: name });
         }
-      }, 8000);
+      }, 35000);
 
-      setTimeout(() => { setIsConnecting(false); }, 15000);
+      setTimeout(() => { setIsConnecting(false); }, 40000);
       return;
     }
 
