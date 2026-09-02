@@ -389,7 +389,7 @@ export default function LandingPage({ onPlayNow, onPlayPvE }) {
             </p>
           </div>
 
-          {/* Card 3: Room Codes */}
+          {/* Card 3: Room Codes & Links */}
           <div className="p-7 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-emerald-500/40 hover:bg-white/[0.05] transition-all duration-300 group">
             <div className="w-12 h-12 rounded-xl bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-6 group-hover:scale-110 transition-transform">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -397,10 +397,10 @@ export default function LandingPage({ onPlayNow, onPlayPvE }) {
               </svg>
             </div>
             <h3 className="font-display text-xl font-bold uppercase text-white mb-2 tracking-wide">
-              Room Codes
+              Room Codes & Links
             </h3>
             <p className="text-sm text-slate-400 leading-relaxed">
-              Generate 4-letter private game codes with a single click. Share via Discord, WhatsApp, or instant link.
+              Generate private room codes and instant shareable invite links. Challenge friends with a single click across WhatsApp, Discord, or web.
             </p>
           </div>
 
@@ -490,7 +490,7 @@ export default function LandingPage({ onPlayNow, onPlayPvE }) {
               Create or join
             </h3>
             <p className="text-sm text-slate-400 leading-relaxed">
-              Spin up a room to get a 4-letter code, send it to your friend, or enter an existing code to challenge a host.
+              Spin up a room to get a code or sharable invite link, send it to your friend, or enter an existing code to challenge a host.
             </p>
           </div>
 

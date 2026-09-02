@@ -237,6 +237,16 @@ export default function HangmanDuelApp() {
   const usedGuesserFactsRef = useRef([]);
   const usedWatchFactsRef = useRef([]);
 
+  // Show Toast Helper
+  const showToast = useCallback((msg, duration = 2500) => {
+    setToastMsg(msg);
+    setToastKey(prev => prev + 1);
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    toastTimeoutRef.current = setTimeout(() => {
+      setToastMsg('');
+    }, duration);
+  }, []);
+
   // ── SSR-Safe Persistent Username (localStorage) ───────────────────────────
   useEffect(() => {
     try {
@@ -251,6 +261,28 @@ export default function HangmanDuelApp() {
     }
   }, []);
 
+  // ── Auto-Parse ?join=CODE or ?room=CODE invite links ──────────────────────
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const codeParam = urlParams.get('join') || urlParams.get('room') || window.location.hash.replace('#room=', '').replace('#', '');
+        if (codeParam && codeParam.trim()) {
+          const cleanCode = codeParam.trim().toUpperCase().slice(0, 6);
+          setJoinCode(cleanCode);
+          showToast(`🎮 Room invite code "${cleanCode}" loaded! Enter your name to join.`, 4000);
+          setTimeout(() => {
+            const inputEl = document.getElementById('input-name');
+            if (inputEl) {
+              inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              inputEl.focus();
+            }
+          }, 400);
+        }
+      }
+    } catch {}
+  }, [showToast]);
+
   const handlePlayerNameChange = (val) => {
     setPlayerName(val);
     try {
@@ -259,16 +291,6 @@ export default function HangmanDuelApp() {
       console.warn('Could not save username to localStorage:', err);
     }
   };
-
-  // Show Toast Helper
-  const showToast = useCallback((msg, duration = 2500) => {
-    setToastMsg(msg);
-    setToastKey(prev => prev + 1);
-    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
-    toastTimeoutRef.current = setTimeout(() => {
-      setToastMsg('');
-    }, duration);
-  }, []);
 
   // ── Confetti Shower Trigger ───────────────────────────────────────────────
   const triggerConfettiShower = useCallback(() => {
@@ -2181,9 +2203,31 @@ export default function HangmanDuelApp() {
   // Copy Room Code Helper
   const copyRoomCode = () => {
     if (roomCode) {
-      navigator.clipboard.writeText(roomCode);
-      showToast('Room code copied to clipboard! 📋');
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(roomCode);
+      }
+      showToast(`Room code "${roomCode}" copied to clipboard! 📋`);
     }
+  };
+
+  // Copy Shareable Link Helper
+  const copyInviteLink = () => {
+    if (!roomCode) return;
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const inviteUrl = `${origin}/?join=${encodeURIComponent(roomCode)}`;
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(inviteUrl);
+    }
+    showToast('🔗 Invite link copied! Send it to your friend 🚀', 3000);
+  };
+
+  // Share via WhatsApp Helper
+  const shareViaWhatsApp = () => {
+    if (!roomCode) return;
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const inviteUrl = `${origin}/?join=${encodeURIComponent(roomCode)}`;
+    const text = `🎮 Play Hangman Duel with me! Click the link to join my room: ${inviteUrl} (Room Code: ${roomCode})`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   // Derived Values
@@ -2755,10 +2799,10 @@ export default function HangmanDuelApp() {
                 </svg>
               </div>
               <h3 className="font-display text-xl font-bold uppercase text-white mb-2 tracking-wide">
-                Room Codes
+                Room Codes & Links
               </h3>
               <p className="text-sm text-slate-400 leading-relaxed">
-                Generate 4-letter private game codes with a single click. Share via Discord, WhatsApp, or instant link.
+                Generate private room codes and instant shareable invite links. Challenge friends with a single click across WhatsApp, Discord, or web.
               </p>
             </div>
 
@@ -2843,7 +2887,7 @@ export default function HangmanDuelApp() {
                 Create or join
               </h3>
               <p className="text-sm text-slate-400 leading-relaxed">
-                Spin up a room to get a 4-letter code, send it to your friend, or enter an existing code to challenge a host.
+                Spin up a room to get a code or sharable invite link, send it to your friend, or enter an existing code to challenge a host.
               </p>
             </div>
 
@@ -3119,26 +3163,64 @@ export default function HangmanDuelApp() {
           <div className="absolute -bottom-32 left-1/3 w-[30rem] h-[30rem] bg-pink-500/20 rounded-full filter blur-3xl opacity-60 animate-blob [animation-delay:4s] mix-blend-screen" />
         </div>
 
-        <div className="waiting-card bg-white/10 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] rounded-3xl relative z-10 p-8 sm:p-10 w-full max-w-md mx-4 flex flex-col items-center gap-5 text-center transition-all">
+        <div className="waiting-card bg-[#11101e]/90 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] rounded-3xl relative z-10 p-7 sm:p-9 w-full max-w-lg mx-4 flex flex-col items-center gap-5 text-center transition-all">
           <div className="pulse-ring mb-1" aria-label="Waiting status indicator"></div>
-          <h2 className="text-2xl font-extrabold tracking-tight text-white">Waiting for opponent…</h2>
-          <p className="text-slate-300 text-sm">Share this room code with your friend to connect:</p>
-          <div
-            className="room-code-display px-6 py-3 bg-slate-950/70 border border-purple-500/40 rounded-2xl font-mono text-2xl font-bold tracking-widest text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.3)] cursor-pointer transition-transform hover:scale-105 active:scale-95"
-            id="display-room-code"
-            onClick={copyRoomCode}
-            title="Click to copy"
-          >
-            {roomCode}
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-display uppercase">Waiting for opponent…</h2>
+          <p className="text-slate-300 text-sm max-w-sm">Share the room code or send an instant invite link to your friend:</p>
+          
+          {/* Room Code Box with Copy */}
+          <div className="w-full flex items-center justify-between gap-2 p-2 rounded-2xl bg-slate-950/80 border border-purple-500/30">
+            <div
+              className="flex-1 px-4 py-2 font-mono text-2xl sm:text-3xl font-black tracking-widest text-purple-300 select-all cursor-pointer text-left"
+              id="display-room-code"
+              onClick={copyRoomCode}
+              title="Click to copy room code"
+            >
+              {roomCode}
+            </div>
+            <button
+              id="btn-copy-code"
+              type="button"
+              className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium text-xs sm:text-sm flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+              onClick={copyRoomCode}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                <rect x="9" y="9" width="13" height="13" rx="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+              <span>Copy Code</span>
+            </button>
           </div>
-          <button id="btn-copy-code" className="btn btn-ghost text-slate-300 hover:text-white border border-white/10 hover:border-white/25 rounded-xl px-4 py-2 text-sm transition-all" onClick={copyRoomCode}>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-              <rect x="9" y="9" width="13" height="13" rx="2" />
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-            </svg>
-            Copy Code
-          </button>
-          <button id="btn-leave-waiting" className="btn btn-ghost btn-sm text-slate-400 hover:text-rose-400 text-xs transition-colors" onClick={handleLeaveGame}>
+
+          {/* Instant Share Link Actions */}
+          <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <button
+              id="btn-copy-link"
+              type="button"
+              onClick={copyInviteLink}
+              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 text-white font-display font-bold text-xs uppercase tracking-wider shadow-lg shadow-purple-600/30 hover:shadow-purple-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+              </svg>
+              <span>Copy Invite Link</span>
+            </button>
+
+            <button
+              id="btn-share-whatsapp"
+              type="button"
+              onClick={shareViaWhatsApp}
+              className="w-full py-3 px-4 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 font-display font-bold text-xs uppercase tracking-wider hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M17.472 14.382c-.301-.15-1.781-.878-2.057-.978-.276-.1-.476-.15-.676.15-.2.3-.776.978-.951 1.178-.175.2-.351.225-.651.075-.3-.15-1.267-.467-2.413-1.489-.893-.796-1.496-1.78-1.671-2.08-.175-.3-.019-.462.131-.611.135-.134.3-.35.45-.525.15-.175.2-.3.3-.5.1-.2.05-.375-.025-.525-.075-.15-.676-1.63-926-2.232-.243-.586-.49-.506-.676-.516-.175-.01-.375-.01-.575-.01-.2 0-.525.075-.8.375-.275.3-1.05 1.026-1.05 2.502s1.075 2.898 1.225 3.098c.15.2 2.115 3.23 5.124 4.531.716.31 1.275.495 1.71.634.72.23 1.375.197 1.893.12.578-.087 1.781-.728 2.032-1.431.25-.703.25-1.306.175-1.431-.075-.125-.275-.2-.576-.35zM12.04 2C6.52 2 2.04 6.48 2.04 12c0 1.98.58 3.83 1.58 5.4L2 22l4.78-1.55c1.52.92 3.3 1.45 5.26 1.45 5.52 0 10-4.48 10-10S17.56 2 12.04 2z" />
+              </svg>
+              <span>Share WhatsApp</span>
+            </button>
+          </div>
+
+          <button id="btn-leave-waiting" className="btn btn-ghost btn-sm text-slate-400 hover:text-rose-400 text-xs transition-colors mt-2 cursor-pointer" onClick={handleLeaveGame}>
             Leave Room
           </button>
         </div>
