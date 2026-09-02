@@ -7,18 +7,12 @@ const path = require('path');
 // ─── Environment & CORS Configuration ──────────────────────────────────────────
 const PORT = process.env.PORT || 3001;
 
-// Allowed frontend origins for CORS (Vercel production URL + local development)
-const PROD_ORIGINS = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim().replace(/\/$/, ''))
-  : [];
-
+// Allowed frontend origins (Vercel production domain + local dev)
 const ALLOWED_ORIGINS = [
-  'http://localhost:3000',
-  'http://localhost:3001',
-  'http://127.0.0.1:3000',
-  'http://127.0.0.1:3001',
   'https://hangmanduel.makxxglobal.cloud',
-  ...PROD_ORIGINS,
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim().replace(/\/$/, '')) : [])
 ];
 
 // ─── Local Dictionary Initialization (O(1) Set Lookups) ────────────────────────

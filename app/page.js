@@ -1521,7 +1521,7 @@ export default function HangmanDuelApp() {
     }
   }, [gameState, game?.word, game?.livesLeft, pveRound]);
 
-  // ── 1. Create Room (Resilient with Instant P2P Fallback) ──────────────────
+  // ── 1. Create Room (Authoritative Socket.io with Auto-Connect Queue) ──────
   const handleCreateRoom = () => {
     const name = playerName.trim();
     if (!name) {
@@ -1533,36 +1533,52 @@ export default function HangmanDuelApp() {
     setLobbyError('');
     setIsPveMode(false);
     setIsConnecting(true);
-    showToast('Creating room… 🎮');
 
-    // 1. If backend Socket.io is connected, emit directly
-    const currentSock = socketRef.current || (isBackendConfigured() ? getSocket() : null);
-    if (currentSock && currentSock.connected) {
-      currentSock.emit('create_room', { playerName: name, wordPickTime });
+    if (isBackendConfigured()) {
+      const sock = socketRef.current || getSocket();
+      if (!sock) {
+        setLobbyError('Could not initialize connection to game backend.');
+        setIsConnecting(false);
+        return;
+      }
+      socketRef.current = sock;
+      attachSocketListeners(sock);
+
+      if (sock.connected) {
+        showToast('Creating room… 🎮');
+        sock.emit('create_room', { playerName: name, wordPickTime });
+      } else {
+        showToast('Connecting to game server… Please wait ⏳');
+        setConnectionStatus('connecting');
+        sock.once('connect', () => {
+          setConnectionStatus('connected');
+          setMyPlayerId(sock.id);
+          sock.emit('create_room', { playerName: name, wordPickTime });
+        });
+      }
       setTimeout(() => { setIsConnecting(false); }, 15000);
       return;
     }
 
-    // 2. If already using ServerlessSocket, emit directly
+    // Fallback: If no backend is configured, use ServerlessSocket
+    const currentSock = socketRef.current;
     if (currentSock && typeof currentSock.isHost !== 'undefined') {
       currentSock.emit('create_room', { playerName: name, wordPickTime });
       setTimeout(() => { setIsConnecting(false); }, 15000);
       return;
     }
 
-    // 3. Fallback: Instantiate ServerlessSocket P2P mode instantly
-    console.log('⚡ [Instant P2P Mode] Creating room via decentralized WebRTC P2P engine...');
+    console.log('⚡ [P2P Mode] No backend configured. Using ServerlessSocket.');
     const p2pSocket = new ServerlessSocket();
     socketRef.current = p2pSocket;
     setConnectionStatus('connected');
     setMyPlayerId(p2pSocket.id);
-
     attachSocketListeners(p2pSocket);
     p2pSocket.emit('create_room', { playerName: name, wordPickTime });
     setTimeout(() => { setIsConnecting(false); }, 15000);
   };
 
-  // ── 2. Join Room (Resilient with Instant P2P Fallback) ────────────────────
+  // ── 2. Join Room (Authoritative Socket.io with Auto-Connect Queue) ────────
   const handleJoinRoom = () => {
     const name = playerName.trim();
     const code = (joinCode || '').replace(/\s+/g, '').trim().toUpperCase();
@@ -1580,27 +1596,46 @@ export default function HangmanDuelApp() {
     setLobbyError('');
     setIsPveMode(false);
     setIsConnecting(true);
-    showToast('Joining game room… 🎯');
 
-    const currentSock = socketRef.current || (isBackendConfigured() ? getSocket() : null);
-    if (currentSock && currentSock.connected) {
-      currentSock.emit('join_room', { roomCode: code, playerName: name });
+    if (isBackendConfigured()) {
+      const sock = socketRef.current || getSocket();
+      if (!sock) {
+        setLobbyError('Could not initialize connection to game backend.');
+        setIsConnecting(false);
+        return;
+      }
+      socketRef.current = sock;
+      attachSocketListeners(sock);
+
+      if (sock.connected) {
+        showToast('Joining game room… 🎯');
+        sock.emit('join_room', { roomCode: code, playerName: name });
+      } else {
+        showToast('Connecting to game server… Please wait ⏳');
+        setConnectionStatus('connecting');
+        sock.once('connect', () => {
+          setConnectionStatus('connected');
+          setMyPlayerId(sock.id);
+          sock.emit('join_room', { roomCode: code, playerName: name });
+        });
+      }
       setTimeout(() => { setIsConnecting(false); }, 15000);
       return;
     }
 
+    // Fallback: If no backend is configured, use ServerlessSocket
+    const currentSock = socketRef.current;
     if (currentSock && typeof currentSock.isHost !== 'undefined') {
       currentSock.emit('join_room', { roomCode: code, playerName: name });
       setTimeout(() => { setIsConnecting(false); }, 15000);
       return;
     }
 
-    console.log(`⚡ [Instant P2P Mode] Joining room ${code} via decentralized WebRTC P2P engine...`);
+    console.log(`⚡ [P2P Mode] Joining room ${code} via ServerlessSocket...`);
     const p2pSocket = new ServerlessSocket();
     socketRef.current = p2pSocket;
     setConnectionStatus('connected');
     setMyPlayerId(p2pSocket.id);
-
     attachSocketListeners(p2pSocket);
     p2pSocket.emit('join_room', { roomCode: code, playerName: name });
     setTimeout(() => { setIsConnecting(false); }, 15000);
