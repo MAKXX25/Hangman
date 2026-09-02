@@ -2509,12 +2509,6 @@ export default function HangmanDuelApp() {
                         </div>
                       ))}
                     </div>
-
-                    <div className="text-xs font-mono-code text-slate-400 tracking-wider uppercase mb-1 text-center flex items-center justify-center gap-2 flex-wrap">
-                      <span>Category: <strong className="text-yellow-400 font-bold">Tech & Gaming</strong></span>
-                      <span>•</span>
-                      <span>Lives: <strong className="text-red-400 font-bold">2 / 6</strong></span>
-                    </div>
                   </div>
 
                   {/* Player Indicators */}

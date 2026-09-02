@@ -214,10 +214,6 @@ export default function LandingPage({ onPlayNow, onPlayPvE }) {
                     </div>
                   ))}
                 </div>
-
-                <div className="text-xs font-mono-code text-slate-400 tracking-wider uppercase mb-2">
-                  Category: <span className="text-yellow-400 font-bold">Tech & Gaming</span> • Lives Left: <span className="text-red-400 font-bold">2 / 6</span>
-                </div>
               </div>
 
               {/* Player Indicators at Bottom */}
