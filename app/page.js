@@ -118,6 +118,30 @@ export default function HangmanDuelApp() {
   // Canvas Drawing Refs
   const hangmanCanvasRef = useRef(null);
   const hangmanWatchCanvasRef = useRef(null);
+
+  // Split Showcase Mock Keyboard State
+  const [showcaseGuessed, setShowcaseGuessed] = useState({
+    P: 'correct',
+    X: 'correct',
+    L: 'correct',
+    E: 'wrong',
+    O: 'wrong',
+    T: 'wrong',
+  });
+  const [showcaseRevealed, setShowcaseRevealed] = useState(['P', '_', 'X', '_', 'L']);
+
+  const handleShowcaseKeyClick = (letter) => {
+    if (showcaseGuessed[letter]) return;
+    const target = ['P', 'I', 'X', 'E', 'L'];
+    if (target.includes(letter)) {
+      setShowcaseGuessed((prev) => ({ ...prev, [letter]: 'correct' }));
+      setShowcaseRevealed((prev) =>
+        prev.map((c, idx) => (target[idx] === letter ? letter : c))
+      );
+    } else {
+      setShowcaseGuessed((prev) => ({ ...prev, [letter]: 'wrong' }));
+    }
+  };
   const canvasAnimStateRef = useRef({ drawnSteps: 0, animId: null });
   const watchCanvasAnimStateRef = useRef({ drawnSteps: 0, animId: null });
   const specialAnimIdRef = useRef(null);
@@ -2206,165 +2230,812 @@ export default function HangmanDuelApp() {
 
   return (
     <>
-      {/* ─── LOBBY SCREEN ─────────────────────────────────────────────────── */}
-      <div id="screen-lobby" className={`screen ${screen === 'lobby' ? 'active' : ''}`}>
-        {/* Dynamic Animated Aurora Background Blobs */}
-        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
-          <div className="absolute -top-40 -left-40 w-96 h-96 bg-cyan-500/25 rounded-full filter blur-3xl opacity-70 animate-blob mix-blend-screen" />
-          <div className="absolute top-1/4 -right-20 w-96 h-96 bg-purple-600/30 rounded-full filter blur-3xl opacity-75 animate-blob [animation-delay:2s] mix-blend-screen" />
-          <div className="absolute -bottom-32 left-1/3 w-[30rem] h-[30rem] bg-pink-500/20 rounded-full filter blur-3xl opacity-60 animate-blob [animation-delay:4s] mix-blend-screen" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40rem] h-[40rem] bg-indigo-900/20 rounded-full filter blur-[120px] opacity-50" />
+      {/* ─── LOBBY / LANDING PAGE SCREEN ─────────────────────────────────── */}
+      <div id="screen-lobby" className={`screen ${screen === 'lobby' ? 'active' : ''} text-slate-100 font-sans selection:bg-purple-500 selection:text-white`}>
+        
+        {/* ─── Typography & Display Font Injection ──────────────────────── */}
+        <style jsx global>{`
+          @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700;800;900&family=JetBrains+Mono:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap');
+          
+          .font-display {
+            font-family: 'Chakra Petch', 'Orbitron', 'JetBrains Mono', -apple-system, sans-serif;
+            letter-spacing: -0.02em;
+          }
+          .font-mono-code {
+            font-family: 'JetBrains Mono', monospace;
+          }
+        `}</style>
+
+        {/* ─── Ambient Glows & Grid Pattern ─────────────────────────────── */}
+        <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[550px] bg-gradient-to-b from-violet-600/25 via-purple-600/10 to-transparent blur-[130px] rounded-full" />
+          <div className="absolute top-[35%] right-[-10%] w-[500px] h-[500px] bg-cyan-500/10 blur-[140px] rounded-full" />
+          <div className="absolute bottom-[15%] left-[-5%] w-[450px] h-[450px] bg-emerald-500/10 blur-[130px] rounded-full" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_80%_60%_at_50%_0%,#000_70%,transparent_100%)]" />
         </div>
 
-        <div className="lobby-card bg-white/10 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] rounded-3xl relative z-10 p-8 sm:p-10 w-full max-w-md mx-4 transition-all duration-300">
-          <div className="logo text-center mb-8">
-            <div className="logo-gallows inline-block text-purple-400 drop-shadow-[0_0_12px_rgba(168,85,247,0.7)] mb-3" aria-hidden="true">
-              <svg viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-16 h-20">
-                <line x1="10" y1="115" x2="90" y2="115" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-                <line x1="30" y1="115" x2="30" y2="10" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-                <line x1="30" y1="10" x2="65" y2="10" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-                <line x1="65" y1="10" x2="65" y2="25" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-                <circle cx="65" cy="35" r="10" stroke="currentColor" strokeWidth="3" />
-                <line x1="65" y1="45" x2="65" y2="75" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-                <line x1="65" y1="55" x2="50" y2="65" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-                <line x1="65" y1="55" x2="80" y2="65" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-                <line x1="65" y1="75" x2="52" y2="92" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-                <line x1="65" y1="75" x2="78" y2="92" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-              </svg>
+        {/* ─── 1. NAVBAR ────────────────────────────────────────────────── */}
+        <header className="sticky top-0 z-50 backdrop-blur-md bg-[#0a0a10]/80 border-b border-white/5 transition-all">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            
+            {/* Left: Brand Logo */}
+            <a href="#" className="flex items-center gap-3 group">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-purple-800 p-0.5 shadow-lg shadow-purple-600/20 group-hover:shadow-purple-500/40 transition-all duration-300">
+                <div className="w-full h-full bg-[#0d0c18] rounded-[10px] flex items-center justify-center">
+                  <svg className="w-5 h-5 text-purple-400 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 6H9a7 7 0 00-7 7v1a4 4 0 004 4h12a4 4 0 004-4v-1a7 7 0 00-7-7z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 12h4m-2-2v4m9-3a1 1 0 11-2 0 1 1 0 012 0zm3 2a1 1 0 11-2 0 1 1 0 012 0z" />
+                  </svg>
+                </div>
+              </div>
+              <span className="font-display text-xl font-bold tracking-wider text-white uppercase group-hover:text-purple-300 transition-colors">
+                Hangman <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400">Duel</span>
+              </span>
+            </a>
+
+            {/* Center: Navigation Links */}
+            <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
+              <a href="#features" className="hover:text-white transition-colors duration-200">
+                Features
+              </a>
+              <a href="#how-to-play" className="hover:text-white transition-colors duration-200">
+                How to Play
+              </a>
+              <a href="#modes" className="hover:text-white transition-colors duration-200">
+                Modes
+              </a>
+            </nav>
+
+            {/* Right: Vibrant 'Play Now' CTA */}
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => {
+                  const el = document.getElementById('input-name');
+                  if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    el.focus();
+                  }
+                }}
+                className="relative group px-6 py-2.5 rounded-xl font-semibold text-sm text-white overflow-hidden shadow-lg shadow-purple-600/30 hover:shadow-purple-500/50 hover:scale-[1.03] active:scale-[0.98] transition-all duration-200"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-500 transition-all duration-300 group-hover:opacity-90" />
+                <div className="relative flex items-center gap-2">
+                  <span>Play Now</span>
+                  <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </div>
+              </button>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white mb-2">
-              Hangman <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">Duel</span>
+          </div>
+        </header>
+
+        {/* ─── 2. HERO SECTION ────────────────────────────────────────── */}
+        <section id="hero" className="relative z-10 pt-12 pb-20 md:pt-20 md:pb-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+          <div className="text-center max-w-4xl mx-auto mb-14">
+            
+            {/* Top Pill Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-yellow-400/10 border border-yellow-400/25 backdrop-blur-sm text-yellow-400 text-xs font-mono-code font-bold tracking-widest uppercase mb-6 shadow-sm shadow-yellow-500/10">
+              <span>⚡ MULTIPLAYER WORD DUEL</span>
+            </div>
+
+            {/* Headline in Blocky Display Font */}
+            <h1 className="font-display text-4xl sm:text-6xl md:text-7xl font-extrabold uppercase tracking-tight text-white leading-[1.08] mb-6 drop-shadow-sm">
+              Guess the word.{' '}
+              <span className="block mt-1 text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-fuchsia-300 to-cyan-400">
+                Save the stickman.
+              </span>
+              <span className="block mt-1">Win the duel.</span>
             </h1>
-            <p className="tagline text-slate-300 font-medium tracking-wide text-sm">
-              Guess the word. Save the stickman. Win the duel.
+
+            {/* Subheadline */}
+            <p className="max-w-2xl mx-auto text-base sm:text-lg text-slate-400 font-normal leading-relaxed">
+              Real-time, head-to-head Hangman engineered for fast rounds, intense mind games, and instant room invites. Challenge friends online or train against the AI wordmaster.
             </p>
           </div>
 
-          <div className="lobby-form flex flex-col gap-5">
-            <div className="input-group flex flex-col gap-1.5">
-              <label htmlFor="input-name" className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                Your Name
-              </label>
-              <input
-                id="input-name"
-                type="text"
-                placeholder="Enter your name…"
-                maxLength={20}
-                autoComplete="off"
-                className="w-full px-4 py-3.5 bg-slate-950/60 border border-white/15 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30 rounded-2xl text-white placeholder-slate-400 backdrop-blur-md outline-none transition-all"
-                value={playerName}
-                onChange={(e) => handlePlayerNameChange(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') handleCreateRoom(); }}
-              />
-            </div>
-
-            <div className="lobby-actions flex flex-col gap-4">
-              <div className="create-section flex flex-col gap-2.5">
-                <button
-                  id="btn-create"
-                  className={`btn btn-primary w-full py-4 px-6 rounded-2xl font-bold text-white tracking-wide bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-lg shadow-purple-500/25 transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_0_25px_rgba(168,85,247,0.6)] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2 cursor-pointer ${isConnecting ? 'loading' : ''}`}
-                  aria-label="Create a new room"
-                  disabled={isConnecting}
-                  onClick={handleCreateRoom}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5">
-                    <path d="M12 5v14M5 12h14" />
-                  </svg>
-                  {isConnecting ? 'Creating Room… 🎮' : 'Create Room'}
-                </button>
-
-                {/* Host Settings */}
-                <div className="host-settings-toggle">
-                  <button
-                    id="btn-advanced"
-                    className="btn-advanced-toggle text-xs text-slate-300 hover:text-white transition-colors"
-                    aria-expanded={advancedOpen}
-                    onClick={() => setAdvancedOpen(!advancedOpen)}
-                    type="button"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="3" />
-                      <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14" />
+          {/* Hero Content: Side-by-Side Launcher Card & Live Game Graphic */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-6xl mx-auto">
+            
+            {/* Left Col: Interactive Duel Launcher & Room Creator */}
+            <div id="lobby-launcher" className="lg:col-span-6 w-full">
+              <div className="lobby-card bg-white/[0.04] backdrop-blur-xl border border-white/15 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] rounded-3xl p-6 sm:p-8 w-full transition-all duration-300">
+                
+                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-white/10">
+                  <div className="w-10 h-10 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
+                    <svg viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-6 h-7">
+                      <line x1="10" y1="115" x2="90" y2="115" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
+                      <line x1="30" y1="115" x2="30" y2="10" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
+                      <line x1="30" y1="10" x2="65" y2="10" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
+                      <line x1="65" y1="10" x2="65" y2="25" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
+                      <circle cx="65" cy="35" r="10" stroke="currentColor" strokeWidth="5" />
+                      <line x1="65" y1="45" x2="65" y2="75" stroke="currentColor" strokeWidth="5" strokeLinecap="round" />
                     </svg>
-                    Advanced Settings
-                    <svg className="chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                  </button>
-                </div>
-
-                <div id="host-settings" className={`host-settings ${advancedOpen ? 'expanded' : 'collapsed'}`}>
-                  <div className="host-settings-inner">
-                    <div className="setting-row">
-                      <label htmlFor="select-timer" className="setting-label">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-                        </svg>
-                        Word Pick Time Limit
-                      </label>
-                      <select
-                        id="select-timer"
-                        className="setting-select"
-                        value={wordPickTime}
-                        onChange={(e) => setWordPickTime(Number(e.target.value))}
-                      >
-                        <option value="30">30 seconds</option>
-                        <option value="60">60 seconds</option>
-                        <option value="90">90 seconds</option>
-                        <option value="120">120 seconds</option>
-                      </select>
-                    </div>
-                    <p className="setting-hint">If the Word Setter doesn't pick in time, a random word is chosen automatically.</p>
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold font-display uppercase tracking-wider text-white">
+                      Start a Match
+                    </h2>
+                    <p className="text-xs text-slate-400">
+                      Create a private room or enter a code to duel
+                    </p>
                   </div>
                 </div>
+
+                <div className="lobby-form flex flex-col gap-4">
+                  {/* Your Name Input */}
+                  <div className="input-group flex flex-col gap-1.5">
+                    <label htmlFor="input-name" className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                      Your Name
+                    </label>
+                    <input
+                      id="input-name"
+                      type="text"
+                      placeholder="Enter your name…"
+                      maxLength={20}
+                      autoComplete="off"
+                      className="w-full px-4 py-3.5 bg-slate-950/70 border border-white/15 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30 rounded-2xl text-white placeholder-slate-400 backdrop-blur-md outline-none transition-all"
+                      value={playerName}
+                      onChange={(e) => handlePlayerNameChange(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleCreateRoom(); }}
+                    />
+                  </div>
+
+                  {/* Create Room Button */}
+                  <div className="create-section flex flex-col gap-2">
+                    <button
+                      id="btn-create"
+                      className={`btn btn-primary w-full py-4 px-6 rounded-2xl font-bold font-display uppercase tracking-wider text-white bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 shadow-lg shadow-purple-600/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-purple-500/50 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer ${isConnecting ? 'loading' : ''}`}
+                      disabled={isConnecting}
+                      onClick={handleCreateRoom}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5">
+                        <path d="M12 5v14M5 12h14" />
+                      </svg>
+                      {isConnecting ? 'Creating Room… 🎮' : 'Create Room'}
+                    </button>
+
+                    {/* Host Settings Accordion */}
+                    <div className="host-settings-toggle">
+                      <button
+                        id="btn-advanced"
+                        className="btn-advanced-toggle text-xs text-slate-400 hover:text-white transition-colors"
+                        aria-expanded={advancedOpen}
+                        onClick={() => setAdvancedOpen(!advancedOpen)}
+                        type="button"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
+                          <circle cx="12" cy="12" r="3" />
+                          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14" />
+                        </svg>
+                        Advanced Host Settings
+                        <svg className="chevron w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    <div id="host-settings" className={`host-settings ${advancedOpen ? 'expanded' : 'collapsed'}`}>
+                      <div className="host-settings-inner">
+                        <div className="setting-row">
+                          <label htmlFor="select-timer" className="setting-label text-xs">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                              <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+                            </svg>
+                            Word Pick Time Limit
+                          </label>
+                          <select
+                            id="select-timer"
+                            className="setting-select"
+                            value={wordPickTime}
+                            onChange={(e) => setWordPickTime(Number(e.target.value))}
+                          >
+                            <option value="30">30 seconds</option>
+                            <option value="60">60 seconds</option>
+                            <option value="90">90 seconds</option>
+                            <option value="120">120 seconds</option>
+                          </select>
+                        </div>
+                        <p className="setting-hint text-xs">If the Word Setter doesn't pick in time, a random word is chosen automatically.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="divider"><span>or join with code</span></div>
+
+                  {/* Join Room Code Row */}
+                  <div className="join-row flex gap-2">
+                    <input
+                      id="input-room-code"
+                      type="text"
+                      placeholder="Room Code"
+                      maxLength={6}
+                      autoCapitalize="characters"
+                      autoCorrect="off"
+                      spellCheck="false"
+                      autoComplete="off"
+                      className="flex-1 px-4 py-3.5 bg-slate-950/70 border border-white/15 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30 rounded-2xl text-white font-mono uppercase tracking-widest placeholder-slate-400 backdrop-blur-md outline-none transition-all text-sm"
+                      value={joinCode}
+                      onChange={(e) => setJoinCode(e.target.value.replace(/\s+/g, '').toUpperCase())}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleJoinRoom(); }}
+                    />
+                    <button 
+                      id="btn-join" 
+                      className="btn btn-secondary py-3.5 px-6 rounded-2xl font-semibold text-white tracking-wide bg-gradient-to-r from-cyan-500 to-blue-600 shadow-md shadow-cyan-500/20 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(6,182,212,0.5)] active:scale-95 flex items-center justify-center cursor-pointer disabled:opacity-50 text-sm" 
+                      disabled={isConnecting}
+                      onClick={handleJoinRoom}
+                    >
+                      {isConnecting ? 'Joining… 🎯' : 'Join'}
+                    </button>
+                  </div>
+
+                  <div className="divider"><span>single player</span></div>
+
+                  {/* Play vs Computer PvE Button */}
+                  <button
+                    id="btn-pve"
+                    className="btn btn-pve w-full py-3.5 px-5 rounded-2xl font-semibold text-slate-100 bg-white/5 border border-white/15 backdrop-blur-md transition-all duration-300 hover:bg-white/10 hover:border-purple-400/50 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] flex items-center justify-between group cursor-pointer"
+                    type="button"
+                    onClick={() => setShowPveModal(true)}
+                  >
+                    <span className="pve-icon text-xl">🤖</span>
+                    <span className="pve-text font-medium tracking-wide">Play vs Computer</span>
+                    <span className="pve-badge text-xs px-2.5 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">PvE Mode</span>
+                  </button>
+
+                  {/* Error Banner */}
+                  <div id="lobby-error" className={`error-banner ${lobbyError ? '' : 'hidden'}`} role="alert">
+                    {lobbyError}
+                  </div>
+                </div>
+
               </div>
+            </div>
 
-              <div className="divider"><span>or</span></div>
+            {/* Right Col: Floating Mock Game State Graphic */}
+            <div className="lg:col-span-6 w-full">
+              <div className="relative">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-600/40 via-cyan-500/30 to-purple-600/40 rounded-3xl blur-xl opacity-75" />
+                
+                <div className="relative bg-[#11101d]/90 border border-white/15 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl text-left">
+                  
+                  {/* Card Header Bar */}
+                  <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-3 h-3 rounded-full bg-red-500/80" />
+                      <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+                      <div className="w-3 h-3 rounded-full bg-green-500/80" />
+                      <span className="ml-2 font-mono-code text-xs text-slate-400 tracking-wider">ROOM #DUEL-894</span>
+                    </div>
+                    <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono-code font-bold">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                      <span>LIVE MATCH</span>
+                    </div>
+                  </div>
 
-              <div className="join-row flex gap-2">
-                <input
-                  id="input-room-code"
-                  type="text"
-                  placeholder="Room Code"
-                  maxLength={6}
-                  autoCapitalize="characters"
-                  autoCorrect="off"
-                  spellCheck="false"
-                  autoComplete="off"
-                  className="flex-1 px-4 py-3.5 bg-slate-950/60 border border-white/15 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30 rounded-2xl text-white font-mono uppercase tracking-widest placeholder-slate-400 backdrop-blur-md outline-none transition-all"
-                  value={joinCode}
-                  onChange={(e) => setJoinCode(e.target.value.replace(/\s+/g, '').toUpperCase())}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleJoinRoom(); }}
-                />
-                <button 
-                  id="btn-join" 
-                  className="btn btn-secondary py-3.5 px-6 rounded-2xl font-semibold text-white tracking-wide bg-gradient-to-r from-cyan-500 to-blue-600 shadow-md shadow-cyan-500/20 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(6,182,212,0.5)] active:scale-95 flex items-center justify-center cursor-pointer disabled:opacity-50" 
-                  disabled={isConnecting}
-                  onClick={handleJoinRoom}
-                >
-                  {isConnecting ? 'Joining… 🎯' : 'Join'}
-                </button>
+                  {/* Stickman Graphic */}
+                  <div className="flex flex-col items-center justify-center my-4">
+                    <div className="w-32 h-28 relative flex items-center justify-center">
+                      <svg className="w-full h-full drop-shadow-[0_0_12px_rgba(168,85,247,0.5)]" viewBox="0 0 100 90" fill="none" stroke="#c084fc" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M15 85 L85 85" stroke="#7c3aed" strokeWidth="4" />
+                        <path d="M30 85 L30 10 L65 10 L65 22" stroke="#7c3aed" strokeWidth="3.5" />
+                        <path d="M30 25 L45 10" stroke="#7c3aed" strokeWidth="2.5" />
+                        <circle cx="65" cy="30" r="8" stroke="#38bdf8" strokeWidth="3" />
+                        <line x1="65" y1="38" x2="65" y2="58" stroke="#38bdf8" strokeWidth="3" />
+                        <line x1="65" y1="44" x2="52" y2="52" stroke="#38bdf8" strokeWidth="3" />
+                        <line x1="65" y1="44" x2="78" y2="52" stroke="#38bdf8" strokeWidth="3" />
+                        <line x1="65" y1="58" x2="54" y2="74" stroke="#38bdf8" strokeWidth="3" />
+                      </svg>
+                    </div>
+
+                    {/* Word Slots */}
+                    <div className="flex items-center justify-center gap-2 sm:gap-3 my-6 font-mono-code">
+                      {['_', 'A', '_', 'B', '_', 'A', '_'].map((char, index) => (
+                        <div
+                          key={index}
+                          className={`w-8 h-11 sm:w-10 sm:h-13 rounded-lg flex items-center justify-center text-lg sm:text-xl font-bold border transition-all ${
+                            char !== '_'
+                              ? 'bg-purple-600/20 border-purple-500 text-purple-200 shadow-[0_0_15px_rgba(168,85,247,0.3)]'
+                              : 'bg-white/5 border-white/10 text-transparent'
+                          }`}
+                        >
+                          {char}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="text-xs font-mono-code text-slate-400 tracking-wider uppercase mb-2">
+                      Category: <span className="text-yellow-400 font-bold">Tech & Gaming</span> • Lives: <span className="text-red-400 font-bold">2 / 6</span>
+                    </div>
+                  </div>
+
+                  {/* Player Indicators */}
+                  <div className="grid grid-cols-2 gap-3 mt-6 pt-4 border-t border-white/10">
+                    <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/[0.03] border border-white/5">
+                      <div className="w-8 h-8 rounded-lg bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-400 font-display font-bold text-xs">
+                        P1
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-semibold text-white truncate">Player 1 (Guesser)</div>
+                        <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-medium">
+                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                          </svg>
+                          <span>Thinking…</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/[0.03] border border-white/5">
+                      <div className="w-8 h-8 rounded-lg bg-cyan-600/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 font-display font-bold text-xs">
+                        P2
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-semibold text-white truncate">Player 2 (Setter)</div>
+                        <div className="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
+                          <svg className="w-3 h-3 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                          </svg>
+                          <span>Word Locked</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
               </div>
+            </div>
 
-              <div className="divider"><span>single player</span></div>
+          </div>
+        </section>
+
+        {/* ─── 3. STATS BAR ───────────────────────────────────────────── */}
+        <section className="relative z-10 py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+            
+            <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md hover:border-cyan-500/30 transition-all duration-300">
+              <div className="font-display text-3xl sm:text-4xl font-extrabold text-cyan-400 drop-shadow-[0_0_15px_rgba(6,182,212,0.3)] mb-1">
+                12,480
+              </div>
+              <div className="text-xs sm:text-sm font-medium text-slate-400 uppercase tracking-wider">
+                Duels Played
+              </div>
+            </div>
+
+            <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md hover:border-purple-500/30 transition-all duration-300">
+              <div className="font-display text-3xl sm:text-4xl font-extrabold text-purple-400 drop-shadow-[0_0_15px_rgba(168,85,247,0.3)] mb-1">
+                3,920
+              </div>
+              <div className="text-xs sm:text-sm font-medium text-slate-400 uppercase tracking-wider">
+                Active Word Nerds
+              </div>
+            </div>
+
+            <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md hover:border-emerald-500/30 transition-all duration-300">
+              <div className="font-display text-3xl sm:text-4xl font-extrabold text-emerald-400 drop-shadow-[0_0_15px_rgba(16,185,129,0.3)] mb-1">
+                98%
+              </div>
+              <div className="text-xs sm:text-sm font-medium text-slate-400 uppercase tracking-wider">
+                Win Rate Accuracy
+              </div>
+            </div>
+
+            <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md hover:border-yellow-500/30 transition-all duration-300">
+              <div className="font-display text-3xl sm:text-4xl font-extrabold text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.3)] mb-1">
+                24/7
+              </div>
+              <div className="text-xs sm:text-sm font-medium text-slate-400 uppercase tracking-wider">
+                Instant Matchmaking
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        {/* ─── 4. FEATURES GRID ("WHY DUEL HERE") ──────────────────────── */}
+        <section id="features" className="relative z-10 py-20 md:py-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <div className="font-mono-code text-xs font-bold uppercase tracking-widest text-yellow-400 mb-3">
+              WHY DUEL HERE
+            </div>
+            <h2 className="font-display text-3xl sm:text-5xl font-extrabold uppercase text-white tracking-tight leading-tight">
+              Built for word nerds who love a fight
+            </h2>
+            <p className="mt-4 text-slate-400 text-base sm:text-lg">
+              Every feature is fine-tuned for lightning speed, zero lag, and competitive tension.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            <div className="p-7 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-violet-500/40 hover:bg-white/[0.05] transition-all duration-300 group">
+              <div className="w-12 h-12 rounded-xl bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-400 mb-6 group-hover:scale-110 transition-transform">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <h3 className="font-display text-xl font-bold uppercase text-white mb-2 tracking-wide">
+                Real-Time Duels
+              </h3>
+              <p className="text-sm text-slate-400 leading-relaxed">
+                Instant WebSockets sync letter-by-letter. See your opponent guess in real-time with zero lag or delay.
+              </p>
+            </div>
+
+            <div className="p-7 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-cyan-500/40 hover:bg-white/[0.05] transition-all duration-300 group">
+              <div className="w-12 h-12 rounded-xl bg-cyan-600/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 mb-6 group-hover:scale-110 transition-transform">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 className="font-display text-xl font-bold uppercase text-white mb-2 tracking-wide">
+                PvE Mode
+              </h3>
+              <p className="text-sm text-slate-400 leading-relaxed">
+                Solo training against an adaptive computer opponent with Easy, Medium, and Master difficulty tiers.
+              </p>
+            </div>
+
+            <div className="p-7 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-emerald-500/40 hover:bg-white/[0.05] transition-all duration-300 group">
+              <div className="w-12 h-12 rounded-xl bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-6 group-hover:scale-110 transition-transform">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                </svg>
+              </div>
+              <h3 className="font-display text-xl font-bold uppercase text-white mb-2 tracking-wide">
+                Room Codes
+              </h3>
+              <p className="text-sm text-slate-400 leading-relaxed">
+                Generate 4-letter private game codes with a single click. Share via Discord, WhatsApp, or instant link.
+              </p>
+            </div>
+
+            <div className="p-7 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-yellow-500/40 hover:bg-white/[0.05] transition-all duration-300 group">
+              <div className="w-12 h-12 rounded-xl bg-yellow-600/20 border border-yellow-500/30 flex items-center justify-center text-yellow-400 mb-6 group-hover:scale-110 transition-transform">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="font-display text-xl font-bold uppercase text-white mb-2 tracking-wide">
+                Fast Rounds
+              </h3>
+              <p className="text-sm text-slate-400 leading-relaxed">
+                Snappy 60-second word setting and rapid-fire guessing timers keep matches energetic and competitive.
+              </p>
+            </div>
+
+            <div className="p-7 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-fuchsia-500/40 hover:bg-white/[0.05] transition-all duration-300 group">
+              <div className="w-12 h-12 rounded-xl bg-fuchsia-600/20 border border-fuchsia-500/30 flex items-center justify-center text-fuchsia-400 mb-6 group-hover:scale-110 transition-transform">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <h3 className="font-display text-xl font-bold uppercase text-white mb-2 tracking-wide">
+                Live Leaderboard
+              </h3>
+              <p className="text-sm text-slate-400 leading-relaxed">
+                Track duel win streaks, accuracy scores, and round times with automated end-of-game performance dialogues.
+              </p>
+            </div>
+
+            <div className="p-7 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-rose-500/40 hover:bg-white/[0.05] transition-all duration-300 group">
+              <div className="w-12 h-12 rounded-xl bg-rose-600/20 border border-rose-500/30 flex items-center justify-center text-rose-400 mb-6 group-hover:scale-110 transition-transform">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                </svg>
+              </div>
+              <h3 className="font-display text-xl font-bold uppercase text-white mb-2 tracking-wide">
+                Advanced Settings
+              </h3>
+              <p className="text-sm text-slate-400 leading-relaxed">
+                Customize host round duration, toggle curated suggestion pools, or allow custom user-crafted puzzle words.
+              </p>
+            </div>
+
+          </div>
+        </section>
+
+        {/* ─── 5. HOW TO PLAY ("GET IN THE RING") ───────────────────────── */}
+        <section id="how-to-play" className="relative z-10 py-20 md:py-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-white/5">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <div className="font-mono-code text-xs font-bold uppercase tracking-widest text-yellow-400 mb-3">
+              GET IN THE RING
+            </div>
+            <h2 className="font-display text-3xl sm:text-5xl font-extrabold uppercase text-white tracking-tight leading-tight">
+              How to Duel in 3 Simple Steps
+            </h2>
+            <p className="mt-4 text-slate-400 text-base sm:text-lg">
+              No signup, no downloads. Just pick your alias and jump into the gallows.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            
+            <div className="relative p-8 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md">
+              <div className="font-mono-code text-5xl font-black text-yellow-400 mb-6 drop-shadow-[0_0_20px_rgba(250,204,21,0.3)]">
+                01
+              </div>
+              <h3 className="font-display text-2xl font-bold uppercase text-white mb-3 tracking-wide">
+                Set your name
+              </h3>
+              <p className="text-sm text-slate-400 leading-relaxed">
+                Enter your duelist handle. No registration required — you get instant access to live lobbies and match stats.
+              </p>
+            </div>
+
+            <div className="relative p-8 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md">
+              <div className="font-mono-code text-5xl font-black text-yellow-400 mb-6 drop-shadow-[0_0_20px_rgba(250,204,21,0.3)]">
+                02
+              </div>
+              <h3 className="font-display text-2xl font-bold uppercase text-white mb-3 tracking-wide">
+                Create or join
+              </h3>
+              <p className="text-sm text-slate-400 leading-relaxed">
+                Spin up a room to get a 4-letter code, send it to your friend, or enter an existing code to challenge a host.
+              </p>
+            </div>
+
+            <div className="relative p-8 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md">
+              <div className="font-mono-code text-5xl font-black text-yellow-400 mb-6 drop-shadow-[0_0_20px_rgba(250,204,21,0.3)]">
+                03
+              </div>
+              <h3 className="font-display text-2xl font-bold uppercase text-white mb-3 tracking-wide">
+                Guess to win
+              </h3>
+              <p className="text-sm text-slate-400 leading-relaxed">
+                Take turns setting and guessing hidden words. Uncover the secret before the 6th limb hangs to take the crown!
+              </p>
+            </div>
+
+          </div>
+        </section>
+
+        {/* ─── 6. SPLIT SHOWCASE ("TWO WAYS TO PLAY") ───────────────────── */}
+        <section id="modes" className="relative z-10 py-20 md:py-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-white/5">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            
+            <div className="lg:col-span-6">
+              <div className="font-mono-code text-xs font-bold uppercase tracking-widest text-yellow-400 mb-3">
+                TWO WAYS TO PLAY
+              </div>
+              <h2 className="font-display text-3xl sm:text-5xl font-extrabold uppercase text-white tracking-tight leading-tight mb-6">
+                Duel a friend, or beat the machine
+              </h2>
+              <p className="text-slate-400 text-base sm:text-lg leading-relaxed mb-6">
+                Whether you want high-stakes multiplayer mind games or quick solo word puzzle practice on the go, Hangman Duel has you covered.
+              </p>
+
+              <ul className="space-y-4 mb-8 text-sm sm:text-base text-slate-300">
+                <li className="flex items-center gap-3">
+                  <div className="w-5 h-5 rounded-full bg-violet-500/20 border border-violet-500/40 flex items-center justify-center text-violet-400 text-xs">
+                    ✓
+                  </div>
+                  <span><strong>Multiplayer 1v1:</strong> Custom words, suggestions & revenge rematches.</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <div className="w-5 h-5 rounded-full bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400 text-xs">
+                    ✓
+                  </div>
+                  <span><strong>Single-Player PvE:</strong> Smart dictionary engine with clue hints.</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <div className="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 text-xs">
+                    ✓
+                  </div>
+                  <span><strong>Cross-Platform:</strong> Seamless on Mobile, Tablet, and Desktop.</span>
+                </li>
+              </ul>
 
               <button
-                id="btn-pve"
-                className="btn btn-pve w-full py-3.5 px-5 rounded-2xl font-semibold text-slate-100 bg-white/5 border border-white/15 backdrop-blur-md transition-all duration-300 hover:bg-white/10 hover:border-purple-400/50 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] flex items-center justify-between group cursor-pointer"
-                type="button"
-                onClick={() => setShowPveModal(true)}
+                onClick={() => {
+                  const el = document.getElementById('input-name');
+                  if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    el.focus();
+                  }
+                }}
+                className="px-8 py-4 rounded-xl font-display font-bold text-base uppercase tracking-wider text-white bg-gradient-to-r from-violet-600 to-purple-600 shadow-lg shadow-purple-600/30 hover:shadow-purple-500/50 hover:scale-[1.03] active:scale-[0.98] transition-all duration-200 flex items-center gap-3"
               >
-                <span className="pve-icon text-xl">🤖</span>
-                <span className="pve-text font-medium tracking-wide">Play vs Computer</span>
-                <span className="pve-badge text-xs px-2.5 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">PvE Mode</span>
+                <span>Start a Duel</span>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
               </button>
             </div>
 
-            <div id="lobby-error" className={`error-banner ${lobbyError ? '' : 'hidden'}`} role="alert">
-              {lobbyError}
+            {/* Right Column: Sleek Mock UI Card for PvE Mode */}
+            <div className="lg:col-span-6">
+              <div className="relative">
+                <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500/30 to-violet-600/30 rounded-3xl blur-xl opacity-60" />
+                
+                <div className="relative bg-[#11101d] border border-white/15 rounded-2xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl">
+                  
+                  {/* Header */}
+                  <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse" />
+                      <span className="font-display font-bold text-sm tracking-wider uppercase text-cyan-300">
+                        PvE Training Mode
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded bg-white/10 font-mono-code text-xs font-bold text-yellow-400">
+                        ROUND 3
+                      </span>
+                      <span className="px-2.5 py-0.5 rounded bg-red-500/20 border border-red-500/30 font-mono-code text-xs font-bold text-red-400">
+                        DIFFICULTY: HARD
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Word Display: P _ X _ L */}
+                  <div className="text-center my-6">
+                    <div className="text-xs font-mono-code text-slate-400 uppercase tracking-widest mb-3">
+                      Secret Word (5 Letters)
+                    </div>
+                    <div className="flex items-center justify-center gap-2.5 sm:gap-3 font-mono-code">
+                      {showcaseRevealed.map((char, index) => (
+                        <div
+                          key={index}
+                          className={`w-10 h-13 sm:w-12 sm:h-15 rounded-xl flex items-center justify-center text-xl sm:text-2xl font-bold border ${
+                            char !== '_'
+                              ? 'bg-cyan-500/20 border-cyan-400 text-cyan-200 shadow-[0_0_15px_rgba(6,182,212,0.3)]'
+                              : 'bg-white/5 border-white/10 text-white/20'
+                          }`}
+                        >
+                          {char}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Lives Tracker */}
+                  <div className="flex items-center justify-between bg-white/[0.02] border border-white/5 rounded-xl p-3 mb-6 font-mono-code text-xs">
+                    <span className="text-slate-400">Gallows Health:</span>
+                    <div className="flex items-center gap-1.5 text-red-400">
+                      <span>❤️</span>
+                      <span>❤️</span>
+                      <span>❤️</span>
+                      <span className="opacity-30">🖤</span>
+                      <span className="opacity-30">🖤</span>
+                      <span className="opacity-30">🖤</span>
+                      <span className="ml-2 text-slate-300 font-bold">(3/6 Lives)</span>
+                    </div>
+                  </div>
+
+                  {/* Interactive Virtual Keyboard */}
+                  <div className="space-y-2">
+                    <div className="text-xs font-mono-code text-slate-400 mb-2">
+                      Interactive Virtual Keyboard (Try clicking!):
+                    </div>
+
+                    <div className="flex justify-center gap-1 sm:gap-1.5">
+                      {['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'].map((key) => {
+                        const state = showcaseGuessed[key];
+                        return (
+                          <button
+                            key={key}
+                            onClick={() => handleShowcaseKeyClick(key)}
+                            type="button"
+                            className={`w-7 h-9 sm:w-8 sm:h-10 rounded-lg font-mono-code font-bold text-xs sm:text-sm flex items-center justify-center transition-all cursor-pointer ${
+                              state === 'correct'
+                                ? 'bg-emerald-600 text-white shadow-[0_0_10px_rgba(16,185,129,0.5)] scale-95'
+                                : state === 'wrong'
+                                ? 'bg-red-600/30 text-red-400 border border-red-500/40 line-through opacity-60'
+                                : 'bg-white/10 text-slate-200 hover:bg-white/20 hover:text-white hover:scale-105 active:scale-95'
+                            }`}
+                          >
+                            {key}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="flex justify-center gap-1 sm:gap-1.5">
+                      {['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'].map((key) => {
+                        const state = showcaseGuessed[key];
+                        return (
+                          <button
+                            key={key}
+                            onClick={() => handleShowcaseKeyClick(key)}
+                            type="button"
+                            className={`w-7 h-9 sm:w-8 sm:h-10 rounded-lg font-mono-code font-bold text-xs sm:text-sm flex items-center justify-center transition-all cursor-pointer ${
+                              state === 'correct'
+                                ? 'bg-emerald-600 text-white shadow-[0_0_10px_rgba(16,185,129,0.5)] scale-95'
+                                : state === 'wrong'
+                                ? 'bg-red-600/30 text-red-400 border border-red-500/40 line-through opacity-60'
+                                : 'bg-white/10 text-slate-200 hover:bg-white/20 hover:text-white hover:scale-105 active:scale-95'
+                            }`}
+                          >
+                            {key}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="flex justify-center gap-1 sm:gap-1.5">
+                      {['Z', 'X', 'C', 'V', 'B', 'N', 'M'].map((key) => {
+                        const state = showcaseGuessed[key];
+                        return (
+                          <button
+                            key={key}
+                            onClick={() => handleShowcaseKeyClick(key)}
+                            type="button"
+                            className={`w-7 h-9 sm:w-8 sm:h-10 rounded-lg font-mono-code font-bold text-xs sm:text-sm flex items-center justify-center transition-all cursor-pointer ${
+                              state === 'correct'
+                                ? 'bg-emerald-600 text-white shadow-[0_0_10px_rgba(16,185,129,0.5)] scale-95'
+                                : state === 'wrong'
+                                ? 'bg-red-600/30 text-red-400 border border-red-500/40 line-through opacity-60'
+                                : 'bg-white/10 text-slate-200 hover:bg-white/20 hover:text-white hover:scale-105 active:scale-95'
+                            }`}
+                          >
+                            {key}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        {/* ─── 7. FINAL CTA & FOOTER ───────────────────────────────────── */}
+        <section className="relative z-10 py-24 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center">
+          <div className="absolute inset-0 bg-gradient-to-r from-violet-600/15 via-fuchsia-600/15 to-cyan-600/15 blur-3xl rounded-3xl -z-10" />
+
+          <div className="p-10 sm:p-16 rounded-3xl bg-white/[0.03] border border-white/10 backdrop-blur-2xl shadow-2xl relative">
+            <div className="w-12 h-12 rounded-2xl bg-yellow-400/10 border border-yellow-400/30 mx-auto flex items-center justify-center text-yellow-400 mb-6 shadow-sm shadow-yellow-500/20">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+
+            <h2 className="font-display text-3xl sm:text-5xl font-extrabold uppercase text-white tracking-tight leading-tight mb-4">
+              Your stickman is waiting.
+            </h2>
+
+            <p className="max-w-xl mx-auto text-slate-400 text-base sm:text-lg mb-8">
+              Jump into a live match right now. No downloads, no registration required.
+            </p>
+
+            <button
+              onClick={() => {
+                const el = document.getElementById('input-name');
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  el.focus();
+                }
+              }}
+              className="px-10 py-5 rounded-xl font-display font-bold text-lg uppercase tracking-wider text-white bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 shadow-2xl shadow-purple-600/40 hover:shadow-purple-500/60 hover:scale-[1.04] active:scale-[0.98] transition-all duration-200 inline-flex items-center gap-3 cursor-pointer"
+            >
+              <span>Play Hangman Duel</span>
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </button>
+          </div>
+        </section>
+
+        {/* ─── FOOTER ─────────────────────────────────────────────────── */}
+        <footer className="relative z-10 border-t border-white/5 py-8 px-4 sm:px-6 lg:px-8 bg-[#07070d]">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <span className="font-display font-bold text-base uppercase text-white tracking-wider">
+                Hangman <span className="text-purple-400">Duel</span>
+              </span>
+              <span className="text-xs text-slate-500">• Real-Time Word Showdown</span>
+            </div>
+
+            <div className="text-xs text-white/40 font-mono-code">
+              © {new Date().getFullYear()} Hangman Duel. All rights reserved.
             </div>
           </div>
-        </div>
+        </footer>
+
       </div>
 
       {/* ─── WAITING SCREEN ───────────────────────────────────────────────── */}
