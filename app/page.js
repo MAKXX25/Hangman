@@ -2947,7 +2947,7 @@ export default function HangmanDuelApp() {
         </section>
 
         {/* ─── 4. FEATURES GRID ("WHY DUEL HERE") ──────────────────────── */}
-        <section id="features" className="relative z-10 py-20 md:py-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <section id="features" className="relative z-10 py-20 md:py-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto scroll-mt-20 md:scroll-mt-24">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <div className="font-mono-code text-xs font-bold uppercase tracking-widest text-yellow-400 mb-3">
               WHY DUEL HERE
@@ -3050,7 +3050,7 @@ export default function HangmanDuelApp() {
         </section>
 
         {/* ─── 5. HOW TO PLAY ("GET IN THE RING") ───────────────────────── */}
-        <section id="how-to-play" className="relative z-10 py-20 md:py-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-white/5">
+        <section id="how-to-play" className="relative z-10 py-20 md:py-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-white/5 scroll-mt-20 md:scroll-mt-24">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <div className="font-mono-code text-xs font-bold uppercase tracking-widest text-yellow-400 mb-3">
               GET IN THE RING

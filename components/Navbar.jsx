@@ -1,23 +1,16 @@
 'use client';
 
 import React from 'react';
-import { usePathname } from 'next/navigation';
 
 /**
  * Navbar Component
  * 
- * - Only visible on the home route ('/').
- * - Inner contents constrained to max-w-7xl mx-auto w-full.
- * - Dead-center absolute navigation links.
+ * - Shows brand logo on the left.
+ * - Shows "How to Play" and "Features" navigation links in the top bar.
+ * - Shows "Play Now" action button on the right.
+ * - Fully responsive with smooth scrolling.
  */
 export default function Navbar({ onPlayNow }) {
-  const pathname = usePathname();
-
-  // Route Restriction: Only display on the home landing page
-  if (pathname && pathname !== '/') {
-    return null;
-  }
-
   const handleScrollTo = (id) => (e) => {
     e.preventDefault();
     const el = document.getElementById(id);
@@ -39,17 +32,18 @@ export default function Navbar({ onPlayNow }) {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-[#09090b]/95 backdrop-blur-sm border-b border-white/5 transition-colors">
-      {/* ─── Constrained Container for Ultra-Wide Screens ───────────── */}
-      <div className="max-w-7xl mx-auto w-full px-3 sm:px-6 py-2.5 sm:py-4 relative flex items-center justify-between">
+    <header className="sticky top-0 z-50 w-full bg-[#09090b]/95 backdrop-blur-md border-b border-white/10 transition-all shadow-lg shadow-black/20">
+      {/* ─── Constrained Container for All Screens ───────────── */}
+      <div className="max-w-7xl mx-auto w-full px-3 sm:px-6 py-2.5 sm:py-3.5 relative flex items-center justify-between gap-2">
         
         {/* ─── 1. Left: Brand Logo ──────────────────────────────────── */}
         <a
           href="#"
-          className="inline-flex items-center gap-2 sm:gap-3 group select-none z-10 flex-shrink-0"
+          className="inline-flex items-center gap-2 sm:gap-3 group select-none flex-shrink-0"
           aria-label="Hangman Duel Home"
+          onClick={handleScrollTo('hero')}
         >
-          <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-lg sm:rounded-xl bg-purple-950/40 border border-purple-500/30 text-purple-400 group-hover:border-purple-400/60 group-hover:bg-purple-900/30 transition-all">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-lg sm:rounded-xl bg-purple-950/50 border border-purple-500/40 text-purple-400 group-hover:border-purple-400 group-hover:bg-purple-900/40 transition-all shadow-sm">
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -57,7 +51,7 @@ export default function Navbar({ onPlayNow }) {
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-200 group-hover:scale-105"
+              className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-200 group-hover:scale-110 text-purple-300"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path d="M3 21h10" />
@@ -77,32 +71,35 @@ export default function Navbar({ onPlayNow }) {
           </div>
         </a>
 
-        {/* ─── 2. Center: Dead-Center Navigation Links (Hidden on Mobile) ─── */}
-        <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-8 z-10">
-          <a
-            href="#features"
-            onClick={handleScrollTo('features')}
-            className="text-sm font-medium text-slate-400 hover:text-white transition-colors cursor-pointer"
-          >
-            Features
-          </a>
+        {/* ─── 2. Center: Navigation Links ("How to Play" & "Features") ─── */}
+        <nav className="flex items-center gap-1 sm:gap-3 md:gap-8" aria-label="Main Navigation">
           <a
             href="#how-to-play"
             onClick={handleScrollTo('how-to-play')}
-            className="text-sm font-medium text-slate-400 hover:text-white transition-colors cursor-pointer"
+            className="px-2 py-1 sm:px-3.5 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-300 hover:text-white hover:bg-white/10 transition-all cursor-pointer flex items-center gap-1.5 active:scale-95"
           >
-            How to Play
+            <span className="text-amber-400 text-xs sm:text-sm">🎮</span>
+            <span>How to Play</span>
           </a>
-        </div>
+          <a
+            href="#features"
+            onClick={handleScrollTo('features')}
+            className="px-2 py-1 sm:px-3.5 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-300 hover:text-white hover:bg-white/10 transition-all cursor-pointer flex items-center gap-1.5 active:scale-95"
+          >
+            <span className="text-purple-400 text-xs sm:text-sm">✨</span>
+            <span>Features</span>
+          </a>
+        </nav>
 
         {/* ─── 3. Right: Play Now CTA Button ────────────────────────── */}
-        <div className="flex items-center gap-2 sm:gap-4 z-10 flex-shrink-0">
+        <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
           <button
             type="button"
             onClick={handlePlayClick}
-            className="bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs sm:text-sm px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-lg transition-colors cursor-pointer shadow-sm active:scale-95"
+            className="bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs sm:text-sm px-3 py-1.5 sm:px-5 sm:py-2 rounded-lg transition-all cursor-pointer shadow-md shadow-purple-600/25 active:scale-95 flex items-center gap-1.5"
           >
-            Play Now
+            <span>Play Now</span>
+            <span className="text-xs">⚡</span>
           </button>
         </div>
 
