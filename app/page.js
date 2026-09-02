@@ -2344,10 +2344,10 @@ export default function HangmanDuelApp() {
         
         {/* ─── Typography & Display Font Injection ──────────────────────── */}
         <style jsx global>{`
-          @import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Silkscreen:wght@400;700&family=Press+Start+2P&family=Chakra+Petch:wght@500;700;800;900&family=JetBrains+Mono:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap');
+          @import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&family=Silkscreen:wght@400;700&family=VT323&family=Chakra+Petch:wght@500;700;800;900&family=JetBrains+Mono:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap');
           
           .font-pixel {
-            font-family: 'Pixelify Sans', 'Silkscreen', 'Press Start 2P', monospace;
+            font-family: 'Pixelify Sans', 'Silkscreen', 'VT323', monospace;
             letter-spacing: 0.01em;
           }
           .font-display {
@@ -2387,15 +2387,15 @@ export default function HangmanDuelApp() {
               <span>⚡ MULTIPLAYER WORD DUEL</span>
             </div>
 
-            {/* Headline in Pixel Font */}
-            <h1 className="font-pixel text-3xl sm:text-5xl md:text-6xl lg:text-[66px] font-bold text-white tracking-normal leading-[1.22] mb-6 drop-shadow-[0_2px_14px_rgba(255,255,255,0.12)]">
+            {/* Headline in Subtle Pixel Font */}
+            <h1 className="font-pixel text-2xl sm:text-4xl md:text-[44px] lg:text-[48px] font-semibold text-white tracking-normal leading-[1.28] mb-5">
               <span className="block">Guess the word.</span>
-              <span className="block mt-2 sm:mt-3">Save the stickman.</span>
-              <span className="block mt-2 sm:mt-3">Win the duel.</span>
+              <span className="block mt-1 sm:mt-1.5">Save the stickman.</span>
+              <span className="block mt-1 sm:mt-1.5">Win the duel.</span>
             </h1>
 
             {/* Subheadline */}
-            <p className="max-w-3xl mx-auto text-sm sm:text-base md:text-lg text-slate-300 font-normal leading-relaxed">
+            <p className="max-w-2xl mx-auto text-sm sm:text-base text-slate-300 font-normal leading-relaxed">
               Challenge a friend in real time, outsmart the AI in solo mode, or create a room and duel anyone with the code. Every wrong guess brings the noose closer.
             </p>
           </div>
