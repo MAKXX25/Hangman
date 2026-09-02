@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Navbar from './Navbar.jsx';
+import InteractiveHeroCard from './InteractiveHeroCard.jsx';
 
 export default function LandingPage({ onPlayNow, onPlayPvE }) {
   // Real-Time Stats State
@@ -142,93 +143,9 @@ export default function LandingPage({ onPlayNow, onPlayPvE }) {
             </button>
           </div>
 
-          {/* ─── Hero Graphic: Floating Game State Mock Card ─────────── */}
+          {/* ─── Hero Graphic: Dynamic Interactive Hangman Preview Card ─── */}
           <div className="relative max-w-2xl mx-auto">
-            {/* Card Outer Glow Border */}
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-600/40 via-cyan-500/30 to-purple-600/40 rounded-3xl blur-xl opacity-75 group-hover:opacity-100 transition duration-1000" />
-            
-            <div className="relative bg-[#11101d]/90 border border-white/15 rounded-2xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl text-left">
-              
-              {/* Card Header Bar */}
-              <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                  <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                  <div className="w-3 h-3 rounded-full bg-green-500/80" />
-                  <span className="ml-2 font-mono-code text-xs text-slate-400 tracking-wider">ROOM #DUEL-894</span>
-                </div>
-                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono-code font-bold">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                  <span>LIVE MATCH</span>
-                </div>
-              </div>
-
-              {/* Game Visual: Stickman Canvas Mock */}
-              <div className="flex flex-col items-center justify-center my-4">
-                <div className="w-32 h-28 relative flex items-center justify-center">
-                  <svg className="w-full h-full drop-shadow-[0_0_12px_rgba(168,85,247,0.5)]" viewBox="0 0 100 90" fill="none" stroke="#c084fc" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    {/* Gallows Structure */}
-                    <path d="M15 85 L85 85" stroke="#7c3aed" strokeWidth="4" />
-                    <path d="M30 85 L30 10 L65 10 L65 22" stroke="#7c3aed" strokeWidth="3.5" />
-                    <path d="M30 25 L45 10" stroke="#7c3aed" strokeWidth="2.5" />
-                    {/* Stickman (Head, Body, Arms, Leg) */}
-                    <circle cx="65" cy="30" r="8" stroke="#38bdf8" strokeWidth="3" />
-                    <line x1="65" y1="38" x2="65" y2="58" stroke="#38bdf8" strokeWidth="3" />
-                    <line x1="65" y1="44" x2="52" y2="52" stroke="#38bdf8" strokeWidth="3" />
-                    <line x1="65" y1="44" x2="78" y2="52" stroke="#38bdf8" strokeWidth="3" />
-                    <line x1="65" y1="58" x2="54" y2="74" stroke="#38bdf8" strokeWidth="3" />
-                  </svg>
-                </div>
-
-                {/* Secret Word Display Slots — Spells HANGMAN */}
-                <div className="flex items-center justify-center gap-2 sm:gap-3 my-6 font-mono-code">
-                  {['H', 'A', 'N', 'G', 'M', 'A', 'N'].map((char, index) => (
-                    <div
-                      key={index}
-                      className="w-9 h-12 sm:w-11 sm:h-14 rounded-xl flex items-center justify-center text-xl sm:text-2xl font-black uppercase transition-all duration-300 border-2 border-cyan-400 bg-cyan-500/20 text-cyan-300 shadow-[0_0_16px_rgba(34,211,238,0.45)]"
-                    >
-                      {char}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Player Indicators at Bottom */}
-              <div className="grid grid-cols-2 gap-4 mt-6 pt-4 border-t border-white/10">
-                {/* Player 1 */}
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/5">
-                  <div className="w-9 h-9 rounded-lg bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-400 font-display font-bold text-sm">
-                    P1
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold text-white truncate">Player 1 (Guesser)</div>
-                    <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span>Thinking...</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Player 2 */}
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/5">
-                  <div className="w-9 h-9 rounded-lg bg-cyan-600/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 font-display font-bold text-sm">
-                    P2
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold text-white truncate">Player 2 (Setter)</div>
-                    <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
-                      <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span>Word Locked</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-            </div>
+            <InteractiveHeroCard onPlayNow={onPlayNow} />
           </div>
 
         </div>
