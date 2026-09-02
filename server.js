@@ -234,7 +234,8 @@ function broadcastState(io, room, roomCode) {
             guesserName: guesserPlayer ? guesserPlayer.name : 'Guesser',
             isWordSetter,
             word: isWordSetter || room.state === 'roundover' ? room.game.word : null,
-            meaning: isWordSetter || room.state === 'roundover' ? (room.game.meaning || '') : null,
+            meaning: room.game.meaning || '',
+            hint: room.game.meaning || '',
             roundResult: room.game.roundResult || null,
             wrongGuesses: room.game.wrongGuesses || [],
           }

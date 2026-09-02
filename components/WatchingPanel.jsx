@@ -29,6 +29,7 @@ export default function WatchingPanel({
   const wrongGuesses = game ? (game.wrongGuesses || []) : [];
   const livesLeft = game ? game.livesLeft : 6;
   const maxLives = game ? game.maxLives : 6;
+  const activeHint = game ? (game.hint || game.meaning || '') : '';
 
   const handleLeave = () => {
     if (onLeaveGame) {
@@ -39,16 +40,19 @@ export default function WatchingPanel({
   };
 
   const wordChars = word ? word.toUpperCase().split('') : [];
-  const guessedSet = new Set(guessedLetters.map(l => l.toUpperCase()));
+  const guessedSet = new Set(guessedLetters.map((l) => l.toUpperCase()));
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-2 sm:py-4 flex-1 flex flex-col justify-between gap-3 sm:gap-4 md:gap-5 text-slate-100 font-sans">
-      
+    <div
+      id="panel-watching"
+      className="w-full max-w-7xl mx-auto flex-1 flex flex-col justify-between gap-2 sm:gap-4 md:gap-5 py-1 sm:py-2"
+    >
       {/* ─── Top Bar: Role Badge & Leave Game Button ──────────────────── */}
-      <div className="w-full flex items-center justify-between pb-2.5 sm:pb-3 border-b border-white/10 flex-wrap sm:flex-nowrap gap-2">
-        <div className="flex items-center gap-2.5 sm:gap-3">
-          <div className="px-2.5 sm:px-3 py-1 rounded-full bg-purple-950/60 border border-purple-500/30 text-purple-300 font-mono text-xs font-semibold uppercase tracking-wider">
-            Role: Word Setter (Watching) 👁️
+      <div className="w-full flex items-center justify-between px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-xl sm:rounded-2xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2.5 py-1 rounded-lg text-xs sm:text-sm font-semibold">
+            <span>👁️</span>
+            <span>Word Setter (Watching)</span>
           </div>
           {game?.roomCode && (
             <div className="hidden sm:block text-xs font-mono text-slate-400">
@@ -76,12 +80,12 @@ export default function WatchingPanel({
       <div className="grid grid-cols-1 md:grid-cols-12 gap-2 sm:gap-4 md:gap-5 lg:gap-6 items-stretch flex-1 min-h-0">
         
         {/* Left Column: Visuals & Canvas (5 cols) */}
-        <div className="md:col-span-5 lg:col-span-5 flex flex-col items-center justify-center gap-1.5 sm:gap-3 p-2 sm:p-4 md:p-5 lg:p-6 rounded-xl sm:rounded-2xl md:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl min-h-0">
+        <div className="md:col-span-5 lg:col-span-5 flex flex-col items-center justify-center gap-1.5 sm:gap-2.5 p-2 sm:p-3 md:p-5 lg:p-6 rounded-2xl md:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl min-h-0">
           <div className="font-mono text-[9px] sm:text-[11px] md:text-xs text-slate-400 uppercase tracking-wider font-semibold">
             Opponent&apos;s Gallows
           </div>
 
-          <div className="w-full max-w-[140px] sm:max-w-[200px] md:max-w-[260px] aspect-[11/12] flex items-center justify-center bg-black/30 rounded-lg sm:rounded-xl md:rounded-2xl border border-white/5 shadow-inner p-1 sm:p-2">
+          <div className="w-full max-w-[120px] sm:max-w-[170px] md:max-w-[220px] aspect-[11/12] flex items-center justify-center bg-black/30 rounded-lg sm:rounded-xl md:rounded-2xl border border-white/5 shadow-inner p-1 sm:p-2">
             <HangmanCanvas
               livesLeft={livesLeft}
               maxLives={maxLives}
@@ -93,19 +97,21 @@ export default function WatchingPanel({
         </div>
 
         {/* Right Column: Secret Word Display for Chooser (7 cols) */}
-        <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-center gap-2 sm:gap-4 p-2.5 sm:p-5 md:p-6 lg:p-8 rounded-xl sm:rounded-2xl md:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl text-center min-h-0">
-          <div className="font-mono text-[10px] sm:text-xs md:text-sm font-bold uppercase tracking-widest text-slate-400">
-            SECRET WORD ({wordChars.length} LETTERS)
+        <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-center gap-2 sm:gap-3 p-3 sm:p-5 md:p-6 lg:p-7 rounded-2xl md:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl text-center min-h-[120px] sm:min-h-0">
+          <div className="flex items-center justify-between w-full px-1">
+            <div className="font-mono text-[10px] sm:text-xs md:text-sm font-bold uppercase tracking-widest text-slate-400">
+              SECRET WORD ({wordChars.length} LETTERS)
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 md:gap-2.5 lg:gap-3.5 font-mono max-w-full">
+          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 md:gap-2.5 lg:gap-3.5 font-mono max-w-full my-0.5">
             {wordChars.map((char, index) => {
               const isGuessed = guessedSet.has(char);
 
               return (
                 <div
                   key={index}
-                  className={`min-w-[32px] min-h-[40px] px-1 sm:w-10 sm:h-12 md:w-13 md:h-15 lg:w-16 lg:h-18 flex items-center justify-center rounded-lg sm:rounded-xl md:rounded-2xl text-lg sm:text-2xl md:text-3xl lg:text-4xl font-extrabold uppercase transition-all duration-300 select-none shadow-sm ${
+                  className={`min-w-[32px] min-h-[42px] px-1 sm:w-10 sm:h-12 md:w-13 md:h-15 lg:w-16 lg:h-18 flex items-center justify-center rounded-lg sm:rounded-xl md:rounded-2xl text-lg sm:text-2xl md:text-3xl lg:text-4xl font-extrabold uppercase transition-all duration-300 select-none shadow-sm ${
                     isGuessed
                       ? 'border-2 border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_18px_rgba(34,211,238,0.5)] scale-100'
                       : 'bg-white/5 border-2 border-dashed border-white/20 text-white/40 scale-95'
@@ -116,6 +122,16 @@ export default function WatchingPanel({
               );
             })}
           </div>
+
+          {activeHint && (
+            <div className="w-full mt-1 px-3 py-2 rounded-xl bg-purple-950/40 border border-purple-500/30 backdrop-blur-md flex items-start sm:items-center justify-center gap-2 text-center animate-fadeIn shadow-sm">
+              <span className="text-sm flex-shrink-0">💡</span>
+              <p className="text-xs sm:text-sm text-purple-200 font-medium leading-snug">
+                <strong className="text-purple-300 font-semibold uppercase tracking-wider text-[10px] sm:text-xs mr-1">Clue:</strong>
+                {activeHint}
+              </p>
+            </div>
+          )}
 
           <div className="text-[10px] sm:text-xs font-mono text-purple-300/80 bg-purple-950/40 border border-purple-500/20 px-2.5 py-0.5 rounded-full">
             Dashed boxes indicate letters your opponent has not guessed yet.

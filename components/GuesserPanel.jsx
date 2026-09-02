@@ -26,6 +26,9 @@ export default function GuesserPanel({
   const wrongGuesses = game ? (game.wrongGuesses || []) : [];
   const livesLeft = game ? game.livesLeft : 6;
   const maxLives = game ? game.maxLives : 6;
+  const activeHint = game ? (game.hint || game.meaning || '') : '';
+
+  const [showHint, setShowHint] = React.useState(true);
 
   // Keyboard shortcut listener
   useEffect(() => {
@@ -41,10 +44,6 @@ export default function GuesserPanel({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [guessedLetters, isRoundOver, onGuessLetter]);
 
-  const guessedSet = new Set(guessedLetters.map(l => l.toUpperCase()));
-  const wrongSet = new Set(wrongGuesses.map(l => l.toUpperCase()));
-  const upperWord = word.toUpperCase();
-
   const handleLeave = () => {
     if (onLeaveGame) {
       onLeaveGame();
@@ -53,29 +52,32 @@ export default function GuesserPanel({
     }
   };
 
-  const hiddenSlots = (() => {
-    if (hiddenWord) {
-      if (Array.isArray(hiddenWord)) return hiddenWord;
-      const str = String(hiddenWord).trim();
-      if (str.includes(' ')) {
-        return str.split(/\s+/).filter(Boolean);
-      }
-      return str.split('');
-    }
-    if (word) {
-      return upperWord.split('').map(ch => (guessedSet.has(ch) ? ch : '_'));
-    }
-    return [];
-  })();
+  const guessedSet = new Set(guessedLetters.map((l) => l.toUpperCase()));
+  const upperWord = word.toUpperCase();
+
+  // Normalize hiddenWord to array of characters
+  let hiddenSlots = [];
+  if (Array.isArray(hiddenWord)) {
+    hiddenSlots = hiddenWord;
+  } else if (typeof hiddenWord === 'string' && hiddenWord.includes(' ')) {
+    hiddenSlots = hiddenWord.trim().split(/\s+/);
+  } else if (typeof hiddenWord === 'string' && hiddenWord.length > 0) {
+    hiddenSlots = hiddenWord.split('');
+  } else if (upperWord) {
+    hiddenSlots = upperWord.split('').map((ch) => (guessedSet.has(ch) ? ch : '_'));
+  }
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-2 sm:py-4 flex-1 flex flex-col justify-between gap-3 sm:gap-4 md:gap-5 text-slate-100 font-sans">
-      
-      {/* ─── Top Bar: Role Badge & Leave Game Button ──────────────────── */}
-      <div className="w-full flex items-center justify-between pb-2.5 sm:pb-3 border-b border-white/10 flex-wrap sm:flex-nowrap gap-2">
-        <div className="flex items-center gap-2.5 sm:gap-3">
-          <div className="px-2.5 sm:px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/30 text-cyan-300 font-mono text-xs font-semibold uppercase tracking-wider">
-            Role: Word Guesser 🎯
+    <div
+      id="panel-guesser"
+      className="w-full max-w-7xl mx-auto flex-1 flex flex-col justify-between gap-2 sm:gap-4 md:gap-5 py-1 sm:py-2"
+    >
+      {/* ─── TOP STATUS BAR: Header & Leave Game ──────────────────────────── */}
+      <div className="w-full flex items-center justify-between px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-xl sm:rounded-2xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2.5 py-1 rounded-lg text-xs sm:text-sm font-semibold">
+            <span>🎮</span>
+            <span>Guesser Mode</span>
           </div>
           {game?.roomCode && (
             <div className="hidden sm:block text-xs font-mono text-slate-400">
@@ -103,12 +105,12 @@ export default function GuesserPanel({
       <div className="grid grid-cols-1 md:grid-cols-12 gap-2 sm:gap-4 md:gap-5 lg:gap-6 items-stretch flex-1 min-h-0">
         
         {/* Left Column: Visuals & Canvas (5 cols) */}
-        <div className="md:col-span-5 lg:col-span-5 flex flex-col items-center justify-center gap-1.5 sm:gap-3 p-2 sm:p-4 md:p-5 lg:p-6 rounded-xl sm:rounded-2xl md:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl min-h-0">
+        <div className="md:col-span-5 lg:col-span-5 flex flex-col items-center justify-center gap-1.5 sm:gap-2.5 p-2 sm:p-3 md:p-5 lg:p-6 rounded-2xl md:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl min-h-0">
           <div className="font-mono text-[9px] sm:text-[11px] md:text-xs text-slate-400 uppercase tracking-wider font-semibold">
             Gallows View
           </div>
 
-          <div className="w-full max-w-[140px] sm:max-w-[200px] md:max-w-[260px] aspect-[11/12] flex items-center justify-center bg-black/30 rounded-lg sm:rounded-xl md:rounded-2xl border border-white/5 shadow-inner p-1 sm:p-2">
+          <div className="w-full max-w-[120px] sm:max-w-[170px] md:max-w-[220px] aspect-[11/12] flex items-center justify-center bg-black/30 rounded-lg sm:rounded-xl md:rounded-2xl border border-white/5 shadow-inner p-1 sm:p-2">
             <HangmanCanvas
               livesLeft={livesLeft}
               maxLives={maxLives}
@@ -119,20 +121,33 @@ export default function GuesserPanel({
           </div>
         </div>
 
-        {/* Right Column: Secret Word Display (7 cols) */}
-        <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-center gap-2 sm:gap-4 p-3 sm:p-5 md:p-6 lg:p-8 rounded-xl sm:rounded-2xl md:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl text-center min-h-[110px] sm:min-h-0">
-          <div className="font-mono text-[10px] sm:text-xs md:text-sm font-bold uppercase tracking-widest text-slate-400">
-            SECRET WORD ({hiddenSlots.length} LETTERS)
+        {/* Right Column: Secret Word Display + Clue (7 cols) */}
+        <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-center gap-2 sm:gap-3 p-3 sm:p-5 md:p-6 lg:p-7 rounded-2xl md:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl text-center min-h-[120px] sm:min-h-0">
+          <div className="flex items-center justify-between w-full px-1">
+            <div className="font-mono text-[10px] sm:text-xs md:text-sm font-bold uppercase tracking-widest text-slate-400">
+              SECRET WORD ({hiddenSlots.length} LETTERS)
+            </div>
+            {activeHint && (
+              <button
+                type="button"
+                onClick={() => setShowHint((prev) => !prev)}
+                className="px-2.5 py-1 rounded-full bg-yellow-400/10 hover:bg-yellow-400/20 border border-yellow-400/30 text-yellow-300 text-[10px] sm:text-xs font-mono font-bold flex items-center gap-1 transition-all cursor-pointer shadow-sm active:scale-95"
+                title={showHint ? 'Hide Clue' : 'Show Clue'}
+              >
+                <span>💡</span>
+                <span>{showHint ? 'Hide Clue' : 'Show Clue'}</span>
+              </button>
+            )}
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 md:gap-2.5 lg:gap-3.5 font-mono max-w-full">
+          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 md:gap-2.5 lg:gap-3.5 font-mono max-w-full my-0.5">
             {hiddenSlots.map((slot, index) => {
               const isRevealed = slot !== '_';
 
               return (
                 <div
                   key={index}
-                  className={`min-w-[32px] min-h-[40px] px-1 sm:w-10 sm:h-12 md:w-13 md:h-15 lg:w-16 lg:h-18 flex items-center justify-center rounded-lg sm:rounded-xl md:rounded-2xl text-lg sm:text-2xl md:text-3xl lg:text-4xl font-extrabold uppercase transition-all duration-300 select-none shadow-sm ${
+                  className={`min-w-[32px] min-h-[42px] px-1 sm:w-10 sm:h-12 md:w-13 md:h-15 lg:w-16 lg:h-18 flex items-center justify-center rounded-lg sm:rounded-xl md:rounded-2xl text-lg sm:text-2xl md:text-3xl lg:text-4xl font-extrabold uppercase transition-all duration-300 select-none shadow-sm ${
                     isRevealed
                       ? 'border-2 border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_18px_rgba(34,211,238,0.5)] scale-100'
                       : 'bg-white/5 border border-white/10 text-white/30'
@@ -143,6 +158,17 @@ export default function GuesserPanel({
               );
             })}
           </div>
+
+          {/* Word Hint / Clue Banner */}
+          {activeHint && showHint && (
+            <div className="w-full mt-1 px-3 py-2 rounded-xl bg-purple-950/40 border border-purple-500/30 backdrop-blur-md flex items-start sm:items-center justify-center gap-2 text-center animate-fadeIn shadow-sm">
+              <span className="text-sm flex-shrink-0">💡</span>
+              <p className="text-xs sm:text-sm text-purple-200 font-medium leading-snug">
+                <strong className="text-purple-300 font-semibold uppercase tracking-wider text-[10px] sm:text-xs mr-1">Clue:</strong>
+                {activeHint}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -183,7 +209,10 @@ export default function GuesserPanel({
               <span className="text-[10px] sm:text-xs md:text-sm text-slate-500 italic">None yet</span>
             ) : (
               wrongGuesses.map((l, i) => (
-                <span key={i} className="px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded sm:rounded-md bg-rose-950/70 border border-rose-500/40 text-rose-300 font-mono font-bold text-[10px] sm:text-xs md:text-sm shadow-sm">
+                <span
+                  key={i}
+                  className="px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded sm:rounded-md bg-rose-950/70 border border-rose-500/40 text-rose-300 font-mono font-bold text-[10px] sm:text-xs md:text-sm shadow-sm"
+                >
                   {l}
                 </span>
               ))
@@ -192,15 +221,15 @@ export default function GuesserPanel({
         </div>
       </div>
 
-      {/* ─── 3. BOTTOM ROW: Interactive QWERTY Keyboard ─────────────────────── */}
-      <div className="w-full p-2 sm:p-3 md:p-4 rounded-xl sm:rounded-2xl md:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl flex flex-col items-center gap-1 sm:gap-1.5">
+      {/* ─── 3. BOTTOM ROW: Interactive QWERTY Keyboard (Optimized for Mobile) ─────────────────────── */}
+      <div className="w-full p-2.5 sm:p-3.5 md:p-4 rounded-2xl md:rounded-3xl bg-[#12111f]/95 border border-white/10 backdrop-blur-2xl shadow-xl flex flex-col items-center gap-1 sm:gap-2">
         <div className="font-mono text-[9px] sm:text-[11px] md:text-xs text-slate-400 uppercase tracking-wider text-center">
-          Interactive Virtual Keyboard:
+          Interactive Virtual Keyboard
         </div>
 
-        <div className="flex flex-col gap-1 sm:gap-1.5 md:gap-2 w-full max-w-3xl touch-manipulation">
+        <div className="flex flex-col gap-1.5 sm:gap-2 w-full max-w-xl mx-auto touch-manipulation">
           {KEYBOARD_ROWS.map((row, rowIndex) => (
-            <div key={rowIndex} className="flex justify-center gap-0.5 sm:gap-1.5 md:gap-2 w-full touch-manipulation">
+            <div key={rowIndex} className="flex justify-center gap-1 sm:gap-1.5 md:gap-2 w-full touch-manipulation">
               {row.map((letter) => {
                 const isGuessed = guessedSet.has(letter);
                 const isCorrect = isGuessed && upperWord.includes(letter);
@@ -209,13 +238,13 @@ export default function GuesserPanel({
                 let keyClasses = '';
                 if (isCorrect) {
                   keyClasses =
-                    'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.5)] border border-emerald-400 scale-95 cursor-default';
+                    'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.5)] border border-emerald-400 scale-95 cursor-default font-black';
                 } else if (isWrong) {
                   keyClasses =
-                    'bg-rose-950/60 text-rose-500/70 line-through border border-rose-900/50 cursor-not-allowed scale-95';
+                    'bg-rose-950/70 text-rose-500/70 line-through border border-rose-900/50 cursor-not-allowed scale-95 opacity-60';
                 } else {
                   keyClasses =
-                    'bg-[#2a2a35] text-white/80 hover:bg-[#3a3a45] hover:text-white border border-white/5 active:scale-90 cursor-pointer';
+                    'bg-[#252338] text-white hover:bg-[#34314c] hover:border-purple-500/40 border border-white/10 active:scale-95 cursor-pointer shadow-md hover:shadow-purple-500/20';
                 }
 
                 return (
@@ -224,7 +253,7 @@ export default function GuesserPanel({
                     type="button"
                     disabled={isGuessed || isRoundOver}
                     onClick={() => onGuessLetter(letter)}
-                    className={`flex-1 max-w-[32px] sm:max-w-[42px] md:max-w-[50px] h-7 sm:h-9 md:h-12 rounded sm:rounded-lg font-mono font-bold text-xs sm:text-sm md:text-base flex items-center justify-center uppercase transition-all select-none touch-manipulation active:scale-90 ${keyClasses}`}
+                    className={`flex-1 min-w-0 h-11 sm:h-12 md:h-13 rounded-lg sm:rounded-xl font-mono font-bold text-sm sm:text-base md:text-lg flex items-center justify-center uppercase transition-all select-none touch-manipulation active:scale-95 ${keyClasses}`}
                     aria-label={`Letter ${letter}`}
                   >
                     {letter}
