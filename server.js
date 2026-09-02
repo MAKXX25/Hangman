@@ -135,11 +135,13 @@ function generateRoomCode() {
   return code;
 }
 
-function getHiddenWord(word, guessed) {
+function getHiddenWord(word, guessed = []) {
+  const guessedUpper = (guessed || []).map((l) => l.toUpperCase());
   return word
+    .toUpperCase()
     .split('')
-    .map((ch) => (guessed.includes(ch) ? ch : '_'))
-    .join('');
+    .map((ch) => (guessedUpper.includes(ch) ? ch : '_'))
+    .join(' ');
 }
 
 function findPlayer(room, socketId) {

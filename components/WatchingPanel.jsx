@@ -98,14 +98,14 @@ export default function WatchingPanel({
             SECRET WORD ({wordChars.length} LETTERS)
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-2 md:gap-2.5 lg:gap-3.5 font-mono max-w-full">
+          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 md:gap-2.5 lg:gap-3.5 font-mono max-w-full">
             {wordChars.map((char, index) => {
               const isGuessed = guessedSet.has(char);
 
               return (
                 <div
                   key={index}
-                  className={`w-7 h-9 sm:w-10 sm:h-12 md:w-13 md:h-15 lg:w-16 lg:h-18 flex items-center justify-center rounded-lg sm:rounded-xl md:rounded-2xl text-base sm:text-2xl md:text-3xl lg:text-4xl font-extrabold uppercase transition-all duration-300 select-none shadow-sm ${
+                  className={`min-w-[32px] min-h-[40px] px-1 sm:w-10 sm:h-12 md:w-13 md:h-15 lg:w-16 lg:h-18 flex items-center justify-center rounded-lg sm:rounded-xl md:rounded-2xl text-lg sm:text-2xl md:text-3xl lg:text-4xl font-extrabold uppercase transition-all duration-300 select-none shadow-sm ${
                     isGuessed
                       ? 'border-2 border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_18px_rgba(34,211,238,0.5)] scale-100'
                       : 'bg-white/5 border-2 border-dashed border-white/20 text-white/40 scale-95'

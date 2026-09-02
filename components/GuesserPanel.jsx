@@ -53,7 +53,20 @@ export default function GuesserPanel({
     }
   };
 
-  const hiddenSlots = hiddenWord ? hiddenWord.split(' ') : [];
+  const hiddenSlots = (() => {
+    if (hiddenWord) {
+      if (Array.isArray(hiddenWord)) return hiddenWord;
+      const str = String(hiddenWord).trim();
+      if (str.includes(' ')) {
+        return str.split(/\s+/).filter(Boolean);
+      }
+      return str.split('');
+    }
+    if (word) {
+      return upperWord.split('').map(ch => (guessedSet.has(ch) ? ch : '_'));
+    }
+    return [];
+  })();
 
   return (
     <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-2 sm:py-4 flex-1 flex flex-col justify-between gap-3 sm:gap-4 md:gap-5 text-slate-100 font-sans">
@@ -107,19 +120,19 @@ export default function GuesserPanel({
         </div>
 
         {/* Right Column: Secret Word Display (7 cols) */}
-        <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-center gap-2 sm:gap-4 p-2.5 sm:p-5 md:p-6 lg:p-8 rounded-xl sm:rounded-2xl md:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl text-center min-h-0">
+        <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-center gap-2 sm:gap-4 p-3 sm:p-5 md:p-6 lg:p-8 rounded-xl sm:rounded-2xl md:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl text-center min-h-[110px] sm:min-h-0">
           <div className="font-mono text-[10px] sm:text-xs md:text-sm font-bold uppercase tracking-widest text-slate-400">
             SECRET WORD ({hiddenSlots.length} LETTERS)
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-2 md:gap-2.5 lg:gap-3.5 font-mono max-w-full">
+          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 md:gap-2.5 lg:gap-3.5 font-mono max-w-full">
             {hiddenSlots.map((slot, index) => {
               const isRevealed = slot !== '_';
 
               return (
                 <div
                   key={index}
-                  className={`w-7 h-9 sm:w-10 sm:h-12 md:w-13 md:h-15 lg:w-16 lg:h-18 flex items-center justify-center rounded-lg sm:rounded-xl md:rounded-2xl text-base sm:text-2xl md:text-3xl lg:text-4xl font-extrabold uppercase transition-all duration-300 select-none shadow-sm ${
+                  className={`min-w-[32px] min-h-[40px] px-1 sm:w-10 sm:h-12 md:w-13 md:h-15 lg:w-16 lg:h-18 flex items-center justify-center rounded-lg sm:rounded-xl md:rounded-2xl text-lg sm:text-2xl md:text-3xl lg:text-4xl font-extrabold uppercase transition-all duration-300 select-none shadow-sm ${
                     isRevealed
                       ? 'border-2 border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_18px_rgba(34,211,238,0.5)] scale-100'
                       : 'bg-white/5 border border-white/10 text-white/30'

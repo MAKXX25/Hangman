@@ -2234,7 +2234,22 @@ export default function HangmanDuelApp() {
   const isWordSetter = game ? (game.wordSetterId === myPlayerId) : false;
   const livesLeft = game ? game.livesLeft : MAX_LIVES;
   const wrongGuesses = game ? (game.wrongGuesses || []) : [];
-  const hiddenWordChars = (game?.hiddenWord || '').split(' ').filter(Boolean);
+  const hiddenWordChars = (() => {
+    const hw = game?.hiddenWord;
+    if (hw) {
+      if (Array.isArray(hw)) return hw;
+      const str = String(hw).trim();
+      if (str.includes(' ')) {
+        return str.split(/\s+/).filter(Boolean);
+      }
+      return str.split('');
+    }
+    if (game?.word) {
+      const guessedSet = new Set((game?.guessedLetters || []).map(l => l.toUpperCase()));
+      return game.word.toUpperCase().split('').map(ch => (guessedSet.has(ch) ? ch : '_'));
+    }
+    return [];
+  })();
 
   // ── Physical Keyboard Support for Guesser ─────────────────────────────────
   useEffect(() => {
@@ -3479,7 +3494,7 @@ export default function HangmanDuelApp() {
                       return (
                         <div
                           key={i}
-                          className={`w-7 h-9 sm:w-10 sm:h-12 md:w-13 md:h-15 lg:w-16 lg:h-18 flex items-center justify-center rounded-lg sm:rounded-xl md:rounded-2xl text-base sm:text-2xl md:text-3xl lg:text-4xl font-extrabold uppercase transition-all duration-300 select-none shadow-sm ${
+                          className={`min-w-[32px] min-h-[40px] px-1 sm:w-10 sm:h-12 md:w-13 md:h-15 lg:w-16 lg:h-18 flex items-center justify-center rounded-lg sm:rounded-xl md:rounded-2xl text-lg sm:text-2xl md:text-3xl lg:text-4xl font-extrabold uppercase transition-all duration-300 select-none shadow-sm ${
                             isRevealed
                               ? 'border-2 border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_18px_rgba(34,211,238,0.5)] scale-100'
                               : 'bg-white/5 border border-white/10 text-white/30'
