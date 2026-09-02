@@ -67,6 +67,31 @@ const rooms = {};
 const MAX_LIVES = 10;
 const DEFAULT_WORD_PICK_TIME = 60; // seconds
 
+// ─── Real-Time Global Stats Tracking ──────────────────────────────────────────
+const globalStats = {
+  duelsPlayed: 0,
+  wordsGuessed: 0,
+  totalGuesses: 0,
+  correctGuesses: 0,
+};
+
+function getStatsPayload(ioInstance) {
+  const totalG = globalStats.totalGuesses || 0;
+  const correctG = globalStats.correctGuesses || 0;
+  const accuracy = totalG > 0 ? Math.round((correctG / totalG) * 100) : (globalStats.duelsPlayed > 0 ? Math.round((globalStats.wordsGuessed / Math.max(1, globalStats.duelsPlayed)) * 100) : 100);
+  const activeClients = ioInstance && ioInstance.engine ? Math.max(1, ioInstance.engine.clientsCount) : 1;
+
+  return {
+    duelsPlayed: globalStats.duelsPlayed,
+    wordsGuessed: globalStats.wordsGuessed,
+    totalGuesses: globalStats.totalGuesses,
+    correctGuesses: globalStats.correctGuesses,
+    winRate: accuracy,
+    activePlayers: activeClients,
+    activeRooms: Object.keys(rooms).length,
+  };
+}
+
 function getRandomWord(difficulty = 'medium') {
   let filtered = DICTIONARY_ENTRIES;
   if (difficulty === 'easy') {
@@ -268,7 +293,29 @@ app.get('/status', (req, res) => {
     service: 'hangman-socket-backend',
     activeRooms: Object.keys(rooms).length,
     uptime: process.uptime(),
+    stats: getStatsPayload(io),
   });
+});
+
+// REST endpoint for real-time stats
+app.get('/api/stats', (req, res) => {
+  res.json({ success: true, stats: getStatsPayload(io) });
+});
+
+app.post('/api/stats', express.json(), (req, res) => {
+  const { action, isCorrect } = req.body || {};
+  if (action === 'record_duel') {
+    globalStats.duelsPlayed++;
+  } else if (action === 'record_win') {
+    globalStats.duelsPlayed++;
+    globalStats.wordsGuessed++;
+  } else if (action === 'record_guess') {
+    globalStats.totalGuesses++;
+    if (isCorrect) globalStats.correctGuesses++;
+  }
+  const payload = getStatsPayload(io);
+  io.emit('stats_update', payload);
+  res.json({ success: true, stats: payload });
 });
 
 // REST endpoint for dictionary entries
@@ -279,6 +326,12 @@ app.get('/api/dictionary', (req, res) => {
 // ─── Socket.io Event Handlers ─────────────────────────────────────────────────
 io.on('connection', (socket) => {
   console.log(`🔌 Client connected: ${socket.id} (Transport: ${socket.conn.transport.name})`);
+
+  // Broadcast updated live players count to everyone
+  io.emit('stats_update', getStatsPayload(io));
+
+  // Also send stats directly to the newly connected client
+  socket.emit('stats_update', getStatsPayload(io));
 
   // 1. Create Room
   socket.on('create_room', ({ playerName, wordPickTime }) => {
@@ -450,8 +503,12 @@ io.on('connection', (socket) => {
     }
 
     room.game.guessedLetters.push(l);
+    globalStats.totalGuesses++;
 
-    if (!room.game.word.includes(l)) {
+    const isMatch = room.game.word.includes(l);
+    if (isMatch) {
+      globalStats.correctGuesses++;
+    } else {
       room.game.livesLeft--;
       room.game.wrongGuesses.push(l);
     }
@@ -462,14 +519,18 @@ io.on('connection', (socket) => {
       if (guesser) guesser.score++;
       room.game.roundResult = 'guesser_wins';
       room.state = 'roundover';
+      globalStats.duelsPlayed++;
+      globalStats.wordsGuessed++;
     } else if (room.game.livesLeft <= 0) {
       const setter = findPlayer(room, room.game.wordSetterId);
       if (setter) setter.score++;
       room.game.roundResult = 'setter_wins';
       room.state = 'roundover';
+      globalStats.duelsPlayed++;
     }
 
     broadcastState(io, room, roomCode);
+    io.emit('stats_update', getStatsPayload(io));
   });
 
   // 6. Next Round
@@ -510,7 +571,10 @@ io.on('connection', (socket) => {
   // 7. Disconnect
   socket.on('disconnect', () => {
     const roomCode = socket.data.roomCode;
-    if (!roomCode || !rooms[roomCode]) return;
+    if (!roomCode || !rooms[roomCode]) {
+      io.emit('stats_update', getStatsPayload(io));
+      return;
+    }
     const room = rooms[roomCode];
 
     stopSettingTimer(roomCode);
@@ -526,6 +590,8 @@ io.on('connection', (socket) => {
       broadcastState(io, room, roomCode);
       console.log(`👋 Player left room ${roomCode}. Waiting for new opponent.`);
     }
+
+    io.emit('stats_update', getStatsPayload(io));
   });
 });
 

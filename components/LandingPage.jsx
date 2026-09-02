@@ -1,8 +1,39 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function LandingPage({ onPlayNow, onPlayPvE }) {
+  // Real-Time Stats State
+  const [liveStats, setLiveStats] = useState({
+    duelsPlayed: 0,
+    wordsGuessed: 0,
+    totalGuesses: 0,
+    correctGuesses: 0,
+    winRate: 100,
+    activePlayers: 1,
+  });
+
+  useEffect(() => {
+    try {
+      const savedStats = localStorage.getItem('hangman_duel_live_stats');
+      if (savedStats) {
+        const parsed = JSON.parse(savedStats);
+        if (parsed && typeof parsed === 'object') {
+          setLiveStats(prev => ({ ...prev, ...parsed }));
+        }
+      }
+    } catch {}
+
+    fetch('/api/stats')
+      .then(res => res.json())
+      .then(data => {
+        if (data?.stats) {
+          setLiveStats(prev => ({ ...prev, ...data.stats }));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   // Interactive mock state for the Split Showcase PvE card
   const [guessedLetters, setGuessedLetters] = useState({
     P: 'correct',
@@ -257,14 +288,14 @@ export default function LandingPage({ onPlayNow, onPlayPvE }) {
         </div>
       </section>
 
-      {/* ─── 3. STATS BAR ───────────────────────────────────────────── */}
+      {/* ─── 3. STATS BAR (Real-Time Live Data) ─────────────────────── */}
       <section className="relative z-10 py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
           
           {/* Stat 1: Cyan */}
           <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md hover:border-cyan-500/30 transition-all duration-300">
             <div className="font-display text-3xl sm:text-4xl font-extrabold text-cyan-400 drop-shadow-[0_0_15px_rgba(6,182,212,0.3)] mb-1">
-              12,480
+              {(liveStats.duelsPlayed || 0).toLocaleString()}
             </div>
             <div className="text-xs sm:text-sm font-medium text-slate-400 uppercase tracking-wider">
               Duels Played
@@ -273,31 +304,32 @@ export default function LandingPage({ onPlayNow, onPlayPvE }) {
 
           {/* Stat 2: Purple */}
           <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md hover:border-purple-500/30 transition-all duration-300">
-            <div className="font-display text-3xl sm:text-4xl font-extrabold text-purple-400 drop-shadow-[0_0_15px_rgba(168,85,247,0.3)] mb-1">
-              3,920
+            <div className="font-display text-3xl sm:text-4xl font-extrabold text-purple-400 drop-shadow-[0_0_15px_rgba(168,85,247,0.3)] mb-1 flex items-center gap-2">
+              <span>{(liveStats.activePlayers || 1).toLocaleString()}</span>
+              <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" title="Live Online" />
             </div>
             <div className="text-xs sm:text-sm font-medium text-slate-400 uppercase tracking-wider">
-              Active Duelists
+              Active Word Nerds
             </div>
           </div>
 
           {/* Stat 3: Green */}
           <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md hover:border-emerald-500/30 transition-all duration-300">
             <div className="font-display text-3xl sm:text-4xl font-extrabold text-emerald-400 drop-shadow-[0_0_15px_rgba(16,185,129,0.3)] mb-1">
-              98%
+              {liveStats.winRate || 100}%
             </div>
             <div className="text-xs sm:text-sm font-medium text-slate-400 uppercase tracking-wider">
-              Match Uptime
+              Win Rate Accuracy
             </div>
           </div>
 
           {/* Stat 4: Yellow */}
           <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md hover:border-yellow-500/30 transition-all duration-300">
             <div className="font-display text-3xl sm:text-4xl font-extrabold text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.3)] mb-1">
-              24/7
+              {(liveStats.wordsGuessed || 0).toLocaleString()}
             </div>
             <div className="text-xs sm:text-sm font-medium text-slate-400 uppercase tracking-wider">
-              Instant Matchmaking
+              Words Solved
             </div>
           </div>
 

@@ -147,6 +147,80 @@ export default function HangmanDuelApp() {
   const watchCanvasAnimStateRef = useRef({ drawnSteps: 0, animId: null });
   const specialAnimIdRef = useRef(null);
 
+  // ── Real-Time Live Stats Tracking ──────────────────────────────────────────
+  const [liveStats, setLiveStats] = useState({
+    duelsPlayed: 0,
+    wordsGuessed: 0,
+    totalGuesses: 0,
+    correctGuesses: 0,
+    winRate: 100,
+    activePlayers: 1,
+  });
+
+  // Load persisted stats on mount & sync with server /api/stats
+  useEffect(() => {
+    try {
+      const savedStats = localStorage.getItem('hangman_duel_live_stats');
+      if (savedStats) {
+        const parsed = JSON.parse(savedStats);
+        if (parsed && typeof parsed === 'object') {
+          setLiveStats(prev => ({ ...prev, ...parsed }));
+        }
+      }
+    } catch {}
+
+    fetch('/api/stats')
+      .then(res => res.json())
+      .then(data => {
+        if (data?.stats) {
+          setLiveStats(prev => {
+            const merged = {
+              duelsPlayed: Math.max(prev.duelsPlayed || 0, data.stats.duelsPlayed || 0),
+              wordsGuessed: Math.max(prev.wordsGuessed || 0, data.stats.wordsGuessed || 0),
+              totalGuesses: Math.max(prev.totalGuesses || 0, data.stats.totalGuesses || 0),
+              correctGuesses: Math.max(prev.correctGuesses || 0, data.stats.correctGuesses || 0),
+              activePlayers: Math.max(1, data.stats.activePlayers || 1),
+              winRate: data.stats.winRate || prev.winRate || 100,
+            };
+            try { localStorage.setItem('hangman_duel_live_stats', JSON.stringify(merged)); } catch {}
+            return merged;
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const recordGuessStats = useCallback((isCorrect) => {
+    setLiveStats(prev => {
+      const totalG = (prev.totalGuesses || 0) + 1;
+      const correctG = (prev.correctGuesses || 0) + (isCorrect ? 1 : 0);
+      const winRate = totalG > 0 ? Math.round((correctG / totalG) * 100) : 100;
+      const next = { ...prev, totalGuesses: totalG, correctGuesses: correctG, winRate };
+      try { localStorage.setItem('hangman_duel_live_stats', JSON.stringify(next)); } catch {}
+      return next;
+    });
+    fetch('/api/stats', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'record_guess', isCorrect }),
+    }).catch(() => {});
+  }, []);
+
+  const recordDuelEndStats = useCallback((isGuesserWin) => {
+    setLiveStats(prev => {
+      const duels = (prev.duelsPlayed || 0) + 1;
+      const words = (prev.wordsGuessed || 0) + (isGuesserWin ? 1 : 0);
+      const next = { ...prev, duelsPlayed: duels, wordsGuessed: words };
+      try { localStorage.setItem('hangman_duel_live_stats', JSON.stringify(next)); } catch {}
+      return next;
+    });
+    fetch('/api/stats', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: isGuesserWin ? 'record_win' : 'record_duel' }),
+    }).catch(() => {});
+  }, []);
+
   // Auxiliary Refs
   const socketRef = useRef(null);
   const wakeUpTimerRef = useRef(null);
@@ -1429,6 +1503,25 @@ export default function HangmanDuelApp() {
       setLobbyError(text);
     };
 
+    const onStatsUpdate = (newStats) => {
+      if (newStats) {
+        setLiveStats((prev) => {
+          const merged = {
+            ...prev,
+            ...newStats,
+            duelsPlayed: Math.max(prev.duelsPlayed || 0, newStats.duelsPlayed || 0),
+            wordsGuessed: Math.max(prev.wordsGuessed || 0, newStats.wordsGuessed || 0),
+            totalGuesses: Math.max(prev.totalGuesses || 0, newStats.totalGuesses || 0),
+            correctGuesses: Math.max(prev.correctGuesses || 0, newStats.correctGuesses || 0),
+            activePlayers: Math.max(1, newStats.activePlayers || 1),
+            winRate: newStats.winRate || prev.winRate || 100,
+          };
+          try { localStorage.setItem('hangman_duel_live_stats', JSON.stringify(merged)); } catch {}
+          return merged;
+        });
+      }
+    };
+
     // Immediate sync if already connected
     if (sock.connected) {
       onConnect();
@@ -1448,6 +1541,7 @@ export default function HangmanDuelApp() {
     sock.on('word_validation', onWordValidation);
     sock.on('opponent_left', onOpponentLeft);
     sock.on('error_msg', onErrorMsg);
+    sock.on('stats_update', onStatsUpdate);
 
     return () => {
       sock.off('connect', onConnect);
@@ -1464,6 +1558,7 @@ export default function HangmanDuelApp() {
       sock.off('word_validation', onWordValidation);
       sock.off('opponent_left', onOpponentLeft);
       sock.off('error_msg', onErrorMsg);
+      sock.off('stats_update', onStatsUpdate);
     };
   }, [applyState, forceResetRoundState, showToast]);
 
@@ -1958,6 +2053,8 @@ export default function HangmanDuelApp() {
 
     // Check if guess is correct (PvE mode has secret word locally)
     const isCorrect = game.word ? game.word.toUpperCase().includes(l) : false;
+    recordGuessStats(isCorrect);
+
     if (isCorrect) {
       triggerHappyGuess(game.livesLeft, game.maxLives || 10);
     }
@@ -1967,6 +2064,7 @@ export default function HangmanDuelApp() {
       const nextRoom = processGuess(currentRoom, l);
       if (nextRoom.state === 'roundover') {
         const won = nextRoom.game.roundResult === 'guesser_wins';
+        recordDuelEndStats(won);
         // Freeze the random dialogue exactly once when the round ends
         const mistakes = nextRoom.game.wrongGuesses?.length ?? 0;
         setFrozenDialogue(getRandomPerformanceDialogue(mistakes, won));
@@ -2551,43 +2649,48 @@ export default function HangmanDuelApp() {
           </div>
         </section>
 
-        {/* ─── 3. STATS BAR ───────────────────────────────────────────── */}
+        {/* ─── 3. STATS BAR (Real-Time Live Data) ─────────────────────── */}
         <section className="relative z-10 py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
             
+            {/* Stat 1: Duels Played */}
             <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md hover:border-cyan-500/30 transition-all duration-300">
               <div className="font-display text-3xl sm:text-4xl font-extrabold text-cyan-400 drop-shadow-[0_0_15px_rgba(6,182,212,0.3)] mb-1">
-                12,480
+                {(liveStats.duelsPlayed || 0).toLocaleString()}
               </div>
               <div className="text-xs sm:text-sm font-medium text-slate-400 uppercase tracking-wider">
                 Duels Played
               </div>
             </div>
 
+            {/* Stat 2: Active Players */}
             <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md hover:border-purple-500/30 transition-all duration-300">
-              <div className="font-display text-3xl sm:text-4xl font-extrabold text-purple-400 drop-shadow-[0_0_15px_rgba(168,85,247,0.3)] mb-1">
-                3,920
+              <div className="font-display text-3xl sm:text-4xl font-extrabold text-purple-400 drop-shadow-[0_0_15px_rgba(168,85,247,0.3)] mb-1 flex items-center gap-2">
+                <span>{(liveStats.activePlayers || 1).toLocaleString()}</span>
+                <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" title="Live Online" />
               </div>
               <div className="text-xs sm:text-sm font-medium text-slate-400 uppercase tracking-wider">
                 Active Word Nerds
               </div>
             </div>
 
+            {/* Stat 3: Accuracy / Win Rate */}
             <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md hover:border-emerald-500/30 transition-all duration-300">
               <div className="font-display text-3xl sm:text-4xl font-extrabold text-emerald-400 drop-shadow-[0_0_15px_rgba(16,185,129,0.3)] mb-1">
-                98%
+                {liveStats.winRate || 100}%
               </div>
               <div className="text-xs sm:text-sm font-medium text-slate-400 uppercase tracking-wider">
                 Win Rate Accuracy
               </div>
             </div>
 
+            {/* Stat 4: Words Solved */}
             <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md hover:border-yellow-500/30 transition-all duration-300">
               <div className="font-display text-3xl sm:text-4xl font-extrabold text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.3)] mb-1">
-                24/7
+                {(liveStats.wordsGuessed || 0).toLocaleString()}
               </div>
               <div className="text-xs sm:text-sm font-medium text-slate-400 uppercase tracking-wider">
-                Instant Matchmaking
+                Words Solved
               </div>
             </div>
 
