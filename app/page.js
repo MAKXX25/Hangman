@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import confetti from 'canvas-confetti';
+import Navbar from '../components/Navbar.jsx';
 import { getSocket, isBackendConfigured, getBackendUrl } from '../lib/socket.js';
 import { ServerlessSocket } from '../lib/serverlessSocket.js';
 import { getRandomWord, isValidWord, getRandomSuggestions } from '../lib/dictionary.js';
@@ -661,7 +662,21 @@ export default function HangmanDuelApp() {
       return;
     }
 
-    if (targetSteps === state.drawnSteps) return;
+    if (targetSteps === state.drawnSteps) {
+      // Re-draw statically on re-render so HTML5 Canvas is never blank
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (targetSteps > 0) {
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        for (let i = 0; i < targetSteps; i++) {
+          drawStaticStep(ctx, i, isDead);
+        }
+        drawPanicOverlays(ctx, targetSteps, isDead);
+        ctx.restore();
+      }
+      return;
+    }
 
     let currentStep = state.drawnSteps;
     const STEP_DURATION = 400; // ms per stroke
@@ -2254,6 +2269,17 @@ export default function HangmanDuelApp() {
           <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_80%_60%_at_50%_0%,#000_70%,transparent_100%)]" />
         </div>
 
+        {/* ─── 1. NAVBAR (Only rendered on the Landing/Lobby Screen) ──── */}
+        <Navbar
+          onPlayNow={() => {
+            const el = document.getElementById('input-name');
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              el.focus();
+            }
+          }}
+        />
+
         {/* ─── 2. HERO SECTION ────────────────────────────────────────── */}
         <section id="hero" className="relative z-10 pt-12 pb-20 md:pt-20 md:pb-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="text-center max-w-4xl mx-auto mb-14">
@@ -3029,33 +3055,52 @@ export default function HangmanDuelApp() {
         </div>
 
         {/* Header Bar */}
-        <header className="game-header">
-          <div className="header-brand">
-            <span className="header-logo">🎯</span>
-            <span className="header-title">Hangman <strong>Duel</strong></span>
-          </div>
-
-          {/* Header Scoreboard with Point Celebration Animations */}
-          <div id="scoreboard" className="scoreboard" aria-live="polite">
-            <div className={`score-player ${p1Scored ? 'score-box-pulse p1-pulse' : ''}`} id="score-p1">
-              {p1Scored && <span className="score-plus-one">+1</span>}
-              <span className="score-name" id="score-name-p1">{p1.name}</span>
-              <span className={`score-val ${p1Scored ? 'score-num-pop' : ''}`} id="score-val-p1">{p1.score}</span>
+        <header className="w-full max-w-5xl mx-auto px-4 py-4 flex items-center justify-between z-10 border-b border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-purple-950/40 border border-purple-500/30 text-purple-400">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                <path d="M3 21h10" /><path d="M6 21V3h10" /><path d="M6 7l4-4" /><path d="M16 3v3" />
+                <circle cx="16" cy="8.5" r="2.2" /><path d="M16 10.7v4.3" />
+                <path d="M13.5 13.2L16 11.8l2.5 1.4" /><path d="M14 19l2-4 2 4" />
+              </svg>
             </div>
-            <div className="score-divider">:</div>
-            <div className={`score-player score-player-right ${p2Scored ? 'score-box-pulse p2-pulse' : ''}`} id="score-p2">
-              {p2Scored && <span className="score-plus-one">+1</span>}
-              <span className={`score-val ${p2Scored ? 'score-num-pop' : ''}`} id="score-val-p2">{p2.score}</span>
-              <span className="score-name" id="score-name-p2">{p2.name}</span>
+            <div className="flex items-center text-base font-bold uppercase tracking-wider">
+              <span className="text-white">Hangman</span>
+              <span className="ml-1 text-purple-400">Duel</span>
             </div>
           </div>
 
-          <div className="header-room">
-            <span id="header-room-code">
+          {/* Header Scoreboard */}
+          <div id="scoreboard" className="flex items-center gap-3 px-4 py-1.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md" aria-live="polite">
+            <div className={`flex items-center gap-1.5 font-mono text-sm ${p1Scored ? 'text-emerald-400 font-bold' : 'text-slate-300'}`}>
+              <span className="font-semibold">{p1.name}</span>
+              <span className="font-bold text-white px-2 py-0.5 rounded-lg bg-white/10">{p1.score}</span>
+            </div>
+            <span className="text-slate-500 font-bold">:</span>
+            <div className={`flex items-center gap-1.5 font-mono text-sm ${p2Scored ? 'text-emerald-400 font-bold' : 'text-slate-300'}`}>
+              <span className="font-bold text-white px-2 py-0.5 rounded-lg bg-white/10">{p2.score}</span>
+              <span className="font-semibold">{p2.name}</span>
+            </div>
+          </div>
+
+          {/* Leave Game CTA */}
+          <div className="flex items-center gap-3">
+            <span className="hidden sm:inline-block px-3 py-1 rounded-full bg-white/5 border border-white/10 font-mono text-xs text-slate-400">
               {isPveMode ? `BOT: ${pveDifficulty.toUpperCase()}` : `ROOM: ${roomCode}`}
             </span>
-            <button id="btn-leave-game" className="btn btn-ghost btn-sm" onClick={handleLeaveGame}>
-              Leave
+            <button
+              id="btn-leave-game"
+              type="button"
+              onClick={handleLeaveGame}
+              className="bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30 hover:text-rose-300 px-4 py-2 rounded-xl text-sm font-semibold transition-all backdrop-blur-md flex items-center gap-2 cursor-pointer shadow-sm active:scale-95"
+              aria-label="Leave Game"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              <span>Leave Game</span>
             </button>
           </div>
         </header>
@@ -3226,74 +3271,132 @@ export default function HangmanDuelApp() {
 
           {/* ─── GUESSER ACTIVE PANEL ─────────────────────────────────────── */}
           {(gameState === 'guessing' || gameState === 'roundover') && !isWordSetter && (
-            <section id="panel-guesser" className="panel">
-              <div className="game-layout">
-                {/* Left Column: Canvas & Lives */}
-                <div className="hangman-area">
-                  <div className={`canvas-wrapper ${isGallowsSwinging ? 'hangman-swing' : ''}`} id="canvas-wrapper">
-                    <canvas id="hangman-canvas" ref={hangmanCanvasRef} width={200} height={240} />
+            <section id="panel-guesser" className="w-full max-w-5xl mx-auto px-4 py-4">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                {/* Left Column: Gallows Canvas & Health (5 cols) */}
+                <div className="lg:col-span-5 flex flex-col items-center gap-4 p-6 rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl">
+                  <div className="font-mono text-xs text-slate-400 uppercase tracking-wider font-semibold">
+                    Gallows View
                   </div>
-                  <div className="lives-display">
-                    <span id="lives-left" className={`lives-number ${livesLeft <= 3 ? 'danger' : livesLeft <= 6 ? 'warn' : ''}`}>
-                      {livesLeft}
+
+                  <div className={`w-[220px] h-[240px] flex items-center justify-center bg-black/30 rounded-2xl border border-white/5 shadow-inner ${isGallowsSwinging ? 'hangman-swing' : ''}`}>
+                    <canvas id="hangman-canvas" ref={hangmanCanvasRef} width={220} height={240} className="w-[220px] h-[240px]" />
+                  </div>
+
+                  {/* Gallows Health Hearts */}
+                  <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-3.5 flex justify-between items-center backdrop-blur-md mt-2">
+                    <span className="font-mono text-xs font-semibold tracking-wider uppercase text-slate-400">
+                      Health:
                     </span>
-                    <span className="lives-label">lives left</span>
-                  </div>
-                  <div id="wrong-letters" className="wrong-letters">
-                    {wrongGuesses.map((l, i) => (
-                      <span key={i} className={`wrong-letter-chip ${newWrongSet.has(l.toUpperCase()) ? 'new-wrong' : ''}`}>
-                        {l}
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: isPveMode ? 6 : (game?.maxLives || 10) }).map((_, i) => (
+                          <svg
+                            key={i}
+                            viewBox="0 0 24 24"
+                            className={`w-5 h-5 transition-all duration-300 ${
+                              i < livesLeft
+                                ? 'fill-rose-500 text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.6)] scale-100'
+                                : 'fill-white/10 text-white/10 scale-90'
+                            }`}
+                          >
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                          </svg>
+                        ))}
+                      </div>
+                      <span className="font-mono text-xs font-bold text-slate-300 ml-1">
+                        ({livesLeft}/{isPveMode ? 6 : (game?.maxLives || 10)})
                       </span>
-                    ))}
+                    </div>
+                  </div>
+
+                  {/* Wrong Letters Chips */}
+                  <div className="w-full flex flex-col gap-2 mt-1">
+                    <span className="font-mono text-xs uppercase tracking-wider text-slate-400">Wrong Letters:</span>
+                    <div className="flex flex-wrap gap-1.5 min-h-[28px]">
+                      {wrongGuesses.length === 0 ? (
+                        <span className="text-xs text-slate-500 italic">None yet</span>
+                      ) : (
+                        wrongGuesses.map((l, i) => (
+                          <span key={i} className="px-2.5 py-1 rounded-lg bg-rose-950/60 border border-rose-500/30 text-rose-400 font-mono font-bold text-xs">
+                            {l}
+                          </span>
+                        ))
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {/* Right Column: Word Slots & Interactive Keyboard */}
-                <div className="guess-area">
-                  <div id="word-display" className="word-display">
-                    {hiddenWordChars.map((slot, i) => {
-                      const isRevealed = slot !== '_';
-                      const isNew = isRevealed && newGuessedSet.has(slot.toUpperCase());
+                {/* Right Column: Neon Word Display & QWERTY Keyboard (7 cols) */}
+                <div className="lg:col-span-7 flex flex-col gap-6 p-6 sm:p-8 rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl">
+                  
+                  {/* Secret Word Display */}
+                  <section className="flex flex-col items-center justify-center text-center">
+                    <div className="font-mono text-xs sm:text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
+                      SECRET WORD ({hiddenWordChars.length} LETTERS)
+                    </div>
 
-                      return (
-                        <div key={i} className="letter-box">
-                          <span className={`letter-char ${!isRevealed ? 'blank' : isNew ? 'letter-drop-in' : ''}`}>
-                            {slot === '_' ? '_' : slot}
-                          </span>
-                          <div className={`letter-line ${isRevealed ? 'revealed' : ''}`}></div>
+                    <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 font-mono">
+                      {hiddenWordChars.map((slot, i) => {
+                        const isRevealed = slot !== '_';
+
+                        return (
+                          <div
+                            key={i}
+                            className={`w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl text-xl sm:text-2xl font-bold uppercase transition-all duration-300 select-none ${
+                              isRevealed
+                                ? 'border-2 border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.4)] scale-100'
+                                : 'bg-white/5 border border-white/10 text-white/30'
+                            }`}
+                          >
+                            {isRevealed ? slot : '_'}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </section>
+
+                  {/* Interactive QWERTY Keyboard */}
+                  <section className="flex flex-col gap-2.5 mt-2">
+                    <div className="font-mono text-xs text-slate-400 uppercase tracking-wider text-center mb-1">
+                      Interactive Virtual Keyboard (Try clicking!):
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      {KEYBOARD_ROWS.map((row, rIdx) => (
+                        <div key={rIdx} className="flex justify-center gap-1.5 sm:gap-2">
+                          {row.map((letter) => {
+                            const isGuessed = guessedSet.has(letter);
+                            const isWrong = wrongSet.has(letter);
+                            const isCorrect = isGuessed && !isWrong;
+
+                            let keyClasses = '';
+                            if (isCorrect) {
+                              keyClasses = 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.5)] border border-emerald-400 scale-95 cursor-default';
+                            } else if (isWrong) {
+                              keyClasses = 'bg-rose-950/60 text-rose-500/70 line-through border border-rose-900/50 cursor-not-allowed scale-95';
+                            } else {
+                              keyClasses = 'bg-[#2a2a35] text-white/70 hover:bg-[#3a3a45] hover:text-white border border-white/5 active:scale-95 cursor-pointer';
+                            }
+
+                            return (
+                              <button
+                                key={letter}
+                                type="button"
+                                className={`w-8 h-10 sm:w-10 sm:h-12 rounded-lg font-mono font-bold text-sm sm:text-base flex items-center justify-center uppercase transition-all select-none ${keyClasses}`}
+                                disabled={isGuessed || gameState === 'roundover'}
+                                onClick={() => handleGuessLetter(letter)}
+                              >
+                                {letter}
+                              </button>
+                            );
+                          })}
                         </div>
-                      );
-                    })}
-                  </div>
+                      ))}
+                    </div>
+                  </section>
 
-                  {/* QWERTY Keyboard — 3 explicit rows, centered */}
-                  <div id="keyboard" className="keyboard">
-                    {KEYBOARD_ROWS.map((row, rIdx) => (
-                      <div key={rIdx} className="keyboard-row">
-                        {row.map((letter) => {
-                          const isGuessed = guessedSet.has(letter);
-                          const isWrong = wrongSet.has(letter);
-                          const isCorrect = isGuessed && !isWrong;
-
-                          let stateClass = '';
-                          if (isCorrect) stateClass = 'correct';
-                          if (isWrong) stateClass = 'wrong';
-
-                          return (
-                            <button
-                              key={letter}
-                              type="button"
-                              className={`key-btn ${stateClass}`}
-                              disabled={isGuessed || gameState === 'roundover'}
-                              onClick={() => handleGuessLetter(letter)}
-                            >
-                              {letter}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    ))}
-                  </div>
                 </div>
               </div>
             </section>
@@ -3301,66 +3404,91 @@ export default function HangmanDuelApp() {
 
           {/* ─── SETTER WATCHING PANEL ────────────────────────────────────── */}
           {(gameState === 'guessing' || gameState === 'roundover') && isWordSetter && (
-            <section id="panel-watching" className="panel">
-              <div className="game-layout game-layout-watch">
-                {/* Left Column: Canvas & Opponent Lives */}
-                <div className="hangman-area">
-                  <div className={`canvas-wrapper ${isGallowsSwinging ? 'hangman-swing' : ''}`} id="canvas-wrapper-watch">
-                    <canvas id="hangman-canvas-watch" ref={hangmanWatchCanvasRef} width={200} height={240} />
+            <section id="panel-watching" className="w-full max-w-5xl mx-auto px-4 py-4">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                {/* Left Column: Canvas & Opponent Lives (5 cols) */}
+                <div className="lg:col-span-5 flex flex-col items-center gap-4 p-6 rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl">
+                  <div className="font-mono text-xs text-slate-400 uppercase tracking-wider font-semibold">
+                    Opponent&apos;s Gallows
                   </div>
-                  <div className="lives-display">
-                    <span id="lives-left-watch" className={`lives-number ${livesLeft <= 3 ? 'danger' : livesLeft <= 6 ? 'warn' : ''}`}>
-                      {livesLeft}
+
+                  <div className={`w-[220px] h-[240px] flex items-center justify-center bg-black/30 rounded-2xl border border-white/5 shadow-inner ${isGallowsSwinging ? 'hangman-swing' : ''}`}>
+                    <canvas id="hangman-canvas-watch" ref={hangmanWatchCanvasRef} width={220} height={240} className="w-[220px] h-[240px]" />
+                  </div>
+
+                  {/* Health Bar */}
+                  <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-3.5 flex justify-between items-center backdrop-blur-md mt-2">
+                    <span className="font-mono text-xs font-semibold tracking-wider uppercase text-slate-400">
+                      Opponent Lives:
                     </span>
-                    <span className="lives-label">lives left</span>
-                  </div>
-                  <div id="wrong-letters-watch" className="wrong-letters">
-                    {wrongGuesses.map((l, i) => (
-                      <span key={i} className={`wrong-letter-chip ${newWrongSet.has(l.toUpperCase()) ? 'new-wrong' : ''}`}>
-                        {l}
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: isPveMode ? 6 : (game?.maxLives || 10) }).map((_, i) => (
+                          <svg
+                            key={i}
+                            viewBox="0 0 24 24"
+                            className={`w-5 h-5 transition-all duration-300 ${
+                              i < livesLeft
+                                ? 'fill-rose-500 text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.6)] scale-100'
+                                : 'fill-white/10 text-white/10 scale-90'
+                            }`}
+                          >
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                          </svg>
+                        ))}
+                      </div>
+                      <span className="font-mono text-xs font-bold text-slate-300 ml-1">
+                        ({livesLeft}/{isPveMode ? 6 : (game?.maxLives || 10)})
                       </span>
-                    ))}
+                    </div>
                   </div>
                 </div>
 
-                {/* Right Column: Live Word Progression & Watcher Trivia */}
-                <div className="guess-area">
-                  <div className="watch-badge">
-                    <span>👁</span> Watching — You set the word
-                  </div>
-
-                  <div id="word-display-watch" className="word-display">
-                    {hiddenWordChars.map((slot, i) => {
-                      const isRevealed = slot !== '_';
-                      const isNew = isRevealed && newGuessedSet.has(slot.toUpperCase());
-
-                      return (
-                        <div key={i} className="letter-box">
-                          <span className={`letter-char ${!isRevealed ? 'blank' : isNew ? 'letter-drop-in' : ''}`}>
-                            {slot === '_' ? '_' : slot}
-                          </span>
-                          <div className={`letter-line ${isRevealed ? 'revealed' : ''}`}></div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <div id="your-word-reveal" className="your-word-reveal">
-                    SECRET WORD: <strong>{game?.word}</strong>
-                  </div>
-
-                  {/* Trivia Widget */}
-                  <div id="facts-widget-watching" className="facts-widget facts-widget-watch" style={{ userSelect: 'none' }}>
-                    <div className="facts-header">
-                      <span className="facts-icon">💡</span>
-                      <span className="facts-title">Did You Know?</span>
+                {/* Right Column: Word Overview & Live Progress (7 cols) */}
+                <div className="lg:col-span-7 flex flex-col gap-6 p-6 sm:p-8 rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl">
+                  
+                  {/* Secret Word Display for Chooser */}
+                  <section className="flex flex-col items-center justify-center text-center">
+                    <div className="font-mono text-xs sm:text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
+                      SECRET WORD ({cleanWord.length} LETTERS)
                     </div>
-                    <div className="fact-card">
-                      <p id="random-fact-watch" className={`fact-text ${watchFactFade ? 'fact-fade-out' : ''}`}>
-                        {currentWatchFact}
-                      </p>
+
+                    <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 font-mono">
+                      {cleanWord.split('').map((char, index) => {
+                        const isGuessed = guessedSet.has(char);
+
+                        return (
+                          <div
+                            key={index}
+                            className={`w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl text-xl sm:text-2xl font-bold uppercase transition-all duration-300 select-none ${
+                              isGuessed
+                                ? 'border-2 border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.4)] scale-100'
+                                : 'bg-white/5 border-2 border-dashed border-white/20 text-white/40 scale-95'
+                            }`}
+                          >
+                            {char}
+                          </div>
+                        );
+                      })}
                     </div>
+
+                    <div className="mt-3 text-[11px] font-mono text-purple-300/80 bg-purple-950/40 border border-purple-500/20 px-3 py-1 rounded-full">
+                      Dashed boxes indicate letters your opponent has not guessed yet.
+                    </div>
+                  </section>
+
+                  {/* Trivia / Facts Box */}
+                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md flex flex-col gap-2">
+                    <div className="flex items-center gap-2 font-mono text-xs font-semibold uppercase text-purple-300">
+                      <span>💡</span>
+                      <span>Hangman Trivia</span>
+                    </div>
+                    <p className="text-sm text-slate-300 leading-relaxed italic">
+                      &ldquo;{currentWatchFact}&rdquo;
+                    </p>
                   </div>
+
                 </div>
               </div>
             </section>

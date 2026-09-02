@@ -32,8 +32,6 @@ export const viewport = {
   initialScale: 1,
 };
 
-import Navbar from '../components/Navbar.jsx';
-
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
@@ -45,9 +43,8 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body suppressHydrationWarning className="bg-[#09090b] text-slate-100 min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-1 w-full">{children}</main>
+      <body suppressHydrationWarning className="bg-[#09090b] text-slate-100 min-h-screen">
+        {children}
       </body>
     </html>
   );
