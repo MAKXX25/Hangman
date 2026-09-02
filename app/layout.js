@@ -16,8 +16,15 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata = {
-  title: 'Hangman Duel — 2-Player Online',
+  title: 'Hangman Duel',
   description: 'Real-time 2-player Hangman game. Create or join a private room with a code and play with a friend online.',
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon.png', type: 'image/png' },
+    ],
+    apple: '/apple-icon.png',
+  },
 };
 
 export const viewport = {
