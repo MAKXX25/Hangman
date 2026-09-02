@@ -419,7 +419,7 @@ export default function HangmanDuelApp() {
     ctx.restore();
   };
 
-  // Helper to draw a dynamically measured & clamped cartoon speech bubble on canvas
+  // Helper to draw a dynamically measured, word-wrapped & clamped cartoon speech bubble on canvas
   const drawSpeechBubble = (
     ctx,
     targetHeadX,
@@ -430,42 +430,71 @@ export default function HangmanDuelApp() {
     bgColor = 'rgba(15, 23, 42, 0.95)',
     textColor = '#f8fafc'
   ) => {
+    if (!text) return;
     ctx.save();
-    ctx.font = 'bold 11px Outfit, Inter, system-ui, sans-serif';
-    const textMetrics = ctx.measureText(text);
-    const textWidth = textMetrics.width;
-    const bubbleWidth = Math.ceil(textWidth + 24);
-    const bubbleHeight = 26;
-    const radius = 7;
-    const canvasW = ctx.canvas ? ctx.canvas.width : 280;
+    const fontSize = 10;
+    const lineHeight = 13;
+    ctx.font = `bold ${fontSize}px Outfit, Inter, system-ui, sans-serif`;
+
+    const canvasW = ctx.canvas ? ctx.canvas.width : 220;
+    const canvasH = ctx.canvas ? ctx.canvas.height : 240;
+    const maxTextWidth = 125;
+
+    // Word Wrap Algorithm into 1, 2, or max 3 lines
+    const words = text.split(' ');
+    const lines = [];
+    let currentLine = '';
+
+    for (const word of words) {
+      const testLine = currentLine ? `${currentLine} ${word}` : word;
+      const testWidth = ctx.measureText(testLine).width;
+      if (testWidth > maxTextWidth && currentLine) {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        currentLine = testLine;
+      }
+    }
+    if (currentLine) lines.push(currentLine);
+
+    // Calculate dynamic bubble dimensions based on wrapped lines
+    let maxLineWidth = 0;
+    lines.forEach(l => {
+      const w = ctx.measureText(l).width;
+      if (w > maxLineWidth) maxLineWidth = w;
+    });
+
+    const bubbleWidth = Math.min(Math.ceil(maxLineWidth + 16), canvasW - 12);
+    const bubbleHeight = Math.max(22, lines.length * lineHeight + 8);
+    const radius = 6;
 
     let targetX;
-    let targetY = targetHeadY - 32;
+    let targetY = targetHeadY - (bubbleHeight + 6);
     let pointerX, pointerY;
 
     if (side === 'left') {
       // Draw to the left of the head (between pole and stickman)
-      targetX = targetHeadX - bubbleWidth - 12;
+      targetX = targetHeadX - bubbleWidth - 10;
       pointerX = targetHeadX - 4;
       pointerY = targetHeadY - 6;
     } else if (side === 'right') {
-      targetX = targetHeadX + 14;
+      targetX = targetHeadX + 10;
       pointerX = targetHeadX + 4;
       pointerY = targetHeadY - 6;
     } else { // top/center
       targetX = targetHeadX - bubbleWidth / 2;
-      targetY = targetHeadY - 38;
+      targetY = targetHeadY - (bubbleHeight + 12);
       pointerX = targetHeadX;
-      pointerY = targetHeadY - 14;
+      pointerY = targetHeadY - 6;
     }
 
-    // Clamping: Ensure bubble stays strictly within [6, canvasW - bubbleWidth - 6]
-    const safeX = Math.max(6, Math.min(targetX, canvasW - bubbleWidth - 6));
-    const safeY = Math.max(6, targetY);
+    // Clamping: Ensure bubble stays strictly inside canvas bounds
+    const safeX = Math.max(4, Math.min(targetX, canvasW - bubbleWidth - 4));
+    const safeY = Math.max(4, Math.min(targetY, canvasH - bubbleHeight - 4));
 
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    ctx.lineWidth = 1.8;
+    ctx.lineWidth = 1.5;
     ctx.strokeStyle = borderColor;
     ctx.fillStyle = bgColor;
 
@@ -477,8 +506,8 @@ export default function HangmanDuelApp() {
     ctx.quadraticCurveTo(safeX + bubbleWidth, safeY + bubbleHeight, safeX + bubbleWidth - radius, safeY + bubbleHeight);
 
     // Pointer tail to head
-    const tailBaseX = Math.max(safeX + 8, Math.min(safeX + bubbleWidth - 24, pointerX - 10));
-    ctx.lineTo(tailBaseX + 16, safeY + bubbleHeight);
+    const tailBaseX = Math.max(safeX + 6, Math.min(safeX + bubbleWidth - 18, pointerX - 8));
+    ctx.lineTo(tailBaseX + 12, safeY + bubbleHeight);
     ctx.lineTo(pointerX, pointerY);
     ctx.lineTo(tailBaseX, safeY + bubbleHeight);
 
@@ -488,7 +517,7 @@ export default function HangmanDuelApp() {
     ctx.quadraticCurveTo(safeX, safeY, safeX + radius, safeY);
     ctx.closePath();
 
-    applyGlow(ctx, borderColor, 8);
+    applyGlow(ctx, borderColor, 6);
     ctx.fill();
     ctx.stroke();
     clearGlow(ctx);
@@ -496,7 +525,13 @@ export default function HangmanDuelApp() {
     ctx.fillStyle = textColor;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(text, safeX + bubbleWidth / 2, safeY + bubbleHeight / 2);
+
+    // Render each wrapped line centered inside the bubble
+    lines.forEach((line, idx) => {
+      const lineY = safeY + 4 + (idx + 0.5) * lineHeight;
+      ctx.fillText(line, safeX + bubbleWidth / 2, lineY);
+    });
+
     ctx.restore();
   };
 
