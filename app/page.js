@@ -3271,11 +3271,13 @@ export default function HangmanDuelApp() {
 
           {/* ─── GUESSER ACTIVE PANEL ─────────────────────────────────────── */}
           {(gameState === 'guessing' || gameState === 'roundover') && !isWordSetter && (
-            <section id="panel-guesser" className="w-full max-w-5xl mx-auto px-4 py-4">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <section id="panel-guesser" className="w-full max-w-5xl mx-auto px-4 py-4 flex flex-col gap-6">
+              
+              {/* 1. TOP ROW: Gallows View & Secret Word Display */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
                 
-                {/* Left Column: Gallows Canvas & Health (5 cols) */}
-                <div className="lg:col-span-5 flex flex-col items-center gap-4 p-6 rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl">
+                {/* Left Column: Gallows Canvas (5 cols) */}
+                <div className="lg:col-span-5 flex flex-col items-center justify-center gap-3 p-6 rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl">
                   <div className="font-mono text-xs text-slate-400 uppercase tracking-wider font-semibold">
                     Gallows View
                   </div>
@@ -3283,120 +3285,118 @@ export default function HangmanDuelApp() {
                   <div className={`w-[220px] h-[240px] flex items-center justify-center bg-black/30 rounded-2xl border border-white/5 shadow-inner ${isGallowsSwinging ? 'hangman-swing' : ''}`}>
                     <canvas id="hangman-canvas" ref={hangmanCanvasRef} width={220} height={240} className="w-[220px] h-[240px]" />
                   </div>
-
-                  {/* Gallows Health Hearts */}
-                  <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-3.5 flex justify-between items-center backdrop-blur-md mt-2">
-                    <span className="font-mono text-xs font-semibold tracking-wider uppercase text-slate-400">
-                      Health:
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1">
-                        {Array.from({ length: game?.maxLives || MAX_LIVES }).map((_, i) => (
-                          <svg
-                            key={i}
-                            viewBox="0 0 24 24"
-                            className={`w-5 h-5 transition-all duration-300 ${
-                              i < livesLeft
-                                ? 'fill-rose-500 text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.6)] scale-100'
-                                : 'fill-white/10 text-white/10 scale-90'
-                            }`}
-                          >
-                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                          </svg>
-                        ))}
-                      </div>
-                      <span className="font-mono text-xs font-bold text-slate-300 ml-1">
-                        ({livesLeft})
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Wrong Letters Chips */}
-                  <div className="w-full flex flex-col gap-2 mt-1">
-                    <span className="font-mono text-xs uppercase tracking-wider text-slate-400">Wrong Letters:</span>
-                    <div className="flex flex-wrap gap-1.5 min-h-[28px]">
-                      {wrongGuesses.length === 0 ? (
-                        <span className="text-xs text-slate-500 italic">None yet</span>
-                      ) : (
-                        wrongGuesses.map((l, i) => (
-                          <span key={i} className="px-2.5 py-1 rounded-lg bg-rose-950/60 border border-rose-500/30 text-rose-400 font-mono font-bold text-xs">
-                            {l}
-                          </span>
-                        ))
-                      )}
-                    </div>
-                  </div>
                 </div>
 
-                {/* Right Column: Neon Word Display & QWERTY Keyboard (7 cols) */}
-                <div className="lg:col-span-7 flex flex-col gap-6 p-6 sm:p-8 rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl">
-                  
-                  {/* Secret Word Display */}
-                  <section className="flex flex-col items-center justify-center text-center">
-                    <div className="font-mono text-xs sm:text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
-                      SECRET WORD ({hiddenWordChars.length} LETTERS)
-                    </div>
+                {/* Right Column: Neon Secret Word Display (7 cols) */}
+                <div className="lg:col-span-7 flex flex-col items-center justify-center gap-4 p-6 sm:p-8 rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl text-center">
+                  <div className="font-mono text-xs sm:text-sm font-bold uppercase tracking-widest text-slate-400">
+                    SECRET WORD ({hiddenWordChars.length} LETTERS)
+                  </div>
 
-                    <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 font-mono">
-                      {hiddenWordChars.map((slot, i) => {
-                        const isRevealed = slot !== '_';
+                  <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 font-mono">
+                    {hiddenWordChars.map((slot, i) => {
+                      const isRevealed = slot !== '_';
+
+                      return (
+                        <div
+                          key={i}
+                          className={`w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center rounded-xl text-xl sm:text-2xl font-bold uppercase transition-all duration-300 select-none ${
+                            isRevealed
+                              ? 'border-2 border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.4)] scale-100'
+                              : 'bg-white/5 border border-white/10 text-white/30'
+                          }`}
+                        >
+                          {isRevealed ? slot : '_'}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. MIDDLE ROW: Separated, Bigger Health Bar & Wrong Letters (Below Gallows & Secret Word) */}
+              <div className="w-full p-4 sm:p-5 rounded-2xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+                {/* Health & Big Hearts */}
+                <div className="flex items-center gap-3 sm:gap-4 flex-wrap justify-center md:justify-start">
+                  <span className="font-mono text-xs sm:text-sm font-bold tracking-widest uppercase text-slate-300">
+                    HEALTH:
+                  </span>
+                  <div className="flex items-center gap-1 sm:gap-1.5">
+                    {Array.from({ length: game?.maxLives || MAX_LIVES }).map((_, i) => (
+                      <svg
+                        key={i}
+                        viewBox="0 0 24 24"
+                        className={`w-7 h-7 sm:w-8 sm:h-8 transition-all duration-300 ${
+                          i < livesLeft
+                            ? 'fill-rose-500 text-rose-500 drop-shadow-[0_0_12px_rgba(244,63,94,0.75)] scale-100'
+                            : 'fill-white/10 text-white/10 scale-90'
+                        }`}
+                      >
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                      </svg>
+                    ))}
+                  </div>
+                  <span className="font-mono text-base sm:text-lg font-bold text-rose-400 ml-1">
+                    ({livesLeft})
+                  </span>
+                </div>
+
+                {/* Wrong Letters */}
+                <div className="flex items-center gap-3 flex-wrap justify-center md:justify-end">
+                  <span className="font-mono text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-400">
+                    WRONG LETTERS:
+                  </span>
+                  <div className="flex flex-wrap items-center gap-1.5 min-h-[28px]">
+                    {wrongGuesses.length === 0 ? (
+                      <span className="text-xs sm:text-sm text-slate-500 italic">None yet</span>
+                    ) : (
+                      wrongGuesses.map((l, i) => (
+                        <span key={i} className="px-3 py-1 rounded-lg bg-rose-950/70 border border-rose-500/40 text-rose-300 font-mono font-bold text-xs sm:text-sm shadow-sm">
+                          {l}
+                        </span>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. BOTTOM ROW: Interactive QWERTY Keyboard */}
+              <div className="w-full p-6 sm:p-7 rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl flex flex-col items-center gap-3">
+                <div className="font-mono text-xs text-slate-400 uppercase tracking-wider text-center mb-1">
+                  Interactive Virtual Keyboard (Try clicking!):
+                </div>
+
+                <div className="flex flex-col gap-2 w-full max-w-2xl">
+                  {KEYBOARD_ROWS.map((row, rIdx) => (
+                    <div key={rIdx} className="flex justify-center gap-1.5 sm:gap-2">
+                      {row.map((letter) => {
+                        const isGuessed = guessedSet.has(letter);
+                        const isWrong = wrongSet.has(letter);
+                        const isCorrect = isGuessed && !isWrong;
+
+                        let keyClasses = '';
+                        if (isCorrect) {
+                          keyClasses = 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.5)] border border-emerald-400 scale-95 cursor-default';
+                        } else if (isWrong) {
+                          keyClasses = 'bg-rose-950/60 text-rose-500/70 line-through border border-rose-900/50 cursor-not-allowed scale-95';
+                        } else {
+                          keyClasses = 'bg-[#2a2a35] text-white/70 hover:bg-[#3a3a45] hover:text-white border border-white/5 active:scale-95 cursor-pointer';
+                        }
 
                         return (
-                          <div
-                            key={i}
-                            className={`w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl text-xl sm:text-2xl font-bold uppercase transition-all duration-300 select-none ${
-                              isRevealed
-                                ? 'border-2 border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.4)] scale-100'
-                                : 'bg-white/5 border border-white/10 text-white/30'
-                            }`}
+                          <button
+                            key={letter}
+                            type="button"
+                            className={`w-8 h-10 sm:w-11 sm:h-12 rounded-lg font-mono font-bold text-sm sm:text-base flex items-center justify-center uppercase transition-all select-none ${keyClasses}`}
+                            disabled={isGuessed || gameState === 'roundover'}
+                            onClick={() => handleGuessLetter(letter)}
                           >
-                            {isRevealed ? slot : '_'}
-                          </div>
+                            {letter}
+                          </button>
                         );
                       })}
                     </div>
-                  </section>
-
-                  {/* Interactive QWERTY Keyboard */}
-                  <section className="flex flex-col gap-2.5 mt-2">
-                    <div className="font-mono text-xs text-slate-400 uppercase tracking-wider text-center mb-1">
-                      Interactive Virtual Keyboard (Try clicking!):
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      {KEYBOARD_ROWS.map((row, rIdx) => (
-                        <div key={rIdx} className="flex justify-center gap-1.5 sm:gap-2">
-                          {row.map((letter) => {
-                            const isGuessed = guessedSet.has(letter);
-                            const isWrong = wrongSet.has(letter);
-                            const isCorrect = isGuessed && !isWrong;
-
-                            let keyClasses = '';
-                            if (isCorrect) {
-                              keyClasses = 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.5)] border border-emerald-400 scale-95 cursor-default';
-                            } else if (isWrong) {
-                              keyClasses = 'bg-rose-950/60 text-rose-500/70 line-through border border-rose-900/50 cursor-not-allowed scale-95';
-                            } else {
-                              keyClasses = 'bg-[#2a2a35] text-white/70 hover:bg-[#3a3a45] hover:text-white border border-white/5 active:scale-95 cursor-pointer';
-                            }
-
-                            return (
-                              <button
-                                key={letter}
-                                type="button"
-                                className={`w-8 h-10 sm:w-10 sm:h-12 rounded-lg font-mono font-bold text-sm sm:text-base flex items-center justify-center uppercase transition-all select-none ${keyClasses}`}
-                                disabled={isGuessed || gameState === 'roundover'}
-                                onClick={() => handleGuessLetter(letter)}
-                              >
-                                {letter}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-
+                  ))}
                 </div>
               </div>
             </section>
@@ -3404,11 +3404,13 @@ export default function HangmanDuelApp() {
 
           {/* ─── SETTER WATCHING PANEL ────────────────────────────────────── */}
           {(gameState === 'guessing' || gameState === 'roundover') && isWordSetter && (
-            <section id="panel-watching" className="w-full max-w-5xl mx-auto px-4 py-4">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <section id="panel-watching" className="w-full max-w-5xl mx-auto px-4 py-4 flex flex-col gap-6">
+              
+              {/* 1. TOP ROW: Opponent's Gallows & Secret Word Display */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
                 
-                {/* Left Column: Canvas & Opponent Lives (5 cols) */}
-                <div className="lg:col-span-5 flex flex-col items-center gap-4 p-6 rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl">
+                {/* Left Column: Canvas (5 cols) */}
+                <div className="lg:col-span-5 flex flex-col items-center justify-center gap-3 p-6 rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl">
                   <div className="font-mono text-xs text-slate-400 uppercase tracking-wider font-semibold">
                     Opponent&apos;s Gallows
                   </div>
@@ -3416,80 +3418,94 @@ export default function HangmanDuelApp() {
                   <div className={`w-[220px] h-[240px] flex items-center justify-center bg-black/30 rounded-2xl border border-white/5 shadow-inner ${isGallowsSwinging ? 'hangman-swing' : ''}`}>
                     <canvas id="hangman-canvas-watch" ref={hangmanWatchCanvasRef} width={220} height={240} className="w-[220px] h-[240px]" />
                   </div>
-
-                  {/* Health Bar */}
-                  <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-3.5 flex justify-between items-center backdrop-blur-md mt-2">
-                    <span className="font-mono text-xs font-semibold tracking-wider uppercase text-slate-400">
-                      Opponent Lives:
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1">
-                        {Array.from({ length: game?.maxLives || MAX_LIVES }).map((_, i) => (
-                          <svg
-                            key={i}
-                            viewBox="0 0 24 24"
-                            className={`w-5 h-5 transition-all duration-300 ${
-                              i < livesLeft
-                                ? 'fill-rose-500 text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.6)] scale-100'
-                                : 'fill-white/10 text-white/10 scale-90'
-                            }`}
-                          >
-                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                          </svg>
-                        ))}
-                      </div>
-                      <span className="font-mono text-xs font-bold text-slate-300 ml-1">
-                        ({livesLeft})
-                      </span>
-                    </div>
-                  </div>
                 </div>
 
-                {/* Right Column: Word Overview & Live Progress (7 cols) */}
-                <div className="lg:col-span-7 flex flex-col gap-6 p-6 sm:p-8 rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl">
-                  
-                  {/* Secret Word Display for Chooser */}
-                  <section className="flex flex-col items-center justify-center text-center">
-                    <div className="font-mono text-xs sm:text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
-                      SECRET WORD ({cleanWord.length} LETTERS)
-                    </div>
-
-                    <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 font-mono">
-                      {cleanWord.split('').map((char, index) => {
-                        const isGuessed = guessedSet.has(char);
-
-                        return (
-                          <div
-                            key={index}
-                            className={`w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl text-xl sm:text-2xl font-bold uppercase transition-all duration-300 select-none ${
-                              isGuessed
-                                ? 'border-2 border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.4)] scale-100'
-                                : 'bg-white/5 border-2 border-dashed border-white/20 text-white/40 scale-95'
-                            }`}
-                          >
-                            {char}
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    <div className="mt-3 text-[11px] font-mono text-purple-300/80 bg-purple-950/40 border border-purple-500/20 px-3 py-1 rounded-full">
-                      Dashed boxes indicate letters your opponent has not guessed yet.
-                    </div>
-                  </section>
-
-                  {/* Trivia / Facts Box */}
-                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md flex flex-col gap-2">
-                    <div className="flex items-center gap-2 font-mono text-xs font-semibold uppercase text-purple-300">
-                      <span>💡</span>
-                      <span>Hangman Trivia</span>
-                    </div>
-                    <p className="text-sm text-slate-300 leading-relaxed italic">
-                      &ldquo;{currentWatchFact}&rdquo;
-                    </p>
+                {/* Right Column: Secret Word Display for Chooser (7 cols) */}
+                <div className="lg:col-span-7 flex flex-col items-center justify-center gap-4 p-6 sm:p-8 rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl text-center">
+                  <div className="font-mono text-xs sm:text-sm font-bold uppercase tracking-widest text-slate-400">
+                    SECRET WORD ({cleanWord.length} LETTERS)
                   </div>
 
+                  <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 font-mono">
+                    {cleanWord.split('').map((char, index) => {
+                      const isGuessed = guessedSet.has(char);
+
+                      return (
+                        <div
+                          key={index}
+                          className={`w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center rounded-xl text-xl sm:text-2xl font-bold uppercase transition-all duration-300 select-none ${
+                            isGuessed
+                              ? 'border-2 border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.4)] scale-100'
+                              : 'bg-white/5 border-2 border-dashed border-white/20 text-white/40 scale-95'
+                          }`}
+                        >
+                          {char}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="text-[11px] font-mono text-purple-300/80 bg-purple-950/40 border border-purple-500/20 px-3 py-1 rounded-full">
+                    Dashed boxes indicate letters your opponent has not guessed yet.
+                  </div>
                 </div>
+              </div>
+
+              {/* 2. MIDDLE ROW: Separated, Bigger Opponent Health Bar */}
+              <div className="w-full p-4 sm:p-5 rounded-2xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+                {/* Health & Big Hearts */}
+                <div className="flex items-center gap-3 sm:gap-4 flex-wrap justify-center md:justify-start">
+                  <span className="font-mono text-xs sm:text-sm font-bold tracking-widest uppercase text-slate-400">
+                    OPPONENT HEALTH:
+                  </span>
+                  <div className="flex items-center gap-1 sm:gap-1.5">
+                    {Array.from({ length: game?.maxLives || MAX_LIVES }).map((_, i) => (
+                      <svg
+                        key={i}
+                        viewBox="0 0 24 24"
+                        className={`w-7 h-7 sm:w-8 sm:h-8 transition-all duration-300 ${
+                          i < livesLeft
+                            ? 'fill-rose-500 text-rose-500 drop-shadow-[0_0_12px_rgba(244,63,94,0.75)] scale-100'
+                            : 'fill-white/10 text-white/10 scale-90'
+                        }`}
+                      >
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                      </svg>
+                    ))}
+                  </div>
+                  <span className="font-mono text-base sm:text-lg font-bold text-rose-400 ml-1">
+                    ({livesLeft})
+                  </span>
+                </div>
+
+                {/* Opponent's Wrong Letters */}
+                <div className="flex items-center gap-3 flex-wrap justify-center md:justify-end">
+                  <span className="font-mono text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-400">
+                    WRONG LETTERS:
+                  </span>
+                  <div className="flex flex-wrap items-center gap-1.5 min-h-[28px]">
+                    {wrongGuesses.length === 0 ? (
+                      <span className="text-xs sm:text-sm text-slate-500 italic">None yet</span>
+                    ) : (
+                      wrongGuesses.map((l, i) => (
+                        <span key={i} className="px-3 py-1 rounded-lg bg-rose-950/70 border border-rose-500/40 text-rose-300 font-mono font-bold text-xs sm:text-sm shadow-sm">
+                          {l}
+                        </span>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. BOTTOM ROW: Trivia / Facts Card */}
+              <div className="w-full p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md flex flex-col gap-2">
+                <div className="flex items-center gap-2 font-mono text-xs font-semibold uppercase text-purple-300">
+                  <span>💡</span>
+                  <span>Hangman Trivia</span>
+                </div>
+                <p className="text-sm text-slate-300 leading-relaxed italic">
+                  &ldquo;{currentWatchFact}&rdquo;
+                </p>
               </div>
             </section>
           )}
