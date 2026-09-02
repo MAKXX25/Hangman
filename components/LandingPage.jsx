@@ -203,16 +203,12 @@ export default function LandingPage({ onPlayNow, onPlayPvE }) {
                   </svg>
                 </div>
 
-                {/* Secret Word Display Slots */}
-                <div className="flex items-center justify-center gap-2.5 sm:gap-3.5 my-6 font-mono-code">
-                  {['_', 'A', '_', 'B', '_', 'A', '_'].map((char, index) => (
+                {/* Secret Word Display Slots — Spells HANGMAN */}
+                <div className="flex items-center justify-center gap-2 sm:gap-3 my-6 font-mono-code">
+                  {['H', 'A', 'N', 'G', 'M', 'A', 'N'].map((char, index) => (
                     <div
                       key={index}
-                      className={`w-9 h-12 sm:w-11 sm:h-14 rounded-lg flex items-center justify-center text-xl sm:text-2xl font-bold border transition-all ${
-                        char !== '_'
-                          ? 'bg-purple-600/20 border-purple-500 text-purple-200 shadow-[0_0_15px_rgba(168,85,247,0.3)]'
-                          : 'bg-white/5 border-white/10 text-transparent'
-                      }`}
+                      className="w-9 h-12 sm:w-11 sm:h-14 rounded-xl flex items-center justify-center text-xl sm:text-2xl font-black uppercase transition-all duration-300 border-2 border-cyan-400 bg-cyan-500/20 text-cyan-300 shadow-[0_0_16px_rgba(34,211,238,0.45)]"
                     >
                       {char}
                     </div>

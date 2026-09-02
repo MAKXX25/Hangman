@@ -2301,146 +2301,150 @@ export default function HangmanDuelApp() {
           </div>
 
           {/* Hero Content: Side-by-Side Launcher Card & Live Game Graphic */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch max-w-6xl mx-auto">
             
             {/* Left Col: Interactive Duel Launcher & Room Creator */}
-            <div id="lobby-launcher" className="lg:col-span-6 w-full">
-              <div className="lobby-card bg-white/[0.04] backdrop-blur-xl border border-white/15 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] rounded-3xl p-6 sm:p-8 w-full transition-all duration-300">
+            <div id="lobby-launcher" className="lg:col-span-6 w-full flex flex-col">
+              <div className="relative bg-[#11101d]/90 border border-white/15 shadow-2xl rounded-3xl p-6 sm:p-8 backdrop-blur-xl w-full flex-1 flex flex-col justify-between transition-all duration-300">
                 
-                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-white/10">
-                  <div className="w-10 h-10 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
-                    <svg viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-6 h-7">
-                      <line x1="10" y1="115" x2="90" y2="115" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
-                      <line x1="30" y1="115" x2="30" y2="10" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
-                      <line x1="30" y1="10" x2="65" y2="10" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
-                      <line x1="65" y1="10" x2="65" y2="25" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
-                      <circle cx="65" cy="35" r="10" stroke="currentColor" strokeWidth="5" />
-                      <line x1="65" y1="45" x2="65" y2="75" stroke="currentColor" strokeWidth="5" strokeLinecap="round" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold font-display uppercase tracking-wider text-white">
-                      Start a Match
-                    </h2>
-                    <p className="text-xs text-slate-400">
-                      Create a private room or enter a code to duel
-                    </p>
-                  </div>
-                </div>
-
-                <div className="lobby-form flex flex-col gap-4">
-                  {/* Your Name Input */}
-                  <div className="input-group flex flex-col gap-1.5">
-                    <label htmlFor="input-name" className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                      Your Name
-                    </label>
-                    <input
-                      id="input-name"
-                      type="text"
-                      placeholder="Enter your name…"
-                      maxLength={20}
-                      autoComplete="off"
-                      className="w-full px-4 py-3.5 bg-slate-950/70 border border-white/15 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30 rounded-2xl text-white placeholder-slate-400 backdrop-blur-md outline-none transition-all"
-                      value={playerName}
-                      onChange={(e) => handlePlayerNameChange(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') handleCreateRoom(); }}
-                    />
-                  </div>
-
-                  {/* Create Room Button */}
-                  <div className="create-section flex flex-col gap-2">
-                    <button
-                      id="btn-create"
-                      className={`btn btn-primary w-full py-4 px-6 rounded-2xl font-bold font-display uppercase tracking-wider text-white bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 shadow-lg shadow-purple-600/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-purple-500/50 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer ${isConnecting ? 'loading' : ''}`}
-                      disabled={isConnecting}
-                      onClick={handleCreateRoom}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5">
-                        <path d="M12 5v14M5 12h14" />
+                <div>
+                  <div className="flex items-center gap-3 mb-6 pb-4 border-b border-white/10">
+                    <div className="w-10 h-10 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
+                      <svg viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-6 h-7">
+                        <line x1="10" y1="115" x2="90" y2="115" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
+                        <line x1="30" y1="115" x2="30" y2="10" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
+                        <line x1="30" y1="10" x2="65" y2="10" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
+                        <line x1="65" y1="10" x2="65" y2="25" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
+                        <circle cx="65" cy="35" r="10" stroke="currentColor" strokeWidth="5" />
+                        <line x1="65" y1="45" x2="65" y2="75" stroke="currentColor" strokeWidth="5" strokeLinecap="round" />
                       </svg>
-                      {isConnecting ? 'Creating Room… 🎮' : 'Create Room'}
-                    </button>
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold font-display uppercase tracking-wider text-white">
+                        Start a Match
+                      </h2>
+                      <p className="text-xs text-slate-400">
+                        Create a private room or enter a code to duel
+                      </p>
+                    </div>
+                  </div>
 
-                    {/* Host Settings Accordion */}
-                    <div className="host-settings-toggle">
+                  <div className="lobby-form flex flex-col gap-4">
+                    {/* Your Name Input */}
+                    <div className="input-group flex flex-col gap-1.5">
+                      <label htmlFor="input-name" className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                        Your Name
+                      </label>
+                      <input
+                        id="input-name"
+                        type="text"
+                        placeholder="Enter your name…"
+                        maxLength={20}
+                        autoComplete="off"
+                        className="w-full px-4 py-3 bg-slate-950/70 border border-white/15 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30 rounded-2xl text-white placeholder-slate-400 backdrop-blur-md outline-none transition-all text-sm"
+                        value={playerName}
+                        onChange={(e) => handlePlayerNameChange(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleCreateRoom(); }}
+                      />
+                    </div>
+
+                    {/* Create Room Button */}
+                    <div className="create-section flex flex-col gap-2">
                       <button
-                        id="btn-advanced"
-                        className="btn-advanced-toggle text-xs text-slate-400 hover:text-white transition-colors"
-                        aria-expanded={advancedOpen}
-                        onClick={() => setAdvancedOpen(!advancedOpen)}
-                        type="button"
+                        id="btn-create"
+                        className={`btn btn-primary w-full py-3.5 px-6 rounded-2xl font-bold font-display uppercase tracking-wider text-white bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 shadow-lg shadow-purple-600/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-purple-500/50 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer ${isConnecting ? 'loading' : ''}`}
+                        disabled={isConnecting}
+                        onClick={handleCreateRoom}
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
-                          <circle cx="12" cy="12" r="3" />
-                          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14" />
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5">
+                          <path d="M12 5v14M5 12h14" />
                         </svg>
-                        Advanced Host Settings
-                        <svg className="chevron w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                          <polyline points="6 9 12 15 18 9" />
-                        </svg>
+                        {isConnecting ? 'Creating Room… 🎮' : 'Create Room'}
+                      </button>
+
+                      {/* Host Settings Accordion */}
+                      <div className="host-settings-toggle">
+                        <button
+                          id="btn-advanced"
+                          className="btn-advanced-toggle text-xs text-slate-400 hover:text-white transition-colors"
+                          aria-expanded={advancedOpen}
+                          onClick={() => setAdvancedOpen(!advancedOpen)}
+                          type="button"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
+                            <circle cx="12" cy="12" r="3" />
+                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14" />
+                          </svg>
+                          Advanced Host Settings
+                          <svg className="chevron w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <polyline points="6 9 12 15 18 9" />
+                          </svg>
+                        </button>
+                      </div>
+
+                      <div id="host-settings" className={`host-settings ${advancedOpen ? 'expanded' : 'collapsed'}`}>
+                        <div className="host-settings-inner">
+                          <div className="setting-row">
+                            <label htmlFor="select-timer" className="setting-label text-xs">
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                                <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+                              </svg>
+                              Word Pick Time Limit
+                            </label>
+                            <select
+                              id="select-timer"
+                              className="setting-select"
+                              value={wordPickTime}
+                              onChange={(e) => setWordPickTime(Number(e.target.value))}
+                            >
+                              <option value="30">30 seconds</option>
+                              <option value="60">60 seconds</option>
+                              <option value="90">90 seconds</option>
+                              <option value="120">120 seconds</option>
+                            </select>
+                          </div>
+                          <p className="setting-hint text-xs">If the Word Setter doesn't pick in time, a random word is chosen automatically.</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="divider"><span>or join with code</span></div>
+
+                    {/* Join Room Code Row */}
+                    <div className="join-row flex gap-2">
+                      <input
+                        id="input-room-code"
+                        type="text"
+                        placeholder="Room Code"
+                        maxLength={6}
+                        autoCapitalize="characters"
+                        autoCorrect="off"
+                        spellCheck="false"
+                        autoComplete="off"
+                        className="flex-1 px-4 py-3 bg-slate-950/70 border border-white/15 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30 rounded-2xl text-white font-mono uppercase tracking-widest placeholder-slate-400 backdrop-blur-md outline-none transition-all text-sm"
+                        value={joinCode}
+                        onChange={(e) => setJoinCode(e.target.value.replace(/\s+/g, '').toUpperCase())}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleJoinRoom(); }}
+                      />
+                      <button 
+                        id="btn-join" 
+                        className="btn btn-secondary py-3 px-6 rounded-2xl font-semibold text-white tracking-wide bg-gradient-to-r from-cyan-500 to-blue-600 shadow-md shadow-cyan-500/20 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(6,182,212,0.5)] active:scale-95 flex items-center justify-center cursor-pointer disabled:opacity-50 text-sm" 
+                        disabled={isConnecting}
+                        onClick={handleJoinRoom}
+                      >
+                        {isConnecting ? 'Joining… 🎯' : 'Join'}
                       </button>
                     </div>
 
-                    <div id="host-settings" className={`host-settings ${advancedOpen ? 'expanded' : 'collapsed'}`}>
-                      <div className="host-settings-inner">
-                        <div className="setting-row">
-                          <label htmlFor="select-timer" className="setting-label text-xs">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-                              <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-                            </svg>
-                            Word Pick Time Limit
-                          </label>
-                          <select
-                            id="select-timer"
-                            className="setting-select"
-                            value={wordPickTime}
-                            onChange={(e) => setWordPickTime(Number(e.target.value))}
-                          >
-                            <option value="30">30 seconds</option>
-                            <option value="60">60 seconds</option>
-                            <option value="90">90 seconds</option>
-                            <option value="120">120 seconds</option>
-                          </select>
-                        </div>
-                        <p className="setting-hint text-xs">If the Word Setter doesn't pick in time, a random word is chosen automatically.</p>
-                      </div>
-                    </div>
+                    <div className="divider"><span>single player</span></div>
                   </div>
+                </div>
 
-                  <div className="divider"><span>or join with code</span></div>
-
-                  {/* Join Room Code Row */}
-                  <div className="join-row flex gap-2">
-                    <input
-                      id="input-room-code"
-                      type="text"
-                      placeholder="Room Code"
-                      maxLength={6}
-                      autoCapitalize="characters"
-                      autoCorrect="off"
-                      spellCheck="false"
-                      autoComplete="off"
-                      className="flex-1 px-4 py-3.5 bg-slate-950/70 border border-white/15 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30 rounded-2xl text-white font-mono uppercase tracking-widest placeholder-slate-400 backdrop-blur-md outline-none transition-all text-sm"
-                      value={joinCode}
-                      onChange={(e) => setJoinCode(e.target.value.replace(/\s+/g, '').toUpperCase())}
-                      onKeyDown={(e) => { if (e.key === 'Enter') handleJoinRoom(); }}
-                    />
-                    <button 
-                      id="btn-join" 
-                      className="btn btn-secondary py-3.5 px-6 rounded-2xl font-semibold text-white tracking-wide bg-gradient-to-r from-cyan-500 to-blue-600 shadow-md shadow-cyan-500/20 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(6,182,212,0.5)] active:scale-95 flex items-center justify-center cursor-pointer disabled:opacity-50 text-sm" 
-                      disabled={isConnecting}
-                      onClick={handleJoinRoom}
-                    >
-                      {isConnecting ? 'Joining… 🎯' : 'Join'}
-                    </button>
-                  </div>
-
-                  <div className="divider"><span>single player</span></div>
-
-                  {/* Play vs Computer PvE Button */}
+                {/* Play vs Computer PvE Button */}
+                <div className="mt-3">
                   <button
                     id="btn-pve"
-                    className="btn btn-pve w-full py-3.5 px-5 rounded-2xl font-semibold text-slate-100 bg-white/5 border border-white/15 backdrop-blur-md transition-all duration-300 hover:bg-white/10 hover:border-purple-400/50 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] flex items-center justify-between group cursor-pointer"
+                    className="btn btn-pve w-full py-3 px-5 rounded-2xl font-semibold text-slate-100 bg-white/5 border border-white/15 backdrop-blur-md transition-all duration-300 hover:bg-white/10 hover:border-purple-400/50 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] flex items-center justify-between group cursor-pointer"
                     type="button"
                     onClick={() => setShowPveModal(true)}
                   >
@@ -2450,7 +2454,7 @@ export default function HangmanDuelApp() {
                   </button>
 
                   {/* Error Banner */}
-                  <div id="lobby-error" className={`error-banner ${lobbyError ? '' : 'hidden'}`} role="alert">
+                  <div id="lobby-error" className={`error-banner mt-2 ${lobbyError ? '' : 'hidden'}`} role="alert">
                     {lobbyError}
                   </div>
                 </div>
@@ -2459,11 +2463,11 @@ export default function HangmanDuelApp() {
             </div>
 
             {/* Right Col: Floating Mock Game State Graphic */}
-            <div className="lg:col-span-6 w-full">
-              <div className="relative">
+            <div className="lg:col-span-6 w-full flex flex-col">
+              <div className="relative w-full flex-1 flex flex-col">
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-600/40 via-cyan-500/30 to-purple-600/40 rounded-3xl blur-xl opacity-75" />
                 
-                <div className="relative bg-[#11101d]/90 border border-white/15 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl text-left">
+                <div className="relative bg-[#11101d]/90 border border-white/15 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl text-left w-full flex-1 flex flex-col justify-between">
                   
                   {/* Card Header Bar */}
                   <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
@@ -2479,8 +2483,8 @@ export default function HangmanDuelApp() {
                     </div>
                   </div>
 
-                  {/* Stickman Graphic */}
-                  <div className="flex flex-col items-center justify-center my-4">
+                  {/* Stickman Graphic & Word */}
+                  <div className="flex flex-col items-center justify-center my-auto py-1">
                     <div className="w-32 h-28 relative flex items-center justify-center">
                       <svg className="w-full h-full drop-shadow-[0_0_12px_rgba(168,85,247,0.5)]" viewBox="0 0 100 90" fill="none" stroke="#c084fc" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M15 85 L85 85" stroke="#7c3aed" strokeWidth="4" />
@@ -2494,24 +2498,22 @@ export default function HangmanDuelApp() {
                       </svg>
                     </div>
 
-                    {/* Word Slots */}
-                    <div className="flex items-center justify-center gap-2 sm:gap-3 my-6 font-mono-code">
-                      {['_', 'A', '_', 'B', '_', 'A', '_'].map((char, index) => (
+                    {/* Word Slots — Spells HANGMAN */}
+                    <div className="flex items-center justify-center gap-1.5 sm:gap-2 my-5 font-mono-code">
+                      {['H', 'A', 'N', 'G', 'M', 'A', 'N'].map((char, index) => (
                         <div
                           key={index}
-                          className={`w-8 h-11 sm:w-10 sm:h-13 rounded-lg flex items-center justify-center text-lg sm:text-xl font-bold border transition-all ${
-                            char !== '_'
-                              ? 'bg-purple-600/20 border-purple-500 text-purple-200 shadow-[0_0_15px_rgba(168,85,247,0.3)]'
-                              : 'bg-white/5 border-white/10 text-transparent'
-                          }`}
+                          className="w-8 h-11 sm:w-10 sm:h-13 rounded-xl flex items-center justify-center text-lg sm:text-2xl font-black uppercase transition-all duration-300 border-2 border-cyan-400 bg-cyan-500/20 text-cyan-300 shadow-[0_0_16px_rgba(34,211,238,0.45)]"
                         >
                           {char}
                         </div>
                       ))}
                     </div>
 
-                    <div className="text-xs font-mono-code text-slate-400 tracking-wider uppercase mb-2">
-                      Category: <span className="text-yellow-400 font-bold">Tech & Gaming</span> • Lives: <span className="text-red-400 font-bold">2 / 6</span>
+                    <div className="text-xs font-mono-code text-slate-400 tracking-wider uppercase mb-1 text-center flex items-center justify-center gap-2 flex-wrap">
+                      <span>Category: <strong className="text-yellow-400 font-bold">Tech & Gaming</strong></span>
+                      <span>•</span>
+                      <span>Lives: <strong className="text-red-400 font-bold">2 / 6</strong></span>
                     </div>
                   </div>
 
