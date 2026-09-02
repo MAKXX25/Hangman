@@ -1521,7 +1521,7 @@ export default function HangmanDuelApp() {
     }
   }, [gameState, game?.word, game?.livesLeft, pveRound]);
 
-  // ── 1. Create Room (Authoritative Socket.io with Auto-Connect Queue) ──────
+  // ── 1. Create Room (Authoritative Socket.io with Auto-Connect Queue & Timeout) ─
   const handleCreateRoom = () => {
     const name = playerName.trim();
     if (!name) {
@@ -1547,27 +1547,44 @@ export default function HangmanDuelApp() {
       if (sock.connected) {
         showToast('Creating room… 🎮');
         sock.emit('create_room', { playerName: name, wordPickTime });
-      } else {
-        showToast('Connecting to game server… Please wait ⏳');
-        setConnectionStatus('connecting');
-        sock.once('connect', () => {
-          setConnectionStatus('connected');
-          setMyPlayerId(sock.id);
-          sock.emit('create_room', { playerName: name, wordPickTime });
-        });
+        setTimeout(() => { setIsConnecting(false); }, 15000);
+        return;
       }
+
+      // Socket is still connecting (e.g. Render cold start)
+      showToast('Connecting to game server… Please wait ⏳', 4000);
+      setConnectionStatus('connecting');
+
+      let timeoutId;
+      const onConnectEmit = () => {
+        if (timeoutId) clearTimeout(timeoutId);
+        setConnectionStatus('connected');
+        setMyPlayerId(sock.id);
+        sock.emit('create_room', { playerName: name, wordPickTime });
+      };
+
+      sock.once('connect', onConnectEmit);
+
+      // 8-second safety timeout if Render backend is unresponsive
+      timeoutId = setTimeout(() => {
+        sock.off('connect', onConnectEmit);
+        if (!sock.connected) {
+          console.warn('⚠️ Backend connection timed out. Falling back to local/P2P mode.');
+          showToast('⚠️ Backend server waking up or unreachable. Falling back to P2P mode…', 4000);
+          const p2pSocket = new ServerlessSocket();
+          socketRef.current = p2pSocket;
+          setConnectionStatus('connected');
+          setMyPlayerId(p2pSocket.id);
+          attachSocketListeners(p2pSocket);
+          p2pSocket.emit('create_room', { playerName: name, wordPickTime });
+        }
+      }, 8000);
+
       setTimeout(() => { setIsConnecting(false); }, 15000);
       return;
     }
 
-    // Fallback: If no backend is configured, use ServerlessSocket
-    const currentSock = socketRef.current;
-    if (currentSock && typeof currentSock.isHost !== 'undefined') {
-      currentSock.emit('create_room', { playerName: name, wordPickTime });
-      setTimeout(() => { setIsConnecting(false); }, 15000);
-      return;
-    }
-
+    // Fallback: If no backend configured at all, use ServerlessSocket
     console.log('⚡ [P2P Mode] No backend configured. Using ServerlessSocket.');
     const p2pSocket = new ServerlessSocket();
     socketRef.current = p2pSocket;
@@ -1578,7 +1595,7 @@ export default function HangmanDuelApp() {
     setTimeout(() => { setIsConnecting(false); }, 15000);
   };
 
-  // ── 2. Join Room (Authoritative Socket.io with Auto-Connect Queue) ────────
+  // ── 2. Join Room (Authoritative Socket.io with Auto-Connect Queue & Timeout) ───
   const handleJoinRoom = () => {
     const name = playerName.trim();
     const code = (joinCode || '').replace(/\s+/g, '').trim().toUpperCase();
@@ -1610,27 +1627,42 @@ export default function HangmanDuelApp() {
       if (sock.connected) {
         showToast('Joining game room… 🎯');
         sock.emit('join_room', { roomCode: code, playerName: name });
-      } else {
-        showToast('Connecting to game server… Please wait ⏳');
-        setConnectionStatus('connecting');
-        sock.once('connect', () => {
-          setConnectionStatus('connected');
-          setMyPlayerId(sock.id);
-          sock.emit('join_room', { roomCode: code, playerName: name });
-        });
+        setTimeout(() => { setIsConnecting(false); }, 15000);
+        return;
       }
+
+      showToast('Connecting to game server… Please wait ⏳', 4000);
+      setConnectionStatus('connecting');
+
+      let timeoutId;
+      const onConnectJoin = () => {
+        if (timeoutId) clearTimeout(timeoutId);
+        setConnectionStatus('connected');
+        setMyPlayerId(sock.id);
+        sock.emit('join_room', { roomCode: code, playerName: name });
+      };
+
+      sock.once('connect', onConnectJoin);
+
+      timeoutId = setTimeout(() => {
+        sock.off('connect', onConnectJoin);
+        if (!sock.connected) {
+          console.warn('⚠️ Backend connection timed out. Falling back to local/P2P mode.');
+          showToast('⚠️ Backend server waking up or unreachable. Falling back to P2P mode…', 4000);
+          const p2pSocket = new ServerlessSocket();
+          socketRef.current = p2pSocket;
+          setConnectionStatus('connected');
+          setMyPlayerId(p2pSocket.id);
+          attachSocketListeners(p2pSocket);
+          p2pSocket.emit('join_room', { roomCode: code, playerName: name });
+        }
+      }, 8000);
+
       setTimeout(() => { setIsConnecting(false); }, 15000);
       return;
     }
 
-    // Fallback: If no backend is configured, use ServerlessSocket
-    const currentSock = socketRef.current;
-    if (currentSock && typeof currentSock.isHost !== 'undefined') {
-      currentSock.emit('join_room', { roomCode: code, playerName: name });
-      setTimeout(() => { setIsConnecting(false); }, 15000);
-      return;
-    }
-
+    // Fallback: If no backend configured at all, use ServerlessSocket
     console.log(`⚡ [P2P Mode] Joining room ${code} via ServerlessSocket...`);
     const p2pSocket = new ServerlessSocket();
     socketRef.current = p2pSocket;
