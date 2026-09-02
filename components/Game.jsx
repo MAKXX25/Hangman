@@ -238,139 +238,150 @@ export default function Game({
         </button>
       </div>
 
-      {/* ─── Main Game Grid ────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      {/* ─── 1. TOP ROW: Gallows View & Secret Word Display ─────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 md:gap-5 lg:gap-6 items-stretch flex-1 min-h-0">
         
-        {/* Left Column: Canvas & Health (4 cols) */}
-        <div className="lg:col-span-5 flex flex-col items-center gap-4 p-6 rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl">
-          <div className="font-mono text-xs text-slate-400 uppercase tracking-wider font-semibold">
-            Gallows View
+        {/* Left Column: Canvas (5 cols) */}
+        <div className="md:col-span-5 lg:col-span-5 flex flex-col items-center justify-center gap-2 sm:gap-3 p-3 sm:p-5 lg:p-6 rounded-2xl sm:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl min-h-0">
+          <div className="font-mono text-[10px] sm:text-xs text-slate-400 uppercase tracking-wider font-semibold">
+            {isChooser ? "Opponent's Gallows" : "Gallows View"}
           </div>
 
-          {/* Canvas Wrapper */}
-          <div className="w-[220px] h-[240px] flex items-center justify-center bg-black/30 rounded-2xl border border-white/5 shadow-inner">
-            <canvas ref={canvasRef} width={220} height={240} className="w-[220px] h-[240px]" />
-          </div>
-
-          {/* Gallows Health Hearts */}
-          <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-3.5 flex justify-between items-center backdrop-blur-md mt-2">
-            <span className="font-mono text-xs font-semibold tracking-wider uppercase text-slate-400">
-              Health:
-            </span>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1">
-                {Array.from({ length: maxLives }).map((_, i) => (
-                  <svg
-                    key={i}
-                    viewBox="0 0 24 24"
-                    className={`w-5 h-5 transition-all duration-300 ${
-                      i < lives
-                        ? 'fill-rose-500 text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.6)] scale-100'
-                        : 'fill-white/10 text-white/10 scale-90'
-                    }`}
-                  >
-                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                  </svg>
-                ))}
-              </div>
-              <span className="font-mono text-xs font-bold text-slate-300 ml-1">
-                ({lives})
-              </span>
-            </div>
+          <div className="w-full max-w-[260px] aspect-[11/12] flex items-center justify-center bg-black/30 rounded-xl sm:rounded-2xl border border-white/5 shadow-inner p-1 sm:p-2">
+            <canvas ref={canvasRef} width={220} height={240} className="w-full h-full object-contain max-h-[180px] sm:max-h-[220px] md:max-h-[260px]" />
           </div>
         </div>
 
-        {/* Right Column: Neon Secret Word & QWERTY Keyboard (7 cols) */}
-        <div className="lg:col-span-7 flex flex-col gap-6 p-6 sm:p-8 rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl">
-          
-          {/* ─── 3. FORCED NEON SECRET WORD DISPLAY ─────────────────── */}
-          <section className="flex flex-col items-center justify-center text-center">
-            <div className="font-mono text-xs sm:text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
-              SECRET WORD ({letterCount} {letterCount === 1 ? 'LETTER' : 'LETTERS'})
+        {/* Right Column: Neon Secret Word Display (7 cols) */}
+        <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-center gap-3 sm:gap-4 p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl text-center min-h-0">
+          <div className="font-mono text-xs sm:text-sm font-bold uppercase tracking-widest text-slate-400">
+            SECRET WORD ({letterCount} {letterCount === 1 ? 'LETTER' : 'LETTERS'})
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2.5 md:gap-3 lg:gap-3.5 font-mono max-w-full">
+            {secretLetters.map((char, index) => {
+              if (char === ' ') {
+                return <div key={index} className="w-3 sm:w-5" aria-hidden="true" />;
+              }
+
+              const isGuessed = guessedSet.has(char);
+
+              let boxContent = '_';
+              let boxStyles = '';
+
+              if (isChooser) {
+                // Chooser POV: Always see the letter
+                boxContent = char;
+                boxStyles = isGuessed
+                  ? 'border-2 border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_18px_rgba(34,211,238,0.5)] scale-100'
+                  : 'bg-white/5 border-2 border-dashed border-white/20 text-white/40 scale-95';
+              } else {
+                // Guesser POV: Hidden until guessed
+                boxContent = isGuessed ? char : '_';
+                boxStyles = isGuessed
+                  ? 'border-2 border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_18px_rgba(34,211,238,0.5)] scale-100'
+                  : 'bg-white/5 border border-white/10 text-white/30';
+              }
+
+              return (
+                <div
+                  key={index}
+                  className={`w-9 h-11 sm:w-12 sm:h-14 md:w-14 md:h-16 lg:w-16 lg:h-18 flex items-center justify-center rounded-xl sm:rounded-2xl text-xl sm:text-3xl md:text-4xl font-extrabold uppercase transition-all duration-300 select-none shadow-sm ${boxStyles}`}
+                >
+                  {boxContent}
+                </div>
+              );
+            })}
+          </div>
+
+          {isChooser && (
+            <div className="text-[11px] font-mono text-purple-300/80 bg-purple-950/40 border border-purple-500/20 px-3 py-1 rounded-full">
+              Dashed boxes indicate letters your opponent has not guessed yet.
             </div>
+          )}
+        </div>
+      </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 font-mono">
-              {secretLetters.map((char, index) => {
-                if (char === ' ') {
-                  return <div key={index} className="w-4 sm:w-6" aria-hidden="true" />;
-                }
+      {/* ─── 2. MIDDLE ROW: Separated, Bigger Health Bar ────────────────────── */}
+      <div className="w-full px-3.5 py-2.5 sm:px-6 sm:py-3.5 rounded-xl sm:rounded-2xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-4">
+        {/* Health & Big Hearts */}
+        <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-wrap justify-center sm:justify-start">
+          <span className="font-mono text-xs sm:text-sm font-bold tracking-widest uppercase text-slate-300 flex-shrink-0">
+            {isChooser ? "OPPONENT HEALTH:" : "HEALTH:"}
+          </span>
+          <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap justify-center">
+            {Array.from({ length: maxLives }).map((_, i) => (
+              <svg
+                key={i}
+                viewBox="0 0 24 24"
+                className={`w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 transition-all duration-300 ${
+                  i < lives
+                    ? 'fill-rose-500 text-rose-500 drop-shadow-[0_0_10px_rgba(244,63,94,0.75)] scale-100'
+                    : 'fill-white/10 text-white/10 scale-90'
+                }`}
+              >
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+              </svg>
+            ))}
+          </div>
+          <span className="font-mono text-sm sm:text-base md:text-lg font-bold text-rose-400 ml-1 flex-shrink-0">
+            ({lives})
+          </span>
+        </div>
 
-                const isGuessed = guessedSet.has(char);
+        {/* Live Guessed/Wrong Summary */}
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-center sm:justify-end">
+          <span className="font-mono text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-400 flex-shrink-0">
+            GUESSED:
+          </span>
+          <span className="font-mono text-xs sm:text-sm text-slate-300">
+            {normalizedGuessed.length} letters
+          </span>
+        </div>
+      </div>
 
-                let boxContent = '_';
-                let boxStyles = '';
+      {/* ─── 3. BOTTOM ROW: Interactive QWERTY Keyboard ─────────────────────── */}
+      <div className={`w-full p-2.5 sm:p-4 md:p-5 rounded-2xl sm:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl flex flex-col items-center gap-1.5 sm:gap-2 ${isChooser ? 'pointer-events-none opacity-90' : ''}`}>
+        <div className="font-mono text-[10px] sm:text-xs text-slate-400 uppercase tracking-wider text-center">
+          {isChooser ? "Opponent's Keyboard (Live):" : "Interactive Virtual Keyboard:"}
+        </div>
 
-                if (isChooser) {
-                  // Chooser POV: Always see the letter
-                  boxContent = char;
-                  boxStyles = isGuessed
-                    ? 'border-2 border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.4)] scale-100'
-                    : 'bg-white/5 border-2 border-dashed border-white/20 text-white/40 scale-95';
+        <div className="flex flex-col gap-1.5 sm:gap-2 w-full max-w-3xl touch-manipulation">
+          {KEYBOARD_ROWS.map((row, rowIndex) => (
+            <div key={rowIndex} className="flex justify-center gap-1 sm:gap-1.5 md:gap-2 w-full touch-manipulation">
+              {row.map((letter) => {
+                const isGuessed = guessedSet.has(letter);
+                const isCorrect = isGuessed && upperSecretWord.includes(letter);
+                const isWrong = isGuessed && !upperSecretWord.includes(letter);
+
+                let keyClasses = '';
+                if (isCorrect) {
+                  keyClasses =
+                    'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.5)] border border-emerald-400 scale-95 cursor-default';
+                } else if (isWrong) {
+                  keyClasses =
+                    'bg-rose-950/60 text-rose-500/70 line-through border border-rose-900/50 cursor-not-allowed scale-95';
                 } else {
-                  // Guesser POV: Hidden until guessed
-                  boxContent = isGuessed ? char : '_';
-                  boxStyles = isGuessed
-                    ? 'border-2 border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.4)] scale-100'
-                    : 'bg-white/5 border border-white/10 text-white/30';
+                  keyClasses = isChooser
+                    ? 'bg-[#2a2a35] text-white/70 border border-white/5 cursor-default'
+                    : 'bg-[#2a2a35] text-white/80 hover:bg-[#3a3a45] hover:text-white border border-white/5 active:scale-90 cursor-pointer';
                 }
 
                 return (
-                  <div
-                    key={index}
-                    className={`w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl text-xl sm:text-2xl font-bold uppercase transition-all duration-300 select-none ${boxStyles}`}
+                  <button
+                    key={letter}
+                    type="button"
+                    disabled={isGuessed || isRoundOver || isChooser}
+                    onClick={() => onGuessLetter(letter)}
+                    className={`flex-1 max-w-[34px] sm:max-w-[44px] md:max-w-[50px] h-9 sm:h-11 md:h-12 rounded-md sm:rounded-lg font-mono font-bold text-xs sm:text-sm md:text-base flex items-center justify-center uppercase transition-all select-none touch-manipulation active:scale-90 ${keyClasses}`}
+                    aria-label={`Letter ${letter}`}
                   >
-                    {boxContent}
-                  </div>
+                    {letter}
+                  </button>
                 );
               })}
             </div>
-          </section>
-
-          {/* ─── 4. FORCED NEON QWERTY VIRTUAL KEYBOARD ─────────────── */}
-          <section className={`flex flex-col gap-2.5 mt-2 ${isChooser ? 'pointer-events-none opacity-90' : ''}`}>
-            <div className="font-mono text-xs text-slate-400 uppercase tracking-wider text-center mb-1">
-              {isChooser ? "Opponent's Keyboard (Live):" : "Interactive Virtual Keyboard (Try clicking!):"}
-            </div>
-
-            <div className="flex flex-col gap-2">
-              {KEYBOARD_ROWS.map((row, rowIndex) => (
-                <div key={rowIndex} className="flex justify-center gap-1.5 sm:gap-2">
-                  {row.map((letter) => {
-                    const isGuessed = guessedSet.has(letter);
-                    const isCorrect = isGuessed && upperSecretWord.includes(letter);
-                    const isWrong = isGuessed && !upperSecretWord.includes(letter);
-
-                    let keyClasses = '';
-                    if (isCorrect) {
-                      keyClasses =
-                        'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.5)] border border-emerald-400 scale-95 cursor-default';
-                    } else if (isWrong) {
-                      keyClasses =
-                        'bg-rose-950/60 text-rose-500/70 line-through border border-rose-900/50 cursor-not-allowed scale-95';
-                    } else {
-                      keyClasses = isChooser
-                        ? 'bg-[#2a2a35] text-white/70 border border-white/5 cursor-default'
-                        : 'bg-[#2a2a35] text-white/70 hover:bg-[#3a3a45] hover:text-white border border-white/5 active:scale-95 cursor-pointer';
-                    }
-
-                    return (
-                      <button
-                        key={letter}
-                        type="button"
-                        disabled={isGuessed || isRoundOver || isChooser}
-                        onClick={() => onGuessLetter(letter)}
-                        className={`w-8 h-10 sm:w-10 sm:h-12 rounded-lg font-mono font-bold text-sm sm:text-base flex items-center justify-center uppercase transition-all select-none ${keyClasses}`}
-                        aria-label={`Letter ${letter}`}
-                      >
-                        {letter}
-                      </button>
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-          </section>
-
+          ))}
         </div>
       </div>
     </div>

@@ -3055,52 +3055,52 @@ export default function HangmanDuelApp() {
         </div>
 
         {/* Header Bar */}
-        <header className="w-full max-w-5xl mx-auto px-4 py-4 flex items-center justify-between z-10 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-purple-950/40 border border-purple-500/30 text-purple-400">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+        <header className="w-full max-w-7xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3.5 flex items-center justify-between gap-2 sm:gap-4 z-10 border-b border-white/10 flex-wrap sm:flex-nowrap">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl bg-purple-950/40 border border-purple-500/30 text-purple-400 flex-shrink-0">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 sm:w-5 sm:h-5">
                 <path d="M3 21h10" /><path d="M6 21V3h10" /><path d="M6 7l4-4" /><path d="M16 3v3" />
                 <circle cx="16" cy="8.5" r="2.2" /><path d="M16 10.7v4.3" />
                 <path d="M13.5 13.2L16 11.8l2.5 1.4" /><path d="M14 19l2-4 2 4" />
               </svg>
             </div>
-            <div className="flex items-center text-base font-bold uppercase tracking-wider">
+            <div className="flex items-center text-sm sm:text-base font-bold uppercase tracking-wider">
               <span className="text-white">Hangman</span>
               <span className="ml-1 text-purple-400">Duel</span>
             </div>
           </div>
 
           {/* Header Scoreboard */}
-          <div id="scoreboard" className="flex items-center gap-3 px-4 py-1.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md" aria-live="polite">
-            <div className={`flex items-center gap-1.5 font-mono text-sm ${p1Scored ? 'text-emerald-400 font-bold' : 'text-slate-300'}`}>
-              <span className="font-semibold">{p1.name}</span>
-              <span className="font-bold text-white px-2 py-0.5 rounded-lg bg-white/10">{p1.score}</span>
+          <div id="scoreboard" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-1 sm:py-1.5 rounded-xl sm:rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md text-xs sm:text-sm" aria-live="polite">
+            <div className={`flex items-center gap-1 sm:gap-1.5 font-mono ${p1Scored ? 'text-emerald-400 font-bold' : 'text-slate-300'}`}>
+              <span className="font-semibold max-w-[70px] sm:max-w-none truncate">{p1.name}</span>
+              <span className="font-bold text-white px-1.5 sm:px-2 py-0.5 rounded-md sm:rounded-lg bg-white/10">{p1.score}</span>
             </div>
             <span className="text-slate-500 font-bold">:</span>
-            <div className={`flex items-center gap-1.5 font-mono text-sm ${p2Scored ? 'text-emerald-400 font-bold' : 'text-slate-300'}`}>
-              <span className="font-bold text-white px-2 py-0.5 rounded-lg bg-white/10">{p2.score}</span>
-              <span className="font-semibold">{p2.name}</span>
+            <div className={`flex items-center gap-1.5 font-mono ${p2Scored ? 'text-emerald-400 font-bold' : 'text-slate-300'}`}>
+              <span className="font-bold text-white px-1.5 sm:px-2 py-0.5 rounded-md sm:rounded-lg bg-white/10">{p2.score}</span>
+              <span className="font-semibold max-w-[70px] sm:max-w-none truncate">{p2.name}</span>
             </div>
           </div>
 
           {/* Leave Game CTA */}
-          <div className="flex items-center gap-3">
-            <span className="hidden sm:inline-block px-3 py-1 rounded-full bg-white/5 border border-white/10 font-mono text-xs text-slate-400">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="hidden md:inline-block px-3 py-1 rounded-full bg-white/5 border border-white/10 font-mono text-xs text-slate-400">
               {isPveMode ? `BOT: ${pveDifficulty.toUpperCase()}` : `ROOM: ${roomCode}`}
             </span>
             <button
               id="btn-leave-game"
               type="button"
               onClick={handleLeaveGame}
-              className="bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30 hover:text-rose-300 px-4 py-2 rounded-xl text-sm font-semibold transition-all backdrop-blur-md flex items-center gap-2 cursor-pointer shadow-sm active:scale-95"
+              className="bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30 hover:text-rose-300 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all backdrop-blur-md flex items-center gap-1.5 sm:gap-2 cursor-pointer shadow-sm active:scale-95"
               aria-label="Leave Game"
             >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                 <polyline points="16 17 21 12 16 7" />
                 <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
-              <span>Leave Game</span>
+              <span>Leave</span>
             </button>
           </div>
         </header>
@@ -3271,38 +3271,38 @@ export default function HangmanDuelApp() {
 
           {/* ─── GUESSER ACTIVE PANEL ─────────────────────────────────────── */}
           {(gameState === 'guessing' || gameState === 'roundover') && !isWordSetter && (
-            <section id="panel-guesser" className="w-full max-w-5xl mx-auto px-4 py-4 flex flex-col gap-6">
+            <section id="panel-guesser" className="w-full max-w-7xl mx-auto flex-1 flex flex-col justify-between gap-3 sm:gap-4 md:gap-5 py-2">
               
-              {/* 1. TOP ROW: Gallows View & Secret Word Display */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+              {/* 1. TOP ROW: Gallows View & Secret Word Display (Fills screen width & flexes) */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 md:gap-5 lg:gap-6 items-stretch flex-1 min-h-0">
                 
                 {/* Left Column: Gallows Canvas (5 cols) */}
-                <div className="lg:col-span-5 flex flex-col items-center justify-center gap-3 p-6 rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl">
-                  <div className="font-mono text-xs text-slate-400 uppercase tracking-wider font-semibold">
+                <div className="md:col-span-5 lg:col-span-5 flex flex-col items-center justify-center gap-2 sm:gap-3 p-3 sm:p-5 lg:p-6 rounded-2xl sm:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl min-h-0">
+                  <div className="font-mono text-[10px] sm:text-xs text-slate-400 uppercase tracking-wider font-semibold">
                     Gallows View
                   </div>
 
-                  <div className={`w-[220px] h-[240px] flex items-center justify-center bg-black/30 rounded-2xl border border-white/5 shadow-inner ${isGallowsSwinging ? 'hangman-swing' : ''}`}>
-                    <canvas id="hangman-canvas" ref={hangmanCanvasRef} width={220} height={240} className="w-[220px] h-[240px]" />
+                  <div className={`w-full max-w-[260px] aspect-[11/12] flex items-center justify-center bg-black/30 rounded-xl sm:rounded-2xl border border-white/5 shadow-inner p-1 sm:p-2 ${isGallowsSwinging ? 'hangman-swing' : ''}`}>
+                    <canvas id="hangman-canvas" ref={hangmanCanvasRef} width={220} height={240} className="w-full h-full object-contain max-h-[180px] sm:max-h-[220px] md:max-h-[260px]" />
                   </div>
                 </div>
 
                 {/* Right Column: Neon Secret Word Display (7 cols) */}
-                <div className="lg:col-span-7 flex flex-col items-center justify-center gap-4 p-6 sm:p-8 rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl text-center">
+                <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-center gap-3 sm:gap-4 p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl text-center min-h-0">
                   <div className="font-mono text-xs sm:text-sm font-bold uppercase tracking-widest text-slate-400">
                     SECRET WORD ({hiddenWordChars.length} LETTERS)
                   </div>
 
-                  <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 font-mono">
+                  <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2.5 md:gap-3 lg:gap-3.5 font-mono max-w-full">
                     {hiddenWordChars.map((slot, i) => {
                       const isRevealed = slot !== '_';
 
                       return (
                         <div
                           key={i}
-                          className={`w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center rounded-xl text-xl sm:text-2xl font-bold uppercase transition-all duration-300 select-none ${
+                          className={`w-9 h-11 sm:w-12 sm:h-14 md:w-14 md:h-16 lg:w-16 lg:h-18 flex items-center justify-center rounded-xl sm:rounded-2xl text-xl sm:text-3xl md:text-4xl font-extrabold uppercase transition-all duration-300 select-none shadow-sm ${
                             isRevealed
-                              ? 'border-2 border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.4)] scale-100'
+                              ? 'border-2 border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_18px_rgba(34,211,238,0.5)] scale-100'
                               : 'bg-white/5 border border-white/10 text-white/30'
                           }`}
                         >
@@ -3315,20 +3315,20 @@ export default function HangmanDuelApp() {
               </div>
 
               {/* 2. MIDDLE ROW: Separated, Bigger Health Bar & Wrong Letters (Below Gallows & Secret Word) */}
-              <div className="w-full p-4 sm:p-5 rounded-2xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="w-full px-3.5 py-2.5 sm:px-6 sm:py-3.5 rounded-xl sm:rounded-2xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-4">
                 {/* Health & Big Hearts */}
-                <div className="flex items-center gap-3 sm:gap-4 flex-wrap justify-center md:justify-start">
-                  <span className="font-mono text-xs sm:text-sm font-bold tracking-widest uppercase text-slate-300">
+                <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-wrap justify-center sm:justify-start">
+                  <span className="font-mono text-xs sm:text-sm font-bold tracking-widest uppercase text-slate-300 flex-shrink-0">
                     HEALTH:
                   </span>
-                  <div className="flex items-center gap-1 sm:gap-1.5">
+                  <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap justify-center">
                     {Array.from({ length: game?.maxLives || MAX_LIVES }).map((_, i) => (
                       <svg
                         key={i}
                         viewBox="0 0 24 24"
-                        className={`w-7 h-7 sm:w-8 sm:h-8 transition-all duration-300 ${
+                        className={`w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 transition-all duration-300 ${
                           i < livesLeft
-                            ? 'fill-rose-500 text-rose-500 drop-shadow-[0_0_12px_rgba(244,63,94,0.75)] scale-100'
+                            ? 'fill-rose-500 text-rose-500 drop-shadow-[0_0_10px_rgba(244,63,94,0.75)] scale-100'
                             : 'fill-white/10 text-white/10 scale-90'
                         }`}
                       >
@@ -3336,22 +3336,22 @@ export default function HangmanDuelApp() {
                       </svg>
                     ))}
                   </div>
-                  <span className="font-mono text-base sm:text-lg font-bold text-rose-400 ml-1">
+                  <span className="font-mono text-sm sm:text-base md:text-lg font-bold text-rose-400 ml-1 flex-shrink-0">
                     ({livesLeft})
                   </span>
                 </div>
 
                 {/* Wrong Letters */}
-                <div className="flex items-center gap-3 flex-wrap justify-center md:justify-end">
-                  <span className="font-mono text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-400">
+                <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-center sm:justify-end">
+                  <span className="font-mono text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-400 flex-shrink-0">
                     WRONG LETTERS:
                   </span>
-                  <div className="flex flex-wrap items-center gap-1.5 min-h-[28px]">
+                  <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 min-h-[24px] sm:min-h-[28px]">
                     {wrongGuesses.length === 0 ? (
                       <span className="text-xs sm:text-sm text-slate-500 italic">None yet</span>
                     ) : (
                       wrongGuesses.map((l, i) => (
-                        <span key={i} className="px-3 py-1 rounded-lg bg-rose-950/70 border border-rose-500/40 text-rose-300 font-mono font-bold text-xs sm:text-sm shadow-sm">
+                        <span key={i} className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-lg bg-rose-950/70 border border-rose-500/40 text-rose-300 font-mono font-bold text-xs sm:text-sm shadow-sm">
                           {l}
                         </span>
                       ))
@@ -3360,15 +3360,15 @@ export default function HangmanDuelApp() {
                 </div>
               </div>
 
-              {/* 3. BOTTOM ROW: Interactive QWERTY Keyboard */}
-              <div className="w-full p-6 sm:p-7 rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl flex flex-col items-center gap-3">
-                <div className="font-mono text-xs text-slate-400 uppercase tracking-wider text-center mb-1">
-                  Interactive Virtual Keyboard (Try clicking!):
+              {/* 3. BOTTOM ROW: Interactive QWERTY Keyboard (Optimized for Smartphones & Desktop) */}
+              <div className="w-full p-2.5 sm:p-4 md:p-5 rounded-2xl sm:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl flex flex-col items-center gap-1.5 sm:gap-2">
+                <div className="font-mono text-[10px] sm:text-xs text-slate-400 uppercase tracking-wider text-center">
+                  Interactive Virtual Keyboard:
                 </div>
 
-                <div className="flex flex-col gap-2 w-full max-w-2xl">
+                <div className="flex flex-col gap-1.5 sm:gap-2 w-full max-w-3xl touch-manipulation">
                   {KEYBOARD_ROWS.map((row, rIdx) => (
-                    <div key={rIdx} className="flex justify-center gap-1.5 sm:gap-2">
+                    <div key={rIdx} className="flex justify-center gap-1 sm:gap-1.5 md:gap-2 w-full touch-manipulation">
                       {row.map((letter) => {
                         const isGuessed = guessedSet.has(letter);
                         const isWrong = wrongSet.has(letter);
@@ -3380,14 +3380,14 @@ export default function HangmanDuelApp() {
                         } else if (isWrong) {
                           keyClasses = 'bg-rose-950/60 text-rose-500/70 line-through border border-rose-900/50 cursor-not-allowed scale-95';
                         } else {
-                          keyClasses = 'bg-[#2a2a35] text-white/70 hover:bg-[#3a3a45] hover:text-white border border-white/5 active:scale-95 cursor-pointer';
+                          keyClasses = 'bg-[#2a2a35] text-white/80 hover:bg-[#3a3a45] hover:text-white border border-white/5 active:scale-90 cursor-pointer';
                         }
 
                         return (
                           <button
                             key={letter}
                             type="button"
-                            className={`w-8 h-10 sm:w-11 sm:h-12 rounded-lg font-mono font-bold text-sm sm:text-base flex items-center justify-center uppercase transition-all select-none ${keyClasses}`}
+                            className={`flex-1 max-w-[34px] sm:max-w-[44px] md:max-w-[50px] h-9 sm:h-11 md:h-12 rounded-md sm:rounded-lg font-mono font-bold text-xs sm:text-sm md:text-base flex items-center justify-center uppercase transition-all select-none touch-manipulation active:scale-90 ${keyClasses}`}
                             disabled={isGuessed || gameState === 'roundover'}
                             onClick={() => handleGuessLetter(letter)}
                           >
@@ -3404,38 +3404,38 @@ export default function HangmanDuelApp() {
 
           {/* ─── SETTER WATCHING PANEL ────────────────────────────────────── */}
           {(gameState === 'guessing' || gameState === 'roundover') && isWordSetter && (
-            <section id="panel-watching" className="w-full max-w-5xl mx-auto px-4 py-4 flex flex-col gap-6">
+            <section id="panel-watching" className="w-full max-w-7xl mx-auto flex-1 flex flex-col justify-between gap-3 sm:gap-4 md:gap-5 py-2">
               
               {/* 1. TOP ROW: Opponent's Gallows & Secret Word Display */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 md:gap-5 lg:gap-6 items-stretch flex-1 min-h-0">
                 
                 {/* Left Column: Canvas (5 cols) */}
-                <div className="lg:col-span-5 flex flex-col items-center justify-center gap-3 p-6 rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl">
-                  <div className="font-mono text-xs text-slate-400 uppercase tracking-wider font-semibold">
+                <div className="md:col-span-5 lg:col-span-5 flex flex-col items-center justify-center gap-2 sm:gap-3 p-3 sm:p-5 lg:p-6 rounded-2xl sm:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl min-h-0">
+                  <div className="font-mono text-[10px] sm:text-xs text-slate-400 uppercase tracking-wider font-semibold">
                     Opponent&apos;s Gallows
                   </div>
 
-                  <div className={`w-[220px] h-[240px] flex items-center justify-center bg-black/30 rounded-2xl border border-white/5 shadow-inner ${isGallowsSwinging ? 'hangman-swing' : ''}`}>
-                    <canvas id="hangman-canvas-watch" ref={hangmanWatchCanvasRef} width={220} height={240} className="w-[220px] h-[240px]" />
+                  <div className={`w-full max-w-[260px] aspect-[11/12] flex items-center justify-center bg-black/30 rounded-xl sm:rounded-2xl border border-white/5 shadow-inner p-1 sm:p-2 ${isGallowsSwinging ? 'hangman-swing' : ''}`}>
+                    <canvas id="hangman-canvas-watch" ref={hangmanWatchCanvasRef} width={220} height={240} className="w-full h-full object-contain max-h-[180px] sm:max-h-[220px] md:max-h-[260px]" />
                   </div>
                 </div>
 
                 {/* Right Column: Secret Word Display for Chooser (7 cols) */}
-                <div className="lg:col-span-7 flex flex-col items-center justify-center gap-4 p-6 sm:p-8 rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl text-center">
+                <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-center gap-3 sm:gap-4 p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl text-center min-h-0">
                   <div className="font-mono text-xs sm:text-sm font-bold uppercase tracking-widest text-slate-400">
                     SECRET WORD ({cleanWord.length} LETTERS)
                   </div>
 
-                  <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 font-mono">
+                  <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2.5 md:gap-3 lg:gap-3.5 font-mono max-w-full">
                     {cleanWord.split('').map((char, index) => {
                       const isGuessed = guessedSet.has(char);
 
                       return (
                         <div
                           key={index}
-                          className={`w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center rounded-xl text-xl sm:text-2xl font-bold uppercase transition-all duration-300 select-none ${
+                          className={`w-9 h-11 sm:w-12 sm:h-14 md:w-14 md:h-16 lg:w-16 lg:h-18 flex items-center justify-center rounded-xl sm:rounded-2xl text-xl sm:text-3xl md:text-4xl font-extrabold uppercase transition-all duration-300 select-none shadow-sm ${
                             isGuessed
-                              ? 'border-2 border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.4)] scale-100'
+                              ? 'border-2 border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_18px_rgba(34,211,238,0.5)] scale-100'
                               : 'bg-white/5 border-2 border-dashed border-white/20 text-white/40 scale-95'
                           }`}
                         >
@@ -3452,20 +3452,20 @@ export default function HangmanDuelApp() {
               </div>
 
               {/* 2. MIDDLE ROW: Separated, Bigger Opponent Health Bar */}
-              <div className="w-full p-4 sm:p-5 rounded-2xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="w-full px-3.5 py-2.5 sm:px-6 sm:py-3.5 rounded-xl sm:rounded-2xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-4">
                 {/* Health & Big Hearts */}
-                <div className="flex items-center gap-3 sm:gap-4 flex-wrap justify-center md:justify-start">
-                  <span className="font-mono text-xs sm:text-sm font-bold tracking-widest uppercase text-slate-400">
+                <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-wrap justify-center sm:justify-start">
+                  <span className="font-mono text-xs sm:text-sm font-bold tracking-widest uppercase text-slate-400 flex-shrink-0">
                     OPPONENT HEALTH:
                   </span>
-                  <div className="flex items-center gap-1 sm:gap-1.5">
+                  <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap justify-center">
                     {Array.from({ length: game?.maxLives || MAX_LIVES }).map((_, i) => (
                       <svg
                         key={i}
                         viewBox="0 0 24 24"
-                        className={`w-7 h-7 sm:w-8 sm:h-8 transition-all duration-300 ${
+                        className={`w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 transition-all duration-300 ${
                           i < livesLeft
-                            ? 'fill-rose-500 text-rose-500 drop-shadow-[0_0_12px_rgba(244,63,94,0.75)] scale-100'
+                            ? 'fill-rose-500 text-rose-500 drop-shadow-[0_0_10px_rgba(244,63,94,0.75)] scale-100'
                             : 'fill-white/10 text-white/10 scale-90'
                         }`}
                       >
@@ -3473,22 +3473,22 @@ export default function HangmanDuelApp() {
                       </svg>
                     ))}
                   </div>
-                  <span className="font-mono text-base sm:text-lg font-bold text-rose-400 ml-1">
+                  <span className="font-mono text-sm sm:text-base md:text-lg font-bold text-rose-400 ml-1 flex-shrink-0">
                     ({livesLeft})
                   </span>
                 </div>
 
                 {/* Opponent's Wrong Letters */}
-                <div className="flex items-center gap-3 flex-wrap justify-center md:justify-end">
-                  <span className="font-mono text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-400">
+                <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-center sm:justify-end">
+                  <span className="font-mono text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-400 flex-shrink-0">
                     WRONG LETTERS:
                   </span>
-                  <div className="flex flex-wrap items-center gap-1.5 min-h-[28px]">
+                  <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 min-h-[24px] sm:min-h-[28px]">
                     {wrongGuesses.length === 0 ? (
                       <span className="text-xs sm:text-sm text-slate-500 italic">None yet</span>
                     ) : (
                       wrongGuesses.map((l, i) => (
-                        <span key={i} className="px-3 py-1 rounded-lg bg-rose-950/70 border border-rose-500/40 text-rose-300 font-mono font-bold text-xs sm:text-sm shadow-sm">
+                        <span key={i} className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-lg bg-rose-950/70 border border-rose-500/40 text-rose-300 font-mono font-bold text-xs sm:text-sm shadow-sm">
                           {l}
                         </span>
                       ))
@@ -3498,12 +3498,12 @@ export default function HangmanDuelApp() {
               </div>
 
               {/* 3. BOTTOM ROW: Trivia / Facts Card */}
-              <div className="w-full p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md flex flex-col gap-2">
+              <div className="w-full p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md flex flex-col gap-1.5">
                 <div className="flex items-center gap-2 font-mono text-xs font-semibold uppercase text-purple-300">
                   <span>💡</span>
                   <span>Hangman Trivia</span>
                 </div>
-                <p className="text-sm text-slate-300 leading-relaxed italic">
+                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed italic">
                   &ldquo;{currentWatchFact}&rdquo;
                 </p>
               </div>

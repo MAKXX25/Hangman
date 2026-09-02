@@ -36,21 +36,21 @@ export default function GameArena({
   ];
 
   return (
-    <div className="w-full max-w-2xl mx-auto flex flex-col gap-6 p-6 sm:p-8 rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] transition-all">
+    <div className="w-full max-w-4xl mx-auto flex flex-col gap-4 sm:gap-6 p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] transition-all">
       
       {/* ─── 1. SECRET WORD DISPLAY (MULTIPLAYER LOGIC) ──────────────── */}
       <section className="flex flex-col items-center justify-center text-center">
         {/* Dynamic Header */}
-        <div className="font-mono text-xs sm:text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
+        <div className="font-mono text-xs sm:text-sm font-bold uppercase tracking-widest text-slate-400 mb-3 sm:mb-4">
           SECRET WORD ({letterCount} {letterCount === 1 ? 'LETTER' : 'LETTERS'})
         </div>
 
         {/* Letter Boxes */}
-        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 font-mono">
+        <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2.5 md:gap-3 lg:gap-3.5 font-mono max-w-full">
           {secretLetters.map((char, index) => {
             // Space separator for multi-word phrases
             if (char === ' ') {
-              return <div key={index} className="w-4 sm:w-6" aria-hidden="true" />;
+              return <div key={index} className="w-3 sm:w-5" aria-hidden="true" />;
             }
 
             const isGuessed = guessedSet.has(char);
@@ -65,7 +65,7 @@ export default function GameArena({
               if (isGuessed) {
                 // Opponent guessed this letter
                 boxStyles =
-                  'border-2 border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.4)] scale-100';
+                  'border-2 border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_18px_rgba(34,211,238,0.5)] scale-100';
               } else {
                 // Opponent has NOT guessed this letter yet
                 boxStyles =
@@ -76,7 +76,7 @@ export default function GameArena({
               if (isGuessed) {
                 boxContent = char;
                 boxStyles =
-                  'border-2 border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.4)] scale-100';
+                  'border-2 border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_18px_rgba(34,211,238,0.5)] scale-100';
               } else {
                 boxContent = '_';
                 boxStyles =
@@ -87,7 +87,7 @@ export default function GameArena({
             return (
               <div
                 key={index}
-                className={`w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl text-xl sm:text-2xl font-bold uppercase transition-all duration-300 select-none ${boxStyles}`}
+                className={`w-9 h-11 sm:w-12 sm:h-14 md:w-14 md:h-16 lg:w-16 lg:h-18 flex items-center justify-center rounded-xl sm:rounded-2xl text-xl sm:text-3xl md:text-4xl font-extrabold uppercase transition-all duration-300 select-none shadow-sm ${boxStyles}`}
               >
                 {boxContent}
               </div>
@@ -104,15 +104,15 @@ export default function GameArena({
       </section>
 
       {/* ─── 2. SHARED GALLOWS HEALTH BAR ────────────────────────────── */}
-      <section className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-center gap-3 mt-4 backdrop-blur-md">
+      <section className="w-full px-3.5 py-2.5 sm:px-6 sm:py-3.5 rounded-xl sm:rounded-2xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-4">
         {/* Left Label */}
-        <span className="font-mono text-xs sm:text-sm font-semibold tracking-wider uppercase text-slate-400">
-          Gallows Health:
+        <span className="font-mono text-xs sm:text-sm font-bold tracking-widest uppercase text-slate-300 flex-shrink-0">
+          {isChooser ? "OPPONENT HEALTH:" : "HEALTH:"}
         </span>
 
         {/* Right Hearts & Lives Counter */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5" aria-label={`Lives: ${lives} of ${maxLives}`}>
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-center sm:justify-end">
+          <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap justify-center" aria-label={`Lives: ${lives} of ${maxLives}`}>
             {Array.from({ length: maxLives }).map((_, index) => {
               const isActive = index < lives;
 
@@ -120,9 +120,9 @@ export default function GameArena({
                 <svg
                   key={index}
                   viewBox="0 0 24 24"
-                  className={`w-5 h-5 sm:w-6 sm:h-6 transition-all duration-300 ${
+                  className={`w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 transition-all duration-300 ${
                     isActive
-                      ? 'fill-rose-500 text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.6)] scale-100'
+                      ? 'fill-rose-500 text-rose-500 drop-shadow-[0_0_10px_rgba(244,63,94,0.75)] scale-100'
                       : 'fill-white/10 text-white/10 scale-90'
                   }`}
                   xmlns="http://www.w3.org/2000/svg"
@@ -133,30 +133,30 @@ export default function GameArena({
             })}
           </div>
 
-          <span className="font-mono text-xs sm:text-sm font-bold text-slate-300 ml-1">
+          <span className="font-mono text-sm sm:text-base md:text-lg font-bold text-rose-400 ml-1 flex-shrink-0">
             ({lives})
           </span>
         </div>
       </section>
 
       {/* ─── 3. QWERTY VIRTUAL KEYBOARD (INTERACTIVE vs LIVE-MIRROR) ─── */}
-      <section className={`flex flex-col gap-2.5 mt-2 ${isChooser ? 'pointer-events-none opacity-90' : ''}`}>
+      <section className={`flex flex-col gap-1.5 sm:gap-2 mt-1 ${isChooser ? 'pointer-events-none opacity-90' : ''}`}>
         {/* Dynamic Context Header */}
-        <div className="font-mono text-xs text-slate-400 uppercase tracking-wider text-center mb-1 flex items-center justify-center gap-2">
+        <div className="font-mono text-[10px] sm:text-xs text-slate-400 uppercase tracking-wider text-center mb-1 flex items-center justify-center gap-2">
           {isChooser ? (
             <>
               <span className="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
               <span>Opponent&apos;s Keyboard (Live):</span>
             </>
           ) : (
-            <span>Interactive Virtual Keyboard (Try clicking!):</span>
+            <span>Interactive Virtual Keyboard:</span>
           )}
         </div>
 
         {/* Keyboard Key Rows */}
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1.5 sm:gap-2 w-full max-w-3xl mx-auto touch-manipulation">
           {KEYBOARD_ROWS.map((row, rowIndex) => (
-            <div key={rowIndex} className="flex justify-center gap-1.5 sm:gap-2">
+            <div key={rowIndex} className="flex justify-center gap-1 sm:gap-1.5 md:gap-2 w-full touch-manipulation">
               {row.map((letter) => {
                 const isGuessed = guessedSet.has(letter);
                 const isCorrect = isGuessed && upperSecretWord.includes(letter);
@@ -175,7 +175,7 @@ export default function GameArena({
                   // Default / Unguessed
                   keyClasses = isChooser
                     ? 'bg-[#2a2a35] text-white/70 border border-white/5 cursor-default'
-                    : 'bg-[#2a2a35] text-white/70 hover:bg-[#3a3a45] hover:text-white border border-white/5 active:scale-95 cursor-pointer';
+                    : 'bg-[#2a2a35] text-white/80 hover:bg-[#3a3a45] hover:text-white border border-white/5 active:scale-90 cursor-pointer';
                 }
 
                 return (
@@ -184,7 +184,7 @@ export default function GameArena({
                     type="button"
                     disabled={isGuessed || disabled || isChooser}
                     onClick={() => onGuessLetter(letter)}
-                    className={`w-8 h-10 sm:w-10 sm:h-12 rounded-lg font-mono font-bold text-sm sm:text-base flex items-center justify-center uppercase transition-all select-none ${keyClasses}`}
+                    className={`flex-1 max-w-[34px] sm:max-w-[44px] md:max-w-[50px] h-9 sm:h-11 md:h-12 rounded-md sm:rounded-lg font-mono font-bold text-xs sm:text-sm md:text-base flex items-center justify-center uppercase transition-all select-none touch-manipulation active:scale-90 ${keyClasses}`}
                     aria-label={`Letter ${letter}`}
                   >
                     {letter}
