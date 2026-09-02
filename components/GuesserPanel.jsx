@@ -227,9 +227,9 @@ export default function GuesserPanel({
           Interactive Virtual Keyboard
         </div>
 
-        <div className="flex flex-col gap-1.5 sm:gap-2 w-full max-w-xl mx-auto touch-manipulation">
+        <div className="flex flex-col gap-1.5 sm:gap-2 w-full max-w-2xl mx-auto touch-manipulation items-center">
           {KEYBOARD_ROWS.map((row, rowIndex) => (
-            <div key={rowIndex} className="flex justify-center gap-1 sm:gap-1.5 md:gap-2 w-full touch-manipulation">
+            <div key={rowIndex} className="flex justify-center gap-1 sm:gap-1.5 md:gap-2 w-full max-w-full touch-manipulation">
               {row.map((letter) => {
                 const isGuessed = guessedSet.has(letter);
                 const isCorrect = isGuessed && upperWord.includes(letter);
@@ -253,7 +253,7 @@ export default function GuesserPanel({
                     type="button"
                     disabled={isGuessed || isRoundOver}
                     onClick={() => onGuessLetter(letter)}
-                    className={`flex-1 min-w-0 h-11 sm:h-12 md:h-13 rounded-lg sm:rounded-xl font-mono font-bold text-sm sm:text-base md:text-lg flex items-center justify-center uppercase transition-all select-none touch-manipulation active:scale-95 ${keyClasses}`}
+                    className={`flex-1 max-w-[34px] sm:max-w-none sm:flex-initial sm:w-10 md:w-11 lg:w-12 h-10 sm:h-11 md:h-12 lg:h-13 rounded-lg sm:rounded-xl font-mono font-bold text-xs sm:text-base md:text-lg flex items-center justify-center uppercase transition-all select-none touch-manipulation active:scale-95 ${keyClasses}`}
                     aria-label={`Letter ${letter}`}
                   >
                     {letter}

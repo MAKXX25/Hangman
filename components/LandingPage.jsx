@@ -296,7 +296,7 @@ export default function LandingPage({ onPlayNow, onPlayPvE }) {
           
           {/* Stat 1: Cyan */}
           <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md hover:border-cyan-500/30 transition-all duration-300">
-            <div className="font-display text-3xl sm:text-4xl font-extrabold text-cyan-400 drop-shadow-[0_0_15px_rgba(6,182,212,0.3)] mb-1">
+            <div className="font-pixel text-3xl sm:text-4xl font-extrabold text-cyan-400 drop-shadow-[0_0_15px_rgba(6,182,212,0.3)] mb-1">
               {(liveStats.duelsPlayed || 0).toLocaleString()}
             </div>
             <div className="text-xs sm:text-sm font-medium text-slate-400 uppercase tracking-wider">
@@ -306,7 +306,7 @@ export default function LandingPage({ onPlayNow, onPlayPvE }) {
 
           {/* Stat 2: Purple */}
           <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md hover:border-purple-500/30 transition-all duration-300">
-            <div className="font-display text-3xl sm:text-4xl font-extrabold text-purple-400 drop-shadow-[0_0_15px_rgba(168,85,247,0.3)] mb-1 flex items-center gap-2">
+            <div className="font-pixel text-3xl sm:text-4xl font-extrabold text-purple-400 drop-shadow-[0_0_15px_rgba(168,85,247,0.3)] mb-1 flex items-center gap-2">
               <span>{(liveStats.activePlayers || 1).toLocaleString()}</span>
               <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" title="Live Online" />
             </div>
@@ -317,8 +317,8 @@ export default function LandingPage({ onPlayNow, onPlayPvE }) {
 
           {/* Stat 3: Green */}
           <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md hover:border-emerald-500/30 transition-all duration-300">
-            <div className="font-display text-3xl sm:text-4xl font-extrabold text-emerald-400 drop-shadow-[0_0_15px_rgba(16,185,129,0.3)] mb-1">
-              {liveStats.winRate || 100}%
+            <div className="font-pixel text-3xl sm:text-4xl font-extrabold text-emerald-400 drop-shadow-[0_0_15px_rgba(16,185,129,0.3)] mb-1">
+              {liveStats.winRate ?? 0}%
             </div>
             <div className="text-xs sm:text-sm font-medium text-slate-400 uppercase tracking-wider">
               Win Rate Accuracy
@@ -327,7 +327,7 @@ export default function LandingPage({ onPlayNow, onPlayPvE }) {
 
           {/* Stat 4: Yellow */}
           <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md hover:border-yellow-500/30 transition-all duration-300">
-            <div className="font-display text-3xl sm:text-4xl font-extrabold text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.3)] mb-1">
+            <div className="font-pixel text-3xl sm:text-4xl font-extrabold text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.3)] mb-1">
               {(liveStats.wordsGuessed || 0).toLocaleString()}
             </div>
             <div className="text-xs sm:text-sm font-medium text-slate-400 uppercase tracking-wider">

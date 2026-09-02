@@ -78,7 +78,12 @@ const globalStats = {
 function getStatsPayload(ioInstance) {
   const totalG = globalStats.totalGuesses || 0;
   const correctG = globalStats.correctGuesses || 0;
-  const accuracy = totalG > 0 ? Math.round((correctG / totalG) * 100) : (globalStats.duelsPlayed > 0 ? Math.round((globalStats.wordsGuessed / Math.max(1, globalStats.duelsPlayed)) * 100) : 100);
+  let accuracy = 0;
+  if (totalG > 0) {
+    accuracy = Math.round((correctG / totalG) * 100);
+  } else if (globalStats.duelsPlayed > 0) {
+    accuracy = Math.round(((globalStats.wordsGuessed || 0) / globalStats.duelsPlayed) * 100);
+  }
   const activeClients = ioInstance && ioInstance.engine ? Math.max(1, ioInstance.engine.clientsCount) : 1;
 
   return {

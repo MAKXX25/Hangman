@@ -156,7 +156,7 @@ export default function HangmanDuelApp() {
     wordsGuessed: 0,
     totalGuesses: 0,
     correctGuesses: 0,
-    winRate: 100,
+    winRate: 0,
     activePlayers: 1,
   });
 
@@ -183,7 +183,7 @@ export default function HangmanDuelApp() {
               totalGuesses: Math.max(prev.totalGuesses || 0, data.stats.totalGuesses || 0),
               correctGuesses: Math.max(prev.correctGuesses || 0, data.stats.correctGuesses || 0),
               activePlayers: Math.max(1, data.stats.activePlayers || 1),
-              winRate: data.stats.winRate || prev.winRate || 100,
+              winRate: typeof data.stats.winRate === 'number' ? data.stats.winRate : (prev.winRate ?? 0),
             };
             try { localStorage.setItem('hangman_duel_live_stats', JSON.stringify(merged)); } catch {}
             return merged;
@@ -197,7 +197,7 @@ export default function HangmanDuelApp() {
     setLiveStats(prev => {
       const totalG = (prev.totalGuesses || 0) + 1;
       const correctG = (prev.correctGuesses || 0) + (isCorrect ? 1 : 0);
-      const winRate = totalG > 0 ? Math.round((correctG / totalG) * 100) : 100;
+      const winRate = totalG > 0 ? Math.round((correctG / totalG) * 100) : 0;
       const next = { ...prev, totalGuesses: totalG, correctGuesses: correctG, winRate };
       try { localStorage.setItem('hangman_duel_live_stats', JSON.stringify(next)); } catch {}
       return next;
@@ -2046,7 +2046,8 @@ export default function HangmanDuelApp() {
   };
 
   // ── 6. Next Round & Skip Countdown ────────────────────────────────────────
-  const handleNextRound = () => {
+  // ── 6. Next Round & Skip Countdown ────────────────────────────────────────
+  const handleNextRound = useCallback(() => {
     if (isPveMode) {
       const nextRound = pveRound + 1;
       setPveRound(nextRound);
@@ -2059,10 +2060,10 @@ export default function HangmanDuelApp() {
     if (socket) {
       socket.emit('next_round');
     }
-  };
+  }, [isPveMode, pveRound, pveDifficulty, pveMaxRounds, startPveGame]);
 
-  // Instant Skip for the 4-second Countdown
-  const handleSkipCountdown = () => {
+  // Instant Skip for the 10-second Countdown
+  const handleSkipCountdown = useCallback(() => {
     if (pveCountdownRef.current) {
       clearInterval(pveCountdownRef.current);
       pveCountdownRef.current = null;
@@ -2071,9 +2072,28 @@ export default function HangmanDuelApp() {
     const nextRound = pveRound + 1;
     setPveRound(nextRound);
     startPveGame(pveDifficulty, nextRound, pveScore, pveMaxRounds);
-  };
+  }, [pveRound, pveDifficulty, pveScore, pveMaxRounds, startPveGame]);
 
-  // ── PvE Auto-Continue Countdown (runs when modal opens in non-final rounds) ──
+  // ── Enter Key Listener for Instant Next Round ─────────────────────────────
+  useEffect(() => {
+    if (!isRoundOverModalOpen) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (isPveMode) {
+          handleSkipCountdown();
+        } else {
+          handleNextRound();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isRoundOverModalOpen, isPveMode, handleSkipCountdown, handleNextRound]);
+
+  // ── PvE Auto-Continue Countdown (10 seconds for comfortable reading) ──────
   const pveCountdownRef = useRef(null);
   useEffect(() => {
     // Only run when modal is open in PvE mode, not the final round
@@ -2083,7 +2103,7 @@ export default function HangmanDuelApp() {
       return;
     }
 
-    let count = 4;
+    let count = 10;
     setPveCountdown(count);
 
     pveCountdownRef.current = setInterval(() => {
@@ -2738,7 +2758,7 @@ export default function HangmanDuelApp() {
             
             {/* Stat 1: Duels Played */}
             <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md hover:border-cyan-500/30 transition-all duration-300">
-              <div className="font-display text-3xl sm:text-4xl font-extrabold text-cyan-400 drop-shadow-[0_0_15px_rgba(6,182,212,0.3)] mb-1">
+              <div className="font-pixel text-3xl sm:text-4xl font-extrabold text-cyan-400 drop-shadow-[0_0_15px_rgba(6,182,212,0.3)] mb-1">
                 {(liveStats.duelsPlayed || 0).toLocaleString()}
               </div>
               <div className="text-xs sm:text-sm font-medium text-slate-400 uppercase tracking-wider">
@@ -2748,7 +2768,7 @@ export default function HangmanDuelApp() {
 
             {/* Stat 2: Active Players */}
             <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md hover:border-purple-500/30 transition-all duration-300">
-              <div className="font-display text-3xl sm:text-4xl font-extrabold text-purple-400 drop-shadow-[0_0_15px_rgba(168,85,247,0.3)] mb-1 flex items-center gap-2">
+              <div className="font-pixel text-3xl sm:text-4xl font-extrabold text-purple-400 drop-shadow-[0_0_15px_rgba(168,85,247,0.3)] mb-1 flex items-center gap-2">
                 <span>{(liveStats.activePlayers || 1).toLocaleString()}</span>
                 <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" title="Live Online" />
               </div>
@@ -2759,8 +2779,8 @@ export default function HangmanDuelApp() {
 
             {/* Stat 3: Accuracy / Win Rate */}
             <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md hover:border-emerald-500/30 transition-all duration-300">
-              <div className="font-display text-3xl sm:text-4xl font-extrabold text-emerald-400 drop-shadow-[0_0_15px_rgba(16,185,129,0.3)] mb-1">
-                {liveStats.winRate || 100}%
+              <div className="font-pixel text-3xl sm:text-4xl font-extrabold text-emerald-400 drop-shadow-[0_0_15px_rgba(16,185,129,0.3)] mb-1">
+                {liveStats.winRate ?? 0}%
               </div>
               <div className="text-xs sm:text-sm font-medium text-slate-400 uppercase tracking-wider">
                 Win Rate Accuracy
@@ -2769,7 +2789,7 @@ export default function HangmanDuelApp() {
 
             {/* Stat 4: Words Solved */}
             <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md hover:border-yellow-500/30 transition-all duration-300">
-              <div className="font-display text-3xl sm:text-4xl font-extrabold text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.3)] mb-1">
+              <div className="font-pixel text-3xl sm:text-4xl font-extrabold text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.3)] mb-1">
                 {(liveStats.wordsGuessed || 0).toLocaleString()}
               </div>
               <div className="text-xs sm:text-sm font-medium text-slate-400 uppercase tracking-wider">
@@ -3286,16 +3306,21 @@ export default function HangmanDuelApp() {
             </div>
           </div>
 
-          {/* Header Scoreboard */}
-          <div id="scoreboard" className="flex items-center gap-1.5 sm:gap-3 px-2 py-0.5 sm:px-4 sm:py-1.5 rounded-lg sm:rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md text-[11px] sm:text-sm flex-shrink-0" aria-live="polite">
-            <div className={`flex items-center gap-1 sm:gap-1.5 font-mono ${p1Scored ? 'text-emerald-400 font-bold' : 'text-slate-300'}`}>
-              <span className="font-semibold max-w-[48px] sm:max-w-[90px] md:max-w-none truncate">{p1.name}</span>
-              <span className="font-bold text-white px-1 sm:px-2 py-0.5 rounded sm:rounded-lg bg-white/10">{p1.score}</span>
+          {/* Header Scoreboard (Aesthetic Glassmorphic Duel Badge) */}
+          <div id="scoreboard" className="flex items-center gap-1 sm:gap-2 px-2 py-1 sm:px-3 sm:py-1.5 rounded-xl sm:rounded-2xl bg-[#131124]/90 border border-purple-500/30 backdrop-blur-xl shadow-[0_0_20px_rgba(168,85,247,0.15)] flex-shrink-0 select-none" aria-live="polite">
+            {/* Player 1 Badge */}
+            <div className={`flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl bg-cyan-500/15 border border-cyan-400/30 transition-all ${p1Scored ? 'scale-110 border-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.6)]' : ''}`}>
+              <span className="text-[10px] sm:text-xs font-semibold text-cyan-200 max-w-[44px] sm:max-w-[85px] md:max-w-[120px] truncate">{p1.name}</span>
+              <span className="font-pixel text-xs sm:text-sm md:text-base font-extrabold text-cyan-400 min-w-[16px] sm:min-w-[20px] text-center bg-cyan-950/70 px-1 py-0.5 rounded border border-cyan-500/40 drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]">{p1.score}</span>
             </div>
-            <span className="text-slate-500 font-bold">:</span>
-            <div className={`flex items-center gap-1 sm:gap-1.5 font-mono ${p2Scored ? 'text-emerald-400 font-bold' : 'text-slate-300'}`}>
-              <span className="font-bold text-white px-1 sm:px-2 py-0.5 rounded sm:rounded-lg bg-white/10">{p2.score}</span>
-              <span className="font-semibold max-w-[48px] sm:max-w-[90px] md:max-w-none truncate">{p2.name}</span>
+
+            {/* Pulsing VS Divider */}
+            <span className="font-pixel text-[9px] sm:text-xs font-black text-purple-400/80 px-0.5 animate-pulse">VS</span>
+
+            {/* Player 2 Badge */}
+            <div className={`flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl bg-purple-500/15 border border-purple-400/30 transition-all ${p2Scored ? 'scale-110 border-purple-300 shadow-[0_0_12px_rgba(168,85,247,0.6)]' : ''}`}>
+              <span className="font-pixel text-xs sm:text-sm md:text-base font-extrabold text-purple-400 min-w-[16px] sm:min-w-[20px] text-center bg-purple-950/70 px-1 py-0.5 rounded border border-purple-500/40 drop-shadow-[0_0_8px_rgba(168,85,247,0.4)]">{p2.score}</span>
+              <span className="text-[10px] sm:text-xs font-semibold text-purple-200 max-w-[44px] sm:max-w-[85px] md:max-w-[120px] truncate">{p2.name}</span>
             </div>
           </div>
 
@@ -3448,51 +3473,49 @@ export default function HangmanDuelApp() {
                 <canvas id="particle-canvas" ref={particleCanvasRef} className="particle-canvas" />
 
                 <div className="guesser-waiting-content glass">
-                  <div className="gw-icon">⏳</div>
-                  <h2 className="gw-title">Opponent is choosing a word</h2>
-                  <p id="scramble-text" className="gw-scramble">{scrambleText}</p>
+                  <div className="scramble-box" id="guesser-scramble-box" aria-hidden="true">
+                    <span id="scramble-word" className="scramble-text">{scrambleText}</span>
+                  </div>
 
-                  {/* Synced Timer */}
-                  <div className="gw-timer-bar">
-                    <div className="gw-timer-label">Time remaining</div>
-                    <div className="gw-timer-track">
-                      <div
-                        className={`gw-timer-fill ${timerSecondsLeft <= 10 ? 'danger' : timerSecondsLeft <= 20 ? 'warn' : ''}`}
-                        id="gw-timer-fill"
-                        style={{ width: `${(timerSecondsLeft / (timerTotal || 60)) * 100}%` }}
-                      ></div>
-                    </div>
-                    <div id="gw-timer-val" className={`gw-timer-val ${timerSecondsLeft <= 10 ? 'danger' : timerSecondsLeft <= 20 ? 'warn' : ''}`}>
-                      {timerSecondsLeft}s
+                  <h2 className="panel-title">Word Setter is Choosing a Word…</h2>
+                  <p className="panel-sub">Get ready to guess! Watch the timer above.</p>
+
+                  <div className="setter-timer-ring-sm" id="guesser-wait-timer" aria-label="Time remaining">
+                    <svg className="timer-svg" viewBox="0 0 100 100">
+                      <circle className="timer-track" cx="50" cy="50" r="42" />
+                      <circle
+                        className={`timer-fill ${timerSecondsLeft <= 10 ? 'danger' : timerSecondsLeft <= 20 ? 'warn' : ''}`}
+                        cx="50"
+                        cy="50"
+                        r="42"
+                        strokeDasharray={RING_CIRCUMFERENCE}
+                        strokeDashoffset={timerRingOffset}
+                      />
+                    </svg>
+                    <div className="timer-inner">
+                      <span className={`timer-val ${timerSecondsLeft <= 10 ? 'danger' : timerSecondsLeft <= 20 ? 'warn' : ''}`}>
+                        {timerSecondsLeft}
+                      </span>
                     </div>
                   </div>
 
-                  {/* Unselectable Rotating Did You Know? Facts Widget */}
-                  <div className="facts-widget" id="facts-widget-guesser" style={{ userSelect: 'none' }}>
-                    <div className="facts-header">
-                      <span className="facts-icon">💡</span>
-                      <span className="facts-title">Did You Know?</span>
-                      <span className="facts-badge">Trivia</span>
-                    </div>
-                    <div className="fact-card">
-                      <p id="random-fact-text" className={`fact-text ${guesserFactFade ? 'fact-fade-out' : ''}`}>
-                        {currentGuesserFact}
-                      </p>
-                    </div>
+                  <div className="did-you-know" id="guesser-fact-card">
+                    <div className="dyk-badge">💡 Did You Know?</div>
+                    <p id="fact-text" className="dyk-text">{factText}</p>
                   </div>
                 </div>
               </div>
             </section>
           )}
 
-          {/* ─── GUESSER ACTIVE PANEL ─────────────────────────────────────── */}
+          {/* ─── GUESSER GUESSING PANEL (Active Guessing Phase) ───────────── */}
           {(gameState === 'guessing' || gameState === 'roundover') && !isWordSetter && (
-            <section id="panel-guesser" className="w-full max-w-7xl mx-auto flex-1 flex flex-col justify-between gap-2 sm:gap-4 md:gap-5 py-1 sm:py-2">
+            <section id="panel-guessing" className="w-full max-w-7xl mx-auto flex-1 flex flex-col justify-between gap-2 sm:gap-4 md:gap-5 py-1 sm:py-2">
               
-              {/* 1. TOP ROW: Gallows View & Secret Word Display (Adaptive scaling) */}
+              {/* 1. TOP ROW: Gallows View & Secret Word Display */}
               <div className="grid grid-cols-1 md:grid-cols-12 gap-2 sm:gap-4 md:gap-5 lg:gap-6 items-stretch flex-1 min-h-0">
                 
-                {/* Left Column: Gallows Canvas (5 cols) */}
+                {/* Left Column: Canvas (5 cols) */}
                 <div className="md:col-span-5 lg:col-span-5 flex flex-col items-center justify-center gap-1.5 sm:gap-2.5 p-2 sm:p-3 md:p-5 lg:p-6 rounded-2xl md:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl min-h-0">
                   <div className="font-mono text-[9px] sm:text-[11px] md:text-xs text-slate-400 uppercase tracking-wider font-semibold">
                     Gallows View
@@ -3503,7 +3526,7 @@ export default function HangmanDuelApp() {
                   </div>
                 </div>
 
-                {/* Right Column: Neon Secret Word Display + Clue (7 cols) */}
+                {/* Right Column: Secret Word Display + Clue (7 cols) */}
                 <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-center gap-2 sm:gap-3 p-3 sm:p-5 md:p-6 lg:p-7 rounded-2xl md:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl text-center min-h-[120px] sm:min-h-0">
                   <div className="flex items-center justify-between w-full px-1">
                     <div className="font-mono text-[10px] sm:text-xs md:text-sm font-bold uppercase tracking-widest text-slate-400">
@@ -3517,40 +3540,30 @@ export default function HangmanDuelApp() {
                         title={showHint ? "Hide Clue" : "Show Clue"}
                       >
                         <span>💡</span>
-                        <span>{showHint ? 'Hide Clue' : 'Show Clue'}</span>
+                        <span>{showHint ? "Hide Clue" : "Show Clue"}</span>
                       </button>
                     )}
                   </div>
 
                   <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 md:gap-2.5 lg:gap-3.5 font-mono max-w-full my-0.5">
-                    {hiddenWordChars.map((slot, i) => {
-                      const isRevealed = slot !== '_';
+                    {hiddenWordChars.map((char, index) => {
+                      const isRevealed = char !== '_';
+                      const isNew = newGuessedSet.has(char);
 
                       return (
                         <div
-                          key={i}
+                          key={index}
                           className={`min-w-[32px] min-h-[42px] px-1 sm:w-10 sm:h-12 md:w-13 md:h-15 lg:w-16 lg:h-18 flex items-center justify-center rounded-lg sm:rounded-xl md:rounded-2xl text-lg sm:text-2xl md:text-3xl lg:text-4xl font-extrabold uppercase transition-all duration-300 select-none shadow-sm ${
                             isRevealed
-                              ? 'border-2 border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_18px_rgba(34,211,238,0.5)] scale-100'
+                              ? `border-2 border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_18px_rgba(34,211,238,0.5)] ${isNew ? 'letter-pop scale-105' : 'scale-100'}`
                               : 'bg-white/5 border border-white/10 text-white/30'
                           }`}
                         >
-                          {isRevealed ? slot : '_'}
+                          {isRevealed ? char : '_'}
                         </div>
                       );
                     })}
                   </div>
-
-                  {/* Word Hint / Clue Banner */}
-                  {activeHint && showHint && (
-                    <div className="w-full mt-1 px-3 py-2 rounded-xl bg-purple-950/40 border border-purple-500/30 backdrop-blur-md flex items-start sm:items-center justify-center gap-2 text-center animate-fadeIn shadow-sm">
-                      <span className="text-sm flex-shrink-0">💡</span>
-                      <p className="text-xs sm:text-sm text-purple-200 font-medium leading-snug">
-                        <strong className="text-purple-300 font-semibold uppercase tracking-wider text-[10px] sm:text-xs mr-1">Clue:</strong>
-                        {activeHint}
-                      </p>
-                    </div>
-                  )}
                 </div>
               </div>
 
@@ -3591,7 +3604,12 @@ export default function HangmanDuelApp() {
                       <span className="text-[10px] sm:text-xs md:text-sm text-slate-500 italic">None yet</span>
                     ) : (
                       wrongGuesses.map((l, i) => (
-                        <span key={i} className="px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded sm:rounded-md bg-rose-950/70 border border-rose-500/40 text-rose-300 font-mono font-bold text-[10px] sm:text-xs md:text-sm shadow-sm">
+                        <span
+                          key={i}
+                          className={`px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded sm:rounded-md bg-rose-950/70 border border-rose-500/40 text-rose-300 font-mono font-bold text-[10px] sm:text-xs md:text-sm shadow-sm ${
+                            newWrongSet.has(l) ? 'wrong-tag-pop' : ''
+                          }`}
+                        >
                           {l}
                         </span>
                       ))
@@ -3600,15 +3618,15 @@ export default function HangmanDuelApp() {
                 </div>
               </div>
 
-              {/* 3. BOTTOM ROW: Interactive QWERTY Keyboard (Optimized for Smartphones & Desktop) */}
+              {/* 3. BOTTOM ROW: Interactive QWERTY Keyboard (Uniformly Responsive on Mobile & Laptop) */}
               <div className="w-full p-2.5 sm:p-3.5 md:p-4 rounded-2xl md:rounded-3xl bg-[#12111f]/95 border border-white/10 backdrop-blur-2xl shadow-xl flex flex-col items-center gap-1 sm:gap-2">
                 <div className="font-mono text-[9px] sm:text-[11px] md:text-xs text-slate-400 uppercase tracking-wider text-center">
                   Interactive Virtual Keyboard
                 </div>
 
-                <div className="flex flex-col gap-1.5 sm:gap-2 w-full max-w-xl mx-auto touch-manipulation">
+                <div className="flex flex-col gap-1.5 sm:gap-2 w-full max-w-2xl mx-auto touch-manipulation items-center">
                   {KEYBOARD_ROWS.map((row, rIdx) => (
-                    <div key={rIdx} className="flex justify-center gap-1 sm:gap-1.5 md:gap-2 w-full touch-manipulation">
+                    <div key={rIdx} className="flex justify-center gap-1 sm:gap-1.5 md:gap-2 w-full max-w-full touch-manipulation">
                       {row.map((letter) => {
                         const isGuessed = guessedSet.has(letter);
                         const isWrong = wrongSet.has(letter);
@@ -3627,7 +3645,7 @@ export default function HangmanDuelApp() {
                           <button
                             key={letter}
                             type="button"
-                            className={`flex-1 min-w-0 h-11 sm:h-12 md:h-13 rounded-lg sm:rounded-xl font-mono font-bold text-sm sm:text-base md:text-lg flex items-center justify-center uppercase transition-all select-none touch-manipulation active:scale-95 ${keyClasses}`}
+                            className={`flex-1 max-w-[34px] sm:max-w-none sm:flex-initial sm:w-10 md:w-11 lg:w-12 h-10 sm:h-11 md:h-12 lg:h-13 rounded-lg sm:rounded-xl font-mono font-bold text-xs sm:text-base md:text-lg flex items-center justify-center uppercase transition-all select-none touch-manipulation active:scale-95 ${keyClasses}`}
                             disabled={isGuessed || gameState === 'roundover'}
                             onClick={() => handleGuessLetter(letter)}
                             aria-label={`Letter ${letter}`}
@@ -3808,15 +3826,15 @@ export default function HangmanDuelApp() {
                       </p>
                     </div>
 
-                    <div id="roundover-scores" className="roundover-scores" style={{ marginBottom: '1.5rem' }}>
-                      <div className="rs-player">
-                        <span className="rs-name">{p1.name}</span>
-                        <span className="rs-score" style={{ fontSize: '2rem' }}>{p1.score}</span>
+                    <div className="w-full max-w-xs mx-auto my-3 p-3 rounded-2xl bg-white/[0.04] border border-white/10 backdrop-blur-md flex items-center justify-around shadow-inner">
+                      <div className="flex flex-col items-center">
+                        <span className="text-xs font-semibold text-cyan-300 max-w-[90px] truncate">{p1.name}</span>
+                        <span className="font-pixel text-3xl font-extrabold text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.4)]">{p1.score}</span>
                       </div>
-                      <div className="rs-divider">–</div>
-                      <div className="rs-player">
-                        <span className="rs-name">{p2.name}</span>
-                        <span className="rs-score" style={{ fontSize: '2rem' }}>{p2.score}</span>
+                      <span className="font-pixel text-xs font-black text-purple-400/80 animate-pulse">VS</span>
+                      <div className="flex flex-col items-center">
+                        <span className="text-xs font-semibold text-purple-300 max-w-[90px] truncate">{p2.name}</span>
+                        <span className="font-pixel text-3xl font-extrabold text-purple-400 drop-shadow-[0_0_10px_rgba(168,85,247,0.4)]">{p2.score}</span>
                       </div>
                     </div>
 
@@ -3886,64 +3904,55 @@ export default function HangmanDuelApp() {
                       )}
                     </div>
 
-                    <div id="roundover-scores" className="roundover-scores">
-                      <div className="rs-player">
-                        <span className="rs-name">{p1.name}</span>
-                        <span className="rs-score">{p1.score}</span>
+                    {/* Aesthetic Round Over Scoreboard */}
+                    <div className="w-full max-w-xs mx-auto my-2.5 p-2.5 sm:p-3 rounded-2xl bg-white/[0.04] border border-white/10 backdrop-blur-md flex items-center justify-around shadow-inner">
+                      <div className="flex flex-col items-center">
+                        <span className="text-[11px] sm:text-xs font-semibold text-cyan-300 max-w-[90px] truncate">{p1.name}</span>
+                        <span className="font-pixel text-2xl sm:text-3xl font-extrabold text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.4)]">{p1.score}</span>
                       </div>
-                      <div className="rs-divider">:</div>
-                      <div className="rs-player">
-                        <span className="rs-name">{p2.name}</span>
-                        <span className="rs-score">{p2.score}</span>
+                      <span className="font-pixel text-[10px] sm:text-xs font-black text-purple-400/80 animate-pulse">VS</span>
+                      <div className="flex flex-col items-center">
+                        <span className="text-[11px] sm:text-xs font-semibold text-purple-300 max-w-[90px] truncate">{p2.name}</span>
+                        <span className="font-pixel text-2xl sm:text-3xl font-extrabold text-purple-400 drop-shadow-[0_0_10px_rgba(168,85,247,0.4)]">{p2.score}</span>
                       </div>
                     </div>
 
-                    {/* PvE: auto-countdown + Instant Skip Button */}
+                    {/* PvE: 10s auto-countdown + Instant Skip Button */}
                     {isPveMode ? (
-                      <div style={{ textAlign: 'center', marginTop: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.6rem', width: '100%' }}>
-                        <p style={{ fontSize: '0.95rem', opacity: 0.85, margin: 0 }}>
+                      <div className="w-full text-center mt-2 flex flex-col items-center gap-2">
+                        <p className="text-xs sm:text-sm text-slate-300 font-medium">
                           {pveCountdown !== null
-                            ? `Next round starting in ${pveCountdown}…`
+                            ? `Next round starting in ${pveCountdown}s…`
                             : 'Starting next round…'}
                         </p>
-                        <div style={{
-                          width: '100%', height: 4, borderRadius: 4,
-                          background: 'rgba(255,255,255,0.12)', overflow: 'hidden'
-                        }}>
-                          <div style={{
-                            height: '100%', borderRadius: 4,
-                            background: 'var(--accent, #a78bfa)',
-                            width: `${((4 - (pveCountdown ?? 0)) / 4) * 100}%`,
-                            transition: 'width 0.9s linear'
-                          }} />
+                        <div className="w-full max-w-xs h-1.5 rounded-full bg-white/10 overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.8)] transition-all duration-1000 ease-linear"
+                            style={{ width: `${((10 - (pveCountdown ?? 0)) / 10) * 100}%` }}
+                          />
                         </div>
                         <button
                           id="btn-skip-countdown"
-                          className="btn btn-secondary btn-sm"
                           type="button"
                           onClick={handleSkipCountdown}
-                          style={{
-                            marginTop: '0.25rem',
-                            padding: '0.5rem 1.25rem',
-                            fontSize: '0.9rem',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            cursor: 'pointer'
-                          }}
+                          className="mt-1 px-5 py-2.5 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 border border-purple-400/40 text-purple-200 hover:text-white text-xs sm:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer shadow-lg active:scale-95"
                         >
-                          <span>Start Instantly</span>
-                          <span>⏩</span>
+                          <span>Start Instantly ⚡</span>
+                          <span className="text-[10px] text-purple-300/80 font-mono font-normal">(Press Enter ↵)</span>
                         </button>
                       </div>
                     ) : (
                       <button
                         id="btn-next-round"
-                        className="btn btn-primary btn-lg"
+                        type="button"
                         disabled={isWaitingOpponent}
                         onClick={handleNextRound}
+                        className="w-full max-w-sm mt-3 px-5 py-3 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 border border-purple-400/40 text-purple-200 hover:text-white text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {isWaitingOpponent ? 'Waiting for opponent…' : 'Next Round ↩ Swap Roles'}
+                        <span>{isWaitingOpponent ? 'Waiting for opponent…' : 'Next Round ⇄ Swap Roles'}</span>
+                        {!isWaitingOpponent && (
+                          <span className="text-[10px] text-purple-300/80 font-mono font-normal">(Press Enter ↵)</span>
+                        )}
                       </button>
                     )}
                   </>
