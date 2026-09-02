@@ -2395,8 +2395,13 @@ export default function HangmanDuelApp() {
             </h1>
 
             {/* Subheadline */}
-            <p className="max-w-2xl mx-auto text-sm sm:text-base text-slate-300 font-normal leading-relaxed">
-              Challenge a friend in real time, outsmart the AI in solo mode, or create a room and duel anyone with the code. Every wrong guess brings the noose closer.
+            <p className="max-w-3xl mx-auto text-sm sm:text-base text-slate-300 font-normal leading-relaxed">
+              <span>
+                Challenge a friend in real time, outsmart the AI in solo mode, or create a room and duel anyone with the code. Every wrong guess brings the noose closer.
+              </span>
+              <span className="block mt-2 text-slate-400">
+                Track duel win streaks, accuracy scores, and round times with automated end-of-game performance dialogues.
+              </span>
             </p>
           </div>
 
