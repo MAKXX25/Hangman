@@ -567,18 +567,12 @@ export default function HangmanDuelApp() {
     ctx.lineTo(ropeEndX, ropeEndY);
     ctx.stroke();
 
-    // If 0 mistakes: Draw a dangling rope noose loop swinging gently
+    // If 0 mistakes: Draw a dangling rope noose loop swinging gently (no stickman, no dialogues)
     if (mistakes === 0) {
       ctx.beginPath();
       ctx.arc(ropeEndX, ropeEndY + 8, 8, 0, Math.PI * 2);
       ctx.stroke();
       clearGlow(ctx);
-
-      // Draw initial dialogue speech bubble from round start
-      if (dialogue) {
-        drawSpeechBubble(ctx, ropeEndX, ropeEndY + 18, dialogue, 'left', 'rgba(168, 85, 247, 0.85)', 'rgba(15, 23, 42, 0.95)', '#f8fafc');
-      }
-
       ctx.restore();
       return;
     }
@@ -1450,19 +1444,21 @@ export default function HangmanDuelApp() {
     }
   }, []);
 
-  // ── Auto-Initialize and Rotate Idle Dialogues during Guessing Phase ────────
+  // ── Auto-Rotate Dialogues during Guessing Phase (Only after losing 1st life) ─
   useEffect(() => {
     if (gameState !== 'guessing') return;
 
-    if (!currentDialogueRef.current) {
-      const initial = INITIAL_IDLE_PHRASES[Math.floor(Math.random() * INITIAL_IDLE_PHRASES.length)];
-      setCurrentDialogue(initial);
-      currentDialogueRef.current = initial;
+    const mistakes = Array.isArray(game?.wrongGuesses) ? game.wrongGuesses.length : 0;
+    if (mistakes === 0) {
+      setCurrentDialogue('');
+      currentDialogueRef.current = '';
       setStickmanMood('neutral');
+      return;
     }
 
     const interval = setInterval(() => {
-      if (stickmanMoodRef.current === 'neutral') {
+      const currentMistakes = Array.isArray(game?.wrongGuesses) ? game.wrongGuesses.length : 0;
+      if (currentMistakes >= 1 && stickmanMoodRef.current === 'neutral') {
         const next = INITIAL_IDLE_PHRASES[Math.floor(Math.random() * INITIAL_IDLE_PHRASES.length)];
         setCurrentDialogue(next);
         currentDialogueRef.current = next;
@@ -1470,7 +1466,7 @@ export default function HangmanDuelApp() {
     }, 7000);
 
     return () => clearInterval(interval);
-  }, [gameState, INITIAL_IDLE_PHRASES]);
+  }, [gameState, game?.wrongGuesses, INITIAL_IDLE_PHRASES]);
 
   // ── Setup Reusable Event Listeners Binding Helper ────────────────────────
   const attachSocketListeners = useCallback((sock) => {
@@ -2071,9 +2067,8 @@ export default function HangmanDuelApp() {
       }
     };
 
-    const initialIdle = INITIAL_IDLE_PHRASES[Math.floor(Math.random() * INITIAL_IDLE_PHRASES.length)];
-    setCurrentDialogue(initialIdle);
-    currentDialogueRef.current = initialIdle;
+    setCurrentDialogue('');
+    currentDialogueRef.current = '';
     setStickmanMood('neutral');
 
     setRoomCode(pveRoom.roomCode);
@@ -3641,7 +3636,7 @@ export default function HangmanDuelApp() {
 
                   <div className="did-you-know" id="guesser-fact-card">
                     <div className="dyk-badge">💡 Did You Know?</div>
-                    <p id="fact-text" className="dyk-text">{factText}</p>
+                    <p id="fact-text" className="dyk-text">{currentGuesserFact}</p>
                   </div>
                 </div>
               </div>
@@ -3665,8 +3660,8 @@ export default function HangmanDuelApp() {
                     <canvas id="hangman-canvas" ref={hangmanCanvasRef} width={220} height={240} className="w-full h-full object-contain max-h-[100px] sm:max-h-[150px] md:max-h-[200px]" />
                   </div>
 
-                  {/* Stickman Live Dialogue Speech Pill */}
-                  {currentDialogue && (
+                  {/* Stickman Live Dialogue Speech Pill - Only show after losing first life (mistakes >= 1) */}
+                  {wrongGuesses.length >= 1 && currentDialogue && (
                     <div className={`w-full max-w-[220px] px-2.5 py-1.5 rounded-xl border backdrop-blur-md text-center transition-all duration-300 shadow-md ${
                       stickmanMood === 'happy'
                         ? 'bg-emerald-950/80 border-emerald-500/40 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.25)]'
@@ -3845,8 +3840,8 @@ export default function HangmanDuelApp() {
                     <canvas id="hangman-canvas-watch" ref={hangmanWatchCanvasRef} width={220} height={240} className="w-full h-full object-contain max-h-[100px] sm:max-h-[150px] md:max-h-[200px]" />
                   </div>
 
-                  {/* Stickman Live Dialogue Speech Pill */}
-                  {currentDialogue && (
+                  {/* Stickman Live Dialogue Speech Pill - Only show after losing first life (mistakes >= 1) */}
+                  {wrongGuesses.length >= 1 && currentDialogue && (
                     <div className={`w-full max-w-[220px] px-2.5 py-1.5 rounded-xl border backdrop-blur-md text-center transition-all duration-300 shadow-md ${
                       stickmanMood === 'happy'
                         ? 'bg-emerald-950/80 border-emerald-500/40 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.25)]'
