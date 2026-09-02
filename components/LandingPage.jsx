@@ -64,8 +64,12 @@ export default function LandingPage({ onPlayNow, onPlayPvE }) {
     <div className="min-h-screen bg-[#0a0a10] text-slate-100 font-sans selection:bg-purple-500 selection:text-white relative overflow-x-hidden">
       {/* ─── Google Font Injection for Blocky Display Typography ──────── */}
       <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700;800;900&family=JetBrains+Mono:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Silkscreen:wght@400;700&family=Press+Start+2P&family=Chakra+Petch:wght@500;700;800;900&family=JetBrains+Mono:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap');
         
+        .font-pixel {
+          font-family: 'Pixelify Sans', 'Silkscreen', 'Press Start 2P', monospace;
+          letter-spacing: 0.01em;
+        }
         .font-display {
           font-family: 'Chakra Petch', 'Orbitron', 'JetBrains Mono', -apple-system, sans-serif;
           letter-spacing: -0.02em;
@@ -159,18 +163,16 @@ export default function LandingPage({ onPlayNow, onPlayPvE }) {
             <span>⚡ MULTIPLAYER WORD DUEL</span>
           </div>
 
-          {/* Headline in Blocky Display Font */}
-          <h1 className="font-display text-4xl sm:text-6xl md:text-7xl font-extrabold uppercase tracking-tight text-white leading-[1.08] mb-6 drop-shadow-sm">
-            Guess the word.{' '}
-            <span className="block mt-1 text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-fuchsia-300 to-cyan-400">
-              Save the stickman.
-            </span>
-            <span className="block mt-1">Win the duel.</span>
+          {/* Headline in Pixel Font */}
+          <h1 className="font-pixel text-3xl sm:text-5xl md:text-6xl lg:text-[66px] font-bold text-white tracking-normal leading-[1.22] mb-6 drop-shadow-[0_2px_14px_rgba(255,255,255,0.12)]">
+            <span className="block">Guess the word.</span>
+            <span className="block mt-2 sm:mt-3">Save the stickman.</span>
+            <span className="block mt-2 sm:mt-3">Win the duel.</span>
           </h1>
 
           {/* Subheadline */}
-          <p className="max-w-2xl mx-auto text-base sm:text-lg text-slate-400 font-normal leading-relaxed mb-10">
-            Real-time, head-to-head Hangman engineered for fast rounds, intense mind games, and instant room invites. Challenge friends online or train against the AI wordmaster.
+          <p className="max-w-3xl mx-auto text-sm sm:text-base md:text-lg text-slate-300 font-normal leading-relaxed mb-10">
+            Challenge a friend in real time, outsmart the AI in solo mode, or create a room and duel anyone with the code. Every wrong guess brings the noose closer.
           </p>
 
           {/* CTAs */}
