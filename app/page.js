@@ -3291,7 +3291,7 @@ export default function HangmanDuelApp() {
                     </span>
                     <div className="flex items-center gap-2">
                       <div className="flex items-center gap-1">
-                        {Array.from({ length: isPveMode ? 6 : (game?.maxLives || 10) }).map((_, i) => (
+                        {Array.from({ length: game?.maxLives || MAX_LIVES }).map((_, i) => (
                           <svg
                             key={i}
                             viewBox="0 0 24 24"
@@ -3306,7 +3306,7 @@ export default function HangmanDuelApp() {
                         ))}
                       </div>
                       <span className="font-mono text-xs font-bold text-slate-300 ml-1">
-                        ({livesLeft}/{isPveMode ? 6 : (game?.maxLives || 10)})
+                        ({livesLeft})
                       </span>
                     </div>
                   </div>
@@ -3424,7 +3424,7 @@ export default function HangmanDuelApp() {
                     </span>
                     <div className="flex items-center gap-2">
                       <div className="flex items-center gap-1">
-                        {Array.from({ length: isPveMode ? 6 : (game?.maxLives || 10) }).map((_, i) => (
+                        {Array.from({ length: game?.maxLives || MAX_LIVES }).map((_, i) => (
                           <svg
                             key={i}
                             viewBox="0 0 24 24"
@@ -3439,7 +3439,7 @@ export default function HangmanDuelApp() {
                         ))}
                       </div>
                       <span className="font-mono text-xs font-bold text-slate-300 ml-1">
-                        ({livesLeft}/{isPveMode ? 6 : (game?.maxLives || 10)})
+                        ({livesLeft})
                       </span>
                     </div>
                   </div>

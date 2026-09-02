@@ -101,7 +101,7 @@ export default function GuessingArea({
           </div>
 
           <span className="font-mono text-xs sm:text-sm font-bold text-slate-300 ml-1">
-            ({lives}/{maxLives} Lives)
+            ({lives})
           </span>
         </div>
       </section>

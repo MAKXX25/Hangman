@@ -127,7 +127,7 @@ export default function GuesserPanel({
                 ))}
               </div>
               <span className="font-mono text-xs font-bold text-slate-300 ml-1">
-                ({livesLeft}/{maxLives})
+                ({livesLeft})
               </span>
             </div>
           </div>

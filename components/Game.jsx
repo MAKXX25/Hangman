@@ -274,7 +274,7 @@ export default function Game({
                 ))}
               </div>
               <span className="font-mono text-xs font-bold text-slate-300 ml-1">
-                ({lives}/{maxLives})
+                ({lives})
               </span>
             </div>
           </div>
