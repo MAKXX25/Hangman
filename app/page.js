@@ -1006,6 +1006,7 @@ export default function HangmanDuelApp() {
 
       if (bodyOffScreen && !callbackFired) {
         callbackFired = true;
+        specialAnimIdRef.current = null;
         // Small grace delay so the canvas is visually clear before modal appears
         setTimeout(() => callback?.(), 300);
         return; // stop rAF loop
@@ -1014,6 +1015,7 @@ export default function HangmanDuelApp() {
       // Hard fallback: fire modal at T_MODAL even if geometry is off
       if (elapsed >= T_MODAL && !callbackFired) {
         callbackFired = true;
+        specialAnimIdRef.current = null;
         callback?.();
         return;
       }
@@ -1246,6 +1248,7 @@ export default function HangmanDuelApp() {
       if (progress < 1) {
         specialAnimIdRef.current = requestAnimationFrame(animate);
       } else {
+        specialAnimIdRef.current = null;
         callback?.();
       }
     }
@@ -1355,6 +1358,10 @@ export default function HangmanDuelApp() {
     setSetterWordSubmitted(false);
     setSecretWordInput('');
     setWordValidationMsg('');
+    if (specialAnimIdRef.current) {
+      cancelAnimationFrame(specialAnimIdRef.current);
+      specialAnimIdRef.current = null;
+    }
     canvasAnimStateRef.current = { drawnSteps: 0, animId: null };
     watchCanvasAnimStateRef.current = { drawnSteps: 0, animId: null };
     prevGuessedRef.current = [];
@@ -1698,6 +1705,10 @@ export default function HangmanDuelApp() {
       game.livesLeft === MAX_LIVES ||
       (game.wrongGuesses && game.wrongGuesses.length === 0)
     ) {
+      if (specialAnimIdRef.current) {
+        cancelAnimationFrame(specialAnimIdRef.current);
+        specialAnimIdRef.current = null;
+      }
       [hangmanCanvasRef.current, hangmanWatchCanvasRef.current].forEach((canvas) => {
         if (canvas) {
           const ctx = canvas.getContext('2d');
@@ -2340,8 +2351,11 @@ export default function HangmanDuelApp() {
 
     const loop = (now) => {
       const elapsed = now - startTime;
-      const mistakes = Math.min(Math.max(0, (game?.maxLives || MAX_LIVES) - livesLeft), 10);
-      const isDead = livesLeft <= 0;
+      const wrongCount = Array.isArray(game?.wrongGuesses)
+        ? game.wrongGuesses.length
+        : Math.max(0, (game?.maxLives || MAX_LIVES) - (livesLeft ?? MAX_LIVES));
+      const mistakes = Math.min(Math.max(0, wrongCount), 10);
+      const isDead = (livesLeft !== undefined && livesLeft <= 0) || mistakes >= 10;
 
       // Only draw continuous idle if not currently running the special death/escape cutscene
       if (!specialAnimIdRef.current) {
@@ -3564,6 +3578,17 @@ export default function HangmanDuelApp() {
                       );
                     })}
                   </div>
+
+                  {/* Clue / Hint Box */}
+                  {activeHint && showHint && (
+                    <div className="w-full mt-2 px-3.5 py-2 sm:py-2.5 rounded-xl bg-purple-950/70 border border-purple-500/40 backdrop-blur-md flex items-center justify-center gap-2 text-center animate-fadeIn shadow-md">
+                      <span className="text-sm sm:text-base flex-shrink-0">💡</span>
+                      <p className="text-xs sm:text-sm text-purple-100 font-medium leading-relaxed">
+                        <span className="text-yellow-300 font-bold uppercase tracking-wider text-[10px] sm:text-xs mr-1.5">Clue:</span>
+                        {activeHint}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
