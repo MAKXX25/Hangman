@@ -183,7 +183,9 @@ function startSettingTimer(io, roomCode) {
 
       // Auto-select a random word if setter runs out of time
       const word = getRandomWord();
+      const entry = DICTIONARY_ENTRIES.find((e) => e.word.toLowerCase() === word.toLowerCase());
       rooms[roomCode].game.word = word;
+      rooms[roomCode].game.meaning = entry ? entry.meaning : '';
       rooms[roomCode].state = 'guessing';
 
       io.to(roomCode).emit('timer_expired', { word });
@@ -232,6 +234,7 @@ function broadcastState(io, room, roomCode) {
             guesserName: guesserPlayer ? guesserPlayer.name : 'Guesser',
             isWordSetter,
             word: isWordSetter || room.state === 'roundover' ? room.game.word : null,
+            meaning: isWordSetter || room.state === 'roundover' ? (room.game.meaning || '') : null,
             roundResult: room.game.roundResult || null,
             wrongGuesses: room.game.wrongGuesses || [],
           }
@@ -471,7 +474,9 @@ io.on('connection', (socket) => {
     stopSettingTimer(roomCode);
     socket.emit('word_validation', { valid: true, reason: '' });
 
+    const entry = DICTIONARY_ENTRIES.find((e) => e.word.toLowerCase() === clean);
     room.game.word = clean;
+    room.game.meaning = entry ? entry.meaning : '';
     room.state = 'guessing';
     broadcastState(io, room, roomCode);
 

@@ -5,7 +5,7 @@ import confetti from 'canvas-confetti';
 import Navbar from '../components/Navbar.jsx';
 import { getSocket, isBackendConfigured, getBackendUrl } from '../lib/socket.js';
 import { ServerlessSocket } from '../lib/serverlessSocket.js';
-import { getRandomWord, isValidWord, getRandomSuggestions } from '../lib/dictionary.js';
+import { getRandomWord, isValidWord, getRandomSuggestions, getWordMeaning } from '../lib/dictionary.js';
 import { getRandomFact } from '../lib/facts.js';
 import {
   MAX_LIVES,
@@ -2396,6 +2396,72 @@ export default function HangmanDuelApp() {
   const newWrongSet = new Set(newlyWrongLetters.map(l => l.toUpperCase()));
   const cleanWord = (game?.word || '').toUpperCase();
 
+  // ── Word Definition Lookup for Round Over Modal ────────────────────────────
+  const [wordMeaning, setWordMeaning] = useState('');
+  const [isFetchingMeaning, setIsFetchingMeaning] = useState(false);
+
+  useEffect(() => {
+    if (!isRoundOverModalOpen || !cleanWord) {
+      setWordMeaning('');
+      setIsFetchingMeaning(false);
+      return;
+    }
+
+    // 1. Check local curated dictionary or game state first
+    const directMeaning = (game?.meaning) || getWordMeaning(cleanWord);
+    if (directMeaning && directMeaning.trim()) {
+      setWordMeaning(directMeaning.trim());
+      setIsFetchingMeaning(false);
+      return;
+    }
+
+    // 2. Check localStorage cache
+    const cacheKey = `hangman_def_${cleanWord.toLowerCase()}`;
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        setWordMeaning(cached);
+        setIsFetchingMeaning(false);
+        return;
+      }
+    } catch {}
+
+    // 3. Fallback: Fetch from Dictionary API asynchronously
+    let isMounted = true;
+    setIsFetchingMeaning(true);
+
+    const fetchMeaning = async () => {
+      try {
+        const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(cleanWord.toLowerCase())}`);
+        if (!res.ok) throw new Error('Definition not found');
+        const data = await res.json();
+        if (Array.isArray(data) && data[0]?.meanings?.length) {
+          const firstDef = data[0].meanings[0]?.definitions?.[0]?.definition || '';
+          const partOfSpeech = data[0].meanings[0]?.partOfSpeech ? `(${data[0].meanings[0].partOfSpeech}) ` : '';
+          const fullDef = partOfSpeech ? `${partOfSpeech}${firstDef}` : firstDef;
+          if (fullDef && isMounted) {
+            setWordMeaning(fullDef);
+            try { localStorage.setItem(cacheKey, fullDef); } catch {}
+          }
+        }
+      } catch {
+        if (isMounted) {
+          setWordMeaning('A valid English dictionary word.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsFetchingMeaning(false);
+        }
+      }
+    };
+
+    fetchMeaning();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isRoundOverModalOpen, cleanWord, game?.meaning]);
+
   return (
     <>
       {/* ─── LOBBY / LANDING PAGE SCREEN ─────────────────────────────────── */}
@@ -3730,6 +3796,25 @@ export default function HangmanDuelApp() {
                         : `Final score: ${p1.score} – ${p2.score}. Better luck next time!`}
                     </p>
 
+                    {cleanWord && (
+                      <div className="roundover-word" id="roundover-word" style={{ marginTop: '0.75rem' }}>
+                        {cleanWord.split('').map((ch, idx) => (
+                          <span key={idx} className="word-letter-span word-letter-unlocked" style={{ '--index': idx }}>{ch}</span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Word Meaning Box */}
+                    <div className="w-full max-w-sm mx-auto my-3 p-3 sm:p-3.5 rounded-2xl bg-white/[0.06] border border-white/10 backdrop-blur-md shadow-inner text-center">
+                      <div className="flex items-center justify-center gap-1.5 text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider text-purple-300/90 mb-1">
+                        <span>📖</span>
+                        <span>Word Meaning</span>
+                      </div>
+                      <p className="text-xs sm:text-sm text-slate-200 font-normal leading-relaxed">
+                        {wordMeaning || 'A valid English dictionary word.'}
+                      </p>
+                    </div>
+
                     <div id="roundover-scores" className="roundover-scores" style={{ marginBottom: '1.5rem' }}>
                       <div className="rs-player">
                         <span className="rs-name">{p1.name}</span>
@@ -3789,6 +3874,23 @@ export default function HangmanDuelApp() {
                           <span key={idx} className={letterClass} style={{ '--index': idx }}>{ch}</span>
                         );
                       })}
+                    </div>
+
+                    {/* Word Meaning / Definition Box */}
+                    <div className="w-full max-w-sm mx-auto my-3 p-3 sm:p-3.5 rounded-2xl bg-white/[0.06] border border-white/15 backdrop-blur-md shadow-inner text-center">
+                      <div className="flex items-center justify-center gap-1.5 text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider text-purple-300/90 mb-1">
+                        <span>📖</span>
+                        <span>Word Meaning</span>
+                      </div>
+                      {isFetchingMeaning && !wordMeaning ? (
+                        <p className="text-xs text-slate-400 italic animate-pulse">
+                          Fetching definition…
+                        </p>
+                      ) : (
+                        <p className="text-xs sm:text-sm text-slate-200 font-normal leading-relaxed">
+                          {wordMeaning || 'A valid English dictionary word.'}
+                        </p>
+                      )}
                     </div>
 
                     <div id="roundover-scores" className="roundover-scores">
