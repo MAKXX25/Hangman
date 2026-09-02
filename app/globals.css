@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* ══════════════════════════════════════════════════════════════════════════════
    HANGMAN DUEL — style.css
    Design system: Deep space dark + electric violet/cyan accent palette

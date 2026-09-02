@@ -41,7 +41,7 @@ const NEON_DEAD_GLOW = '#fca5a5';
 export default function HangmanDuelApp() {
   // Screen state: 'lobby' | 'waiting' | 'game'
   const [screen, setScreen] = useState('lobby');
-  const [playerName, setPlayerName] = useState('Player 1');
+  const [playerName, setPlayerName] = useState('');
   const [roomCode, setRoomCode] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [lobbyError, setLobbyError] = useState('');
@@ -137,6 +137,29 @@ export default function HangmanDuelApp() {
   const usedWordsRef = useRef([]);
   const usedGuesserFactsRef = useRef([]);
   const usedWatchFactsRef = useRef([]);
+
+  // ── SSR-Safe Persistent Username (localStorage) ───────────────────────────
+  useEffect(() => {
+    try {
+      const savedName = localStorage.getItem('hangman_username');
+      if (savedName && savedName.trim()) {
+        setPlayerName(savedName.trim());
+      } else {
+        setPlayerName('Player 1');
+      }
+    } catch {
+      setPlayerName('Player 1');
+    }
+  }, []);
+
+  const handlePlayerNameChange = (val) => {
+    setPlayerName(val);
+    try {
+      localStorage.setItem('hangman_username', val);
+    } catch (err) {
+      console.warn('Could not save username to localStorage:', err);
+    }
+  };
 
   // Show Toast Helper
   const showToast = useCallback((msg, duration = 2500) => {
@@ -2185,13 +2208,18 @@ export default function HangmanDuelApp() {
     <>
       {/* ─── LOBBY SCREEN ─────────────────────────────────────────────────── */}
       <div id="screen-lobby" className={`screen ${screen === 'lobby' ? 'active' : ''}`}>
-        <div className="lobby-bg-anim">
-          <span></span><span></span><span></span><span></span><span></span>
+        {/* Dynamic Animated Aurora Background Blobs */}
+        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
+          <div className="absolute -top-40 -left-40 w-96 h-96 bg-cyan-500/25 rounded-full filter blur-3xl opacity-70 animate-blob mix-blend-screen" />
+          <div className="absolute top-1/4 -right-20 w-96 h-96 bg-purple-600/30 rounded-full filter blur-3xl opacity-75 animate-blob [animation-delay:2s] mix-blend-screen" />
+          <div className="absolute -bottom-32 left-1/3 w-[30rem] h-[30rem] bg-pink-500/20 rounded-full filter blur-3xl opacity-60 animate-blob [animation-delay:4s] mix-blend-screen" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40rem] h-[40rem] bg-indigo-900/20 rounded-full filter blur-[120px] opacity-50" />
         </div>
-        <div className="lobby-card glass">
-          <div className="logo">
-            <div className="logo-gallows" aria-hidden="true">
-              <svg viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+        <div className="lobby-card bg-white/10 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] rounded-3xl relative z-10 p-8 sm:p-10 w-full max-w-md mx-4 transition-all duration-300">
+          <div className="logo text-center mb-8">
+            <div className="logo-gallows inline-block text-purple-400 drop-shadow-[0_0_12px_rgba(168,85,247,0.7)] mb-3" aria-hidden="true">
+              <svg viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-16 h-20">
                 <line x1="10" y1="115" x2="90" y2="115" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
                 <line x1="30" y1="115" x2="30" y2="10" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
                 <line x1="30" y1="10" x2="65" y2="10" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
@@ -2204,37 +2232,42 @@ export default function HangmanDuelApp() {
                 <line x1="65" y1="75" x2="78" y2="92" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
               </svg>
             </div>
-            <h1>Hangman <span className="accent">Duel</span></h1>
-            <p className="tagline text-slate-400 font-medium tracking-wide">
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white mb-2">
+              Hangman <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">Duel</span>
+            </h1>
+            <p className="tagline text-slate-300 font-medium tracking-wide text-sm">
               Guess the word. Save the stickman. Win the duel.
             </p>
           </div>
 
-          <div className="lobby-form">
-            <div className="input-group">
-              <label htmlFor="input-name">Your Name</label>
+          <div className="lobby-form flex flex-col gap-5">
+            <div className="input-group flex flex-col gap-1.5">
+              <label htmlFor="input-name" className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                Your Name
+              </label>
               <input
                 id="input-name"
                 type="text"
                 placeholder="Enter your name…"
                 maxLength={20}
                 autoComplete="off"
+                className="w-full px-4 py-3.5 bg-slate-950/60 border border-white/15 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30 rounded-2xl text-white placeholder-slate-400 backdrop-blur-md outline-none transition-all"
                 value={playerName}
-                onChange={(e) => setPlayerName(e.target.value)}
+                onChange={(e) => handlePlayerNameChange(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') handleCreateRoom(); }}
               />
             </div>
 
-            <div className="lobby-actions">
-              <div className="create-section">
+            <div className="lobby-actions flex flex-col gap-4">
+              <div className="create-section flex flex-col gap-2.5">
                 <button
                   id="btn-create"
-                  className={`btn btn-primary ${isConnecting ? 'loading' : ''}`}
+                  className={`btn btn-primary w-full py-4 px-6 rounded-2xl font-bold text-white tracking-wide bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-lg shadow-purple-500/25 transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_0_25px_rgba(168,85,247,0.6)] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2 cursor-pointer ${isConnecting ? 'loading' : ''}`}
                   aria-label="Create a new room"
                   disabled={isConnecting}
                   onClick={handleCreateRoom}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5">
                     <path d="M12 5v14M5 12h14" />
                   </svg>
                   {isConnecting ? 'Creating Room… 🎮' : 'Create Room'}
@@ -2244,7 +2277,7 @@ export default function HangmanDuelApp() {
                 <div className="host-settings-toggle">
                   <button
                     id="btn-advanced"
-                    className="btn-advanced-toggle"
+                    className="btn-advanced-toggle text-xs text-slate-300 hover:text-white transition-colors"
                     aria-expanded={advancedOpen}
                     onClick={() => setAdvancedOpen(!advancedOpen)}
                     type="button"
@@ -2288,7 +2321,7 @@ export default function HangmanDuelApp() {
 
               <div className="divider"><span>or</span></div>
 
-              <div className="join-row">
+              <div className="join-row flex gap-2">
                 <input
                   id="input-room-code"
                   type="text"
@@ -2298,13 +2331,14 @@ export default function HangmanDuelApp() {
                   autoCorrect="off"
                   spellCheck="false"
                   autoComplete="off"
+                  className="flex-1 px-4 py-3.5 bg-slate-950/60 border border-white/15 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30 rounded-2xl text-white font-mono uppercase tracking-widest placeholder-slate-400 backdrop-blur-md outline-none transition-all"
                   value={joinCode}
                   onChange={(e) => setJoinCode(e.target.value.replace(/\s+/g, '').toUpperCase())}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleJoinRoom(); }}
                 />
                 <button 
                   id="btn-join" 
-                  className="btn btn-secondary" 
+                  className="btn btn-secondary py-3.5 px-6 rounded-2xl font-semibold text-white tracking-wide bg-gradient-to-r from-cyan-500 to-blue-600 shadow-md shadow-cyan-500/20 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(6,182,212,0.5)] active:scale-95 flex items-center justify-center cursor-pointer disabled:opacity-50" 
                   disabled={isConnecting}
                   onClick={handleJoinRoom}
                 >
@@ -2316,13 +2350,13 @@ export default function HangmanDuelApp() {
 
               <button
                 id="btn-pve"
-                className="btn btn-pve"
+                className="btn btn-pve w-full py-3.5 px-5 rounded-2xl font-semibold text-slate-100 bg-white/5 border border-white/15 backdrop-blur-md transition-all duration-300 hover:bg-white/10 hover:border-purple-400/50 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] flex items-center justify-between group cursor-pointer"
                 type="button"
                 onClick={() => setShowPveModal(true)}
               >
-                <span className="pve-icon">🤖</span>
-                <span className="pve-text">Play vs Computer</span>
-                <span className="pve-badge">PvE Mode</span>
+                <span className="pve-icon text-xl">🤖</span>
+                <span className="pve-text font-medium tracking-wide">Play vs Computer</span>
+                <span className="pve-badge text-xs px-2.5 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">PvE Mode</span>
               </button>
             </div>
 
@@ -2335,26 +2369,33 @@ export default function HangmanDuelApp() {
 
       {/* ─── WAITING SCREEN ───────────────────────────────────────────────── */}
       <div id="screen-waiting" className={`screen ${screen === 'waiting' ? 'active' : ''}`}>
-        <div className="waiting-card glass flex flex-col items-center gap-4">
-          <div className="pulse-ring mb-2" aria-label="Waiting status indicator"></div>
-          <h2 className="text-xl font-bold tracking-wide">Waiting for opponent…</h2>
-          <p>Share this code with your friend:</p>
+        {/* Dynamic Animated Aurora Background Blobs */}
+        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
+          <div className="absolute -top-40 -left-40 w-96 h-96 bg-cyan-500/25 rounded-full filter blur-3xl opacity-70 animate-blob mix-blend-screen" />
+          <div className="absolute top-1/4 -right-20 w-96 h-96 bg-purple-600/30 rounded-full filter blur-3xl opacity-75 animate-blob [animation-delay:2s] mix-blend-screen" />
+          <div className="absolute -bottom-32 left-1/3 w-[30rem] h-[30rem] bg-pink-500/20 rounded-full filter blur-3xl opacity-60 animate-blob [animation-delay:4s] mix-blend-screen" />
+        </div>
+
+        <div className="waiting-card bg-white/10 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] rounded-3xl relative z-10 p-8 sm:p-10 w-full max-w-md mx-4 flex flex-col items-center gap-5 text-center transition-all">
+          <div className="pulse-ring mb-1" aria-label="Waiting status indicator"></div>
+          <h2 className="text-2xl font-extrabold tracking-tight text-white">Waiting for opponent…</h2>
+          <p className="text-slate-300 text-sm">Share this room code with your friend to connect:</p>
           <div
-            className="room-code-display"
+            className="room-code-display px-6 py-3 bg-slate-950/70 border border-purple-500/40 rounded-2xl font-mono text-2xl font-bold tracking-widest text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.3)] cursor-pointer transition-transform hover:scale-105 active:scale-95"
             id="display-room-code"
             onClick={copyRoomCode}
             title="Click to copy"
           >
             {roomCode}
           </div>
-          <button id="btn-copy-code" className="btn btn-ghost" onClick={copyRoomCode}>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <button id="btn-copy-code" className="btn btn-ghost text-slate-300 hover:text-white border border-white/10 hover:border-white/25 rounded-xl px-4 py-2 text-sm transition-all" onClick={copyRoomCode}>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
               <rect x="9" y="9" width="13" height="13" rx="2" />
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
             </svg>
             Copy Code
           </button>
-          <button id="btn-leave-waiting" className="btn btn-ghost btn-sm" onClick={handleLeaveGame}>
+          <button id="btn-leave-waiting" className="btn btn-ghost btn-sm text-slate-400 hover:text-rose-400 text-xs transition-colors" onClick={handleLeaveGame}>
             Leave Room
           </button>
         </div>
@@ -2365,6 +2406,13 @@ export default function HangmanDuelApp() {
         id="screen-game"
         className={`screen ${screen === 'game' ? 'active' : ''} ${isScreenFlashing ? 'game-losing-flash' : ''}`}
       >
+        {/* Dynamic Animated Aurora Background Blobs */}
+        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
+          <div className="absolute -top-40 -left-40 w-96 h-96 bg-cyan-500/20 rounded-full filter blur-3xl opacity-60 animate-blob mix-blend-screen" />
+          <div className="absolute top-1/3 -right-20 w-96 h-96 bg-purple-600/25 rounded-full filter blur-3xl opacity-65 animate-blob [animation-delay:2s] mix-blend-screen" />
+          <div className="absolute -bottom-32 left-1/3 w-[30rem] h-[30rem] bg-pink-500/15 rounded-full filter blur-3xl opacity-50 animate-blob [animation-delay:4s] mix-blend-screen" />
+        </div>
+
         {/* Header Bar */}
         <header className="game-header">
           <div className="header-brand">
