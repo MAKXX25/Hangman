@@ -2670,7 +2670,7 @@ export default function HangmanDuelApp() {
                 <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" title="Live Online" />
               </div>
               <div className="text-xs sm:text-sm font-medium text-slate-400 uppercase tracking-wider">
-                Active Word Nerds
+                Active Players Online
               </div>
             </div>
 
@@ -2704,7 +2704,7 @@ export default function HangmanDuelApp() {
               WHY DUEL HERE
             </div>
             <h2 className="font-display text-3xl sm:text-5xl font-extrabold uppercase text-white tracking-tight leading-tight">
-              Built for word nerds who love a fight
+              Engineered for players who love a duel
             </h2>
             <p className="mt-4 text-slate-400 text-base sm:text-lg">
               Every feature is fine-tuned for lightning speed, zero lag, and competitive tension.
