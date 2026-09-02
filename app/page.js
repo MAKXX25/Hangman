@@ -64,6 +64,13 @@ export default function HangmanDuelApp() {
   const [pveCountdown, setPveCountdown] = useState(null); // null | 3 | 2 | 1 | 0
   const [frozenDialogue, setFrozenDialogue] = useState(''); // Stable random text per round
 
+  // Stickman Mood & Dynamic Dialogue State
+  const [stickmanMood, setStickmanMood] = useState('neutral'); // 'neutral' | 'happy' | 'panic'
+  const [currentDialogue, setCurrentDialogue] = useState('');
+  const dialogueTimeoutRef = useRef(null);
+  const stickmanMoodRef = useRef('neutral');
+  const currentDialogueRef = useRef('');
+
   // Multiplayer Game State
   const [myPlayerId, setMyPlayerId] = useState('');
   const [gameState, setGameState] = useState('waiting'); // waiting | setting | guessing | roundover
@@ -193,6 +200,16 @@ export default function HangmanDuelApp() {
     "Think hard!",
     "Help me!",
     "Yikes!"
+  ];
+
+  const HAPPY_GUESS_PHRASES = [
+    "Yes! Keep going!",
+    "Phew, good guess!",
+    "You're a genius!",
+    "I can breathe! 💨",
+    "Great letter! ✨",
+    "That's the one!",
+    "Keep it up! 🎯"
   ];
 
   const ESCAPE_PHRASES = [
@@ -494,43 +511,77 @@ export default function HangmanDuelApp() {
     drawProgressiveStep(ctx, stepIndex, 1.0, isDead, false);
   }, [drawProgressiveStep]);
 
-  // ── Panic Face & Mid-Game Dialogue Bubble (Mistakes >= 5) ──────────────────
+  // ── Dynamic Stickman Facial Expressions & Speech Bubble (Happy vs Panic) ────
   const drawPanicOverlays = useCallback((ctx, totalSteps, isDead) => {
     if (totalSteps < 5 || isDead) return;
 
+    const mood = stickmanMoodRef.current;
+    const dialogue = currentDialogueRef.current;
+
     ctx.save();
-    // 1. Wide Nervous Eyes
-    ctx.fillStyle = NEON_BODY;
-    applyGlow(ctx, NEON_BODY, 8);
-    ctx.beginPath();
-    ctx.arc(139, 61, 2.2, 0, Math.PI * 2);
-    ctx.arc(151, 61, 2.2, 0, Math.PI * 2);
-    ctx.fill();
 
-    // 2. Nervous Wavy Mouth
-    ctx.strokeStyle = NEON_BODY;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(138, 73);
-    ctx.quadraticCurveTo(145, 69, 152, 73);
-    ctx.stroke();
+    if (mood === 'happy') {
+      // ── Happy Face Expression ─────────────────────────────────────────────
+      // 1. Happy Smiling Eyes (Cheer / Joy)
+      ctx.strokeStyle = '#22c55e';
+      applyGlow(ctx, '#22c55e', 8);
+      ctx.lineWidth = 2.2;
 
-    // 3. Cyan Sweat Bead (Mistakes >= 6)
-    if (totalSteps >= 6) {
-      ctx.fillStyle = '#06b6d4';
-      applyGlow(ctx, 'rgba(6,182,212,0.8)', 6);
+      // Left eye happy arch (^_^)
       ctx.beginPath();
-      ctx.arc(162, 54, 2.5, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    clearGlow(ctx);
-    ctx.restore();
+      ctx.arc(139, 62, 3, Math.PI, 0, false);
+      ctx.stroke();
 
-    // 4. Floating Panic Speech Bubble (Lives <= 5, left-aligned to avoid canvas cut-off)
-    if (totalSteps >= 5 && totalSteps < 10) {
-      const phrase = PANIC_PHRASES[(totalSteps - 5) % PANIC_PHRASES.length];
-      drawSpeechBubble(ctx, 145, 64, phrase, 'left', 'rgba(168, 85, 247, 0.85)', 'rgba(15, 23, 42, 0.95)', '#f8fafc');
+      // Right eye happy arch (^_^)
+      ctx.beginPath();
+      ctx.arc(151, 62, 3, Math.PI, 0, false);
+      ctx.stroke();
+
+      // 2. Wide Happy Smile (arc)
+      ctx.beginPath();
+      ctx.arc(145, 68, 6, 0.1 * Math.PI, 0.9 * Math.PI, false);
+      ctx.stroke();
+      clearGlow(ctx);
+
+      // 3. Cheerful Speech Bubble
+      const happyText = dialogue || "Yes! Keep going!";
+      drawSpeechBubble(ctx, 145, 64, happyText, 'left', 'rgba(34, 197, 94, 0.9)', 'rgba(15, 23, 42, 0.95)', '#4ade80');
+    } else {
+      // ── Panic / Nervous Expression (Mistakes >= 5) ────────────────────────
+      // 1. Wide Nervous Eyes
+      ctx.fillStyle = NEON_BODY;
+      applyGlow(ctx, NEON_BODY, 8);
+      ctx.beginPath();
+      ctx.arc(139, 61, 2.2, 0, Math.PI * 2);
+      ctx.arc(151, 61, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. Nervous Frowning/Wavy Mouth
+      ctx.strokeStyle = NEON_BODY;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(138, 73);
+      ctx.quadraticCurveTo(145, 69, 152, 73);
+      ctx.stroke();
+
+      // 3. Cyan Sweat Bead (Mistakes >= 6)
+      if (totalSteps >= 6) {
+        ctx.fillStyle = '#06b6d4';
+        applyGlow(ctx, 'rgba(6,182,212,0.8)', 6);
+        ctx.beginPath();
+        ctx.arc(162, 54, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      clearGlow(ctx);
+
+      // 4. Floating Panic Speech Bubble (Lives <= 5)
+      if (totalSteps >= 5 && totalSteps < 10) {
+        const phrase = PANIC_PHRASES[(totalSteps - 5) % PANIC_PHRASES.length];
+        drawSpeechBubble(ctx, 145, 64, phrase, 'left', 'rgba(168, 85, 247, 0.85)', 'rgba(15, 23, 42, 0.95)', '#f8fafc');
+      }
     }
+
+    ctx.restore();
   }, [PANIC_PHRASES]);
 
   // ── Animated Stroke-by-Stroke Drawing Engine (400ms per mistake) ──────────
@@ -1100,6 +1151,41 @@ export default function HangmanDuelApp() {
     specialAnimIdRef.current = requestAnimationFrame(animate);
   }, [ESCAPE_PHRASES]);
 
+  // ── Trigger Happy Stickman Expression on Correct Guess ────────────────────
+  const triggerHappyGuess = useCallback((currentLives = 10, maxL = 10) => {
+    if (dialogueTimeoutRef.current) clearTimeout(dialogueTimeoutRef.current);
+
+    const phrase = HAPPY_GUESS_PHRASES[Math.floor(Math.random() * HAPPY_GUESS_PHRASES.length)];
+    setCurrentDialogue(phrase);
+    setStickmanMood('happy');
+    currentDialogueRef.current = phrase;
+    stickmanMoodRef.current = 'happy';
+
+    // Immediate canvas redraw to show smiling face
+    if (hangmanCanvasRef.current) {
+      animateHangmanDrawing(hangmanCanvasRef.current, canvasAnimStateRef, currentLives, maxL, false);
+    }
+    if (hangmanWatchCanvasRef.current) {
+      animateHangmanDrawing(hangmanWatchCanvasRef.current, watchCanvasAnimStateRef, currentLives, maxL, false);
+    }
+
+    // 2.5s temporary dialogue timeout to reset back to neutral/panic
+    dialogueTimeoutRef.current = setTimeout(() => {
+      setCurrentDialogue('');
+      currentDialogueRef.current = '';
+      const fallbackMood = currentLives <= 5 ? 'panic' : 'neutral';
+      setStickmanMood(fallbackMood);
+      stickmanMoodRef.current = fallbackMood;
+
+      if (hangmanCanvasRef.current) {
+        animateHangmanDrawing(hangmanCanvasRef.current, canvasAnimStateRef, currentLives, maxL, false);
+      }
+      if (hangmanWatchCanvasRef.current) {
+        animateHangmanDrawing(hangmanWatchCanvasRef.current, watchCanvasAnimStateRef, currentLives, maxL, false);
+      }
+    }, 2500);
+  }, [HAPPY_GUESS_PHRASES, animateHangmanDrawing]);
+
   // ── Apply Room State Updates ──────────────────────────────────────────────
   const applyState = useCallback((roomData) => {
     if (!roomData) return;
@@ -1121,6 +1207,11 @@ export default function HangmanDuelApp() {
 
       setNewlyGuessedLetters(newG);
       setNewlyWrongLetters(newW);
+
+      // Trigger happy stickman reaction on correct letter guess
+      if (newG.length > 0 && newW.length === 0 && prevGuessedRef.current.length > 0) {
+        triggerHappyGuess(g.livesLeft, g.maxLives || 10);
+      }
 
       // Trigger gallows swing animation on new wrong guess
       if (newW.length > 0) {
@@ -1823,12 +1914,18 @@ export default function HangmanDuelApp() {
     const l = letter.toUpperCase();
     if (game.guessedLetters.includes(l)) return;
 
+    // Check if guess is correct (PvE mode has secret word locally)
+    const isCorrect = game.word ? game.word.toUpperCase().includes(l) : false;
+    if (isCorrect) {
+      triggerHappyGuess(game.livesLeft, game.maxLives || 10);
+    }
+
     if (isPveMode) {
       const currentRoom = { state: gameState, players, game };
       const nextRoom = processGuess(currentRoom, l);
       if (nextRoom.state === 'roundover') {
         const won = nextRoom.game.roundResult === 'guesser_wins';
-        // Fix #1: Freeze the random dialogue exactly once when the round ends
+        // Freeze the random dialogue exactly once when the round ends
         const mistakes = nextRoom.game.wrongGuesses?.length ?? 0;
         setFrozenDialogue(getRandomPerformanceDialogue(mistakes, won));
 

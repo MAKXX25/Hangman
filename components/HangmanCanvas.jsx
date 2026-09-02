@@ -20,6 +20,7 @@ export default function HangmanCanvas({
   isRoundOver = false,
   roundResult = null,
   isSpecialAnimating = false,
+  stickmanMood = 'neutral',
   onSpecialAnimComplete
 }) {
   const canvasRef = useRef(null);
@@ -61,7 +62,7 @@ export default function HangmanCanvas({
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
-  }, [livesLeft, maxLives, isRoundOver, roundResult]);
+  }, [livesLeft, maxLives, isRoundOver, roundResult, stickmanMood]);
 
   function drawHangmanStatic(ctx, w, h, mistakes) {
     ctx.clearRect(0, 0, w, h);
@@ -104,13 +105,49 @@ export default function HangmanCanvas({
       ctx.lineTo(150, 50);
       ctx.stroke();
     }
-    // 5. Head
+    // 5. Head + Facial Expression
     if (mistakes >= 5) {
       ctx.strokeStyle = '#06b6d4';
       ctx.shadowColor = '#06b6d4';
       ctx.beginPath();
       ctx.arc(150, 65, 15, 0, Math.PI * 2);
       ctx.stroke();
+
+      // Facial Features
+      ctx.save();
+      if (stickmanMood === 'happy') {
+        // Happy Smiling Eyes (^_^)
+        ctx.strokeStyle = '#22c55e';
+        ctx.shadowColor = '#22c55e';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(145, 63, 2.5, Math.PI, 0, false);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(155, 63, 2.5, Math.PI, 0, false);
+        ctx.stroke();
+
+        // Happy Smile Arc
+        ctx.beginPath();
+        ctx.arc(150, 68, 5, 0.1 * Math.PI, 0.9 * Math.PI, false);
+        ctx.stroke();
+      } else {
+        // Nervous / Panic Eyes
+        ctx.fillStyle = '#06b6d4';
+        ctx.beginPath();
+        ctx.arc(145, 63, 1.8, 0, Math.PI * 2);
+        ctx.arc(155, 63, 1.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Wavy / Frown Mouth
+        ctx.strokeStyle = '#06b6d4';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.moveTo(144, 73);
+        ctx.quadraticCurveTo(150, 69, 156, 73);
+        ctx.stroke();
+      }
+      ctx.restore();
     }
     // 6. Body
     if (mistakes >= 6) {
