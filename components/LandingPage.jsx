@@ -60,49 +60,48 @@ export default function LandingPage({ onPlayNow, onPlayPvE }) {
       </div>
 
       {/* ─── 1. NAVBAR ────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 w-full bg-[#09090b]/95 backdrop-blur-sm border-b border-white/10 transition-colors">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 relative flex items-center justify-between">
-          
-          {/* Left: Brand Logo */}
-          <a href="#" className="inline-flex items-center gap-3 group select-none" aria-label="Hangman Duel Home">
-            <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-purple-950/40 border border-purple-500/30 text-purple-400 group-hover:border-purple-400/60 group-hover:bg-purple-900/30 transition-all">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="w-5 h-5 transition-transform duration-200 group-hover:scale-105"
-              >
-                <path d="M3 21h10" />
-                <path d="M6 21V3h10" />
-                <path d="M6 7l4-4" />
-                <path d="M16 3v3" />
-                <circle cx="16" cy="8.5" r="2.2" />
-                <path d="M16 10.7v4.3" />
-                <path d="M13.5 13.2L16 11.8l2.5 1.4" />
-                <path d="M14 19l2-4 2 4" />
-              </svg>
-            </div>
-            <div className="flex items-center text-lg font-bold uppercase tracking-wider">
-              <span className="text-white">Hangman</span>
-              <span className="ml-1.5 text-purple-400">Duel</span>
-            </div>
+      <header className="relative w-full flex items-center justify-between px-6 py-4 bg-[#09090b] border-b border-white/5 z-50">
+        
+        {/* Left: Brand Logo */}
+        <a href="#" className="inline-flex items-center gap-3 group select-none z-10" aria-label="Hangman Duel Home">
+          <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-purple-950/40 border border-purple-500/30 text-purple-400 group-hover:border-purple-400/60 group-hover:bg-purple-900/30 transition-all">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-5 h-5 transition-transform duration-200 group-hover:scale-105"
+            >
+              <path d="M3 21h10" />
+              <path d="M6 21V3h10" />
+              <path d="M6 7l4-4" />
+              <path d="M16 3v3" />
+              <circle cx="16" cy="8.5" r="2.2" />
+              <path d="M16 10.7v4.3" />
+              <path d="M13.5 13.2L16 11.8l2.5 1.4" />
+              <path d="M14 19l2-4 2 4" />
+            </svg>
+          </div>
+          <div className="flex items-center text-lg font-bold uppercase tracking-wider">
+            <span className="text-white">Hangman</span>
+            <span className="ml-1.5 text-purple-400">Duel</span>
+          </div>
+        </a>
+
+        {/* Center: Absolute Centered Navigation Links */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-8 z-10">
+          <a href="#features" className="text-sm font-medium text-slate-400 hover:text-white transition-colors cursor-pointer">
+            Features
           </a>
+          <a href="#how-to-play" className="text-sm font-medium text-slate-400 hover:text-white transition-colors cursor-pointer">
+            How to Play
+          </a>
+        </div>
 
-          {/* Center: Dead-Center Navigation Links */}
-          <nav className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2" aria-label="Main Navigation">
-            <a href="#features" className="text-sm font-medium text-slate-400 hover:text-white transition-colors cursor-pointer">
-              Features
-            </a>
-            <a href="#how-to-play" className="text-sm font-medium text-slate-400 hover:text-white transition-colors cursor-pointer">
-              How to Play
-            </a>
-          </nav>
-
-          {/* Right: Solid Flat "Play Now" CTA */}
-          <div className="flex items-center gap-4">
+        {/* Right: Solid Flat "Play Now" CTA */}
+        <div className="flex items-center gap-4 z-10">
             <button
               onClick={onPlayNow || (() => {
                 const el = document.getElementById('input-name');
