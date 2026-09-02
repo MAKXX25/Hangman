@@ -2582,6 +2582,7 @@ export default function HangmanDuelApp() {
   }, [isRoundOverModalOpen, cleanWord, game?.meaning]);
 
   const activeHint = game?.hint || game?.meaning || wordMeaning || (cleanWord ? getWordMeaning(cleanWord) : '') || '';
+  const isHardDifficulty = (isPveMode && pveDifficulty === 'hard') || (game?.difficulty === 'hard');
 
   return (
     <>
@@ -3718,7 +3719,12 @@ export default function HangmanDuelApp() {
                     <div className="font-mono text-[10px] sm:text-xs md:text-sm font-bold uppercase tracking-widest text-slate-400">
                       SECRET WORD ({hiddenWordChars.length} LETTERS)
                     </div>
-                    {activeHint && (
+                    {isHardDifficulty ? (
+                      <span className="px-2.5 py-0.5 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-300 text-[10px] sm:text-xs font-mono font-bold flex items-center gap-1 shadow-sm">
+                        <span>🔒</span>
+                        <span>NO HINTS IN HARD MODE</span>
+                      </span>
+                    ) : activeHint ? (
                       <button
                         type="button"
                         onClick={() => setShowHint(prev => !prev)}
@@ -3728,7 +3734,7 @@ export default function HangmanDuelApp() {
                         <span>💡</span>
                         <span>{showHint ? "Hide Clue" : "Show Clue"}</span>
                       </button>
-                    )}
+                    ) : null}
                   </div>
 
                   <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 md:gap-2.5 lg:gap-3.5 font-mono max-w-full my-0.5">
@@ -3751,8 +3757,8 @@ export default function HangmanDuelApp() {
                     })}
                   </div>
 
-                  {/* Clue / Hint Box */}
-                  {activeHint && showHint && (
+                  {/* Clue / Hint Box (Disabled in Hard Mode) */}
+                  {!isHardDifficulty && activeHint && showHint && (
                     <div className="w-full mt-2 px-3.5 py-2 sm:py-2.5 rounded-xl bg-purple-950/70 border border-purple-500/40 backdrop-blur-md flex items-center justify-center gap-2 text-center animate-fadeIn shadow-md">
                       <span className="text-sm sm:text-base flex-shrink-0">💡</span>
                       <p className="text-xs sm:text-sm text-purple-100 font-medium leading-relaxed">
@@ -4219,10 +4225,10 @@ export default function HangmanDuelApp() {
                 onClick={() => startPveGame('easy', 1, null, pveMaxRounds)}
               >
                 <div className="diff-header">
-                  <span className="diff-tag">Easy</span>
-                  <span className="diff-length">Common Letters</span>
+                  <span className="diff-tag">🟢 Easy</span>
+                  <span className="diff-length">Familiar & High Vowels</span>
                 </div>
-                <p className="diff-desc">Rich in standard vowels (A, E, I, O) and frequent letters (E, T, A, O, I, N, S, H, R).</p>
+                <p className="diff-desc">Simple, everyday words rich in vowels (A, E, I, O, U). 💡 Full clues & hints enabled.</p>
               </button>
 
               <button
@@ -4231,10 +4237,10 @@ export default function HangmanDuelApp() {
                 onClick={() => startPveGame('medium', 1, null, pveMaxRounds)}
               >
                 <div className="diff-header">
-                  <span className="diff-tag">Medium</span>
-                  <span className="diff-length">Standard Mix</span>
+                  <span className="diff-tag">🟡 Medium</span>
+                  <span className="diff-length">Standard Vocabulary</span>
                 </div>
-                <p className="diff-desc">Everyday vocabulary with a balanced mix of common and intermediate consonants.</p>
+                <p className="diff-desc">Rich mix of everyday vocabulary and intermediate blends. 💡 Full clues & hints enabled.</p>
               </button>
 
               <button
@@ -4243,10 +4249,10 @@ export default function HangmanDuelApp() {
                 onClick={() => startPveGame('hard', 1, null, pveMaxRounds)}
               >
                 <div className="diff-header">
-                  <span className="diff-tag">Hard</span>
-                  <span className="diff-length">Rare & Vowelless</span>
+                  <span className="diff-tag">💀 Hard</span>
+                  <span className="diff-length">Rare Letters • 🔒 No Hints</span>
                 </div>
-                <p className="diff-desc">High-penalty letters (Z, Q, X, J, K, V, W) or tricky vowel-sparse words (e.g. RHYTHM, JINX, AWKWARD).</p>
+                <p className="diff-desc">Obscure, low-vowel & high-penalty words (e.g. RHYTHM, JINX, OXYGEN). 🚫 No clues or hints allowed!</p>
               </button>
             </div>
 
