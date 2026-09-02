@@ -467,353 +467,314 @@ export default function HangmanDuelApp() {
     ctx.restore();
   };
 
-  // ── Draw Progressive Stroke Step ──────────────────────────────────────────
-  const drawProgressiveStep = useCallback((ctx, stepIndex, progress, isDead, withTip = true) => {
-    const p = Math.max(0, Math.min(1, progress));
-    if (p === 0) return;
+  // ── Unified Dynamic Canvas Animation Engine ──────────────────────────────
+  const drawFrame = useCallback((canvas, mistakes, isDead, timeMs = 0) => {
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-    switch (stepIndex) {
-      case 0: { // 1: Base
-        const x1 = 15, y1 = 225, x2 = 185, y2 = 225;
-        const curX = x1 + p * (x2 - x1);
-        ctx.strokeStyle = isDead ? NEON_DEAD : NEON_GALLOWS;
-        applyGlow(ctx, isDead ? NEON_DEAD_GLOW : NEON_GALLOWS_GLOW, 12);
-        ctx.lineWidth = 6;
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(curX, y2);
-        ctx.stroke();
-        clearGlow(ctx);
-        if (withTip && p < 1) drawPenTip(ctx, curX, y2, isDead ? NEON_DEAD_GLOW : NEON_GALLOWS_GLOW);
-        break;
-      }
-      case 1: { // 2: Vertical Pole
-        const x1 = 55, y1 = 225, x2 = 55, y2 = 18;
-        const curY = y1 + p * (y2 - y1);
-        ctx.strokeStyle = isDead ? NEON_DEAD : NEON_GALLOWS;
-        applyGlow(ctx, isDead ? NEON_DEAD_GLOW : NEON_GALLOWS_GLOW, 12);
-        ctx.lineWidth = 5;
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x1, curY);
-        ctx.stroke();
-        clearGlow(ctx);
-        if (withTip && p < 1) drawPenTip(ctx, x1, curY, isDead ? NEON_DEAD_GLOW : NEON_GALLOWS_GLOW);
-        break;
-      }
-      case 2: { // 3: Top line / Beam
-        const x1 = 55, y1 = 18, x2 = 145, y2 = 18;
-        const curX = x1 + p * (x2 - x1);
-        ctx.strokeStyle = isDead ? NEON_DEAD : NEON_GALLOWS;
-        applyGlow(ctx, isDead ? NEON_DEAD_GLOW : NEON_GALLOWS_GLOW, 12);
-        ctx.lineWidth = 5;
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(curX, y1);
-        ctx.stroke();
-        clearGlow(ctx);
-        if (withTip && p < 1) drawPenTip(ctx, curX, y1, isDead ? NEON_DEAD_GLOW : NEON_GALLOWS_GLOW);
-        break;
-      }
-      case 3: { // 4: Rope
-        const x1 = 145, y1 = 18, x2 = 145, y2 = 44;
-        const curY = y1 + p * (y2 - y1);
-        ctx.strokeStyle = isDead ? NEON_DEAD : NEON_BODY;
-        applyGlow(ctx, isDead ? NEON_DEAD_GLOW : NEON_GALLOWS_GLOW, 8);
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x1, curY);
-        ctx.stroke();
-        clearGlow(ctx);
-        if (withTip && p < 1) drawPenTip(ctx, x1, curY, isDead ? NEON_DEAD_GLOW : NEON_BODY);
-        break;
-      }
-      case 4: { // 5: Head
-        const cx = 145, cy = 64, r = 20;
-        const startAngle = -Math.PI / 2;
-        const endAngle = startAngle + p * (Math.PI * 2);
-        ctx.strokeStyle = isDead ? NEON_DEAD : NEON_BODY;
-        applyGlow(ctx, isDead ? NEON_DEAD_GLOW : NEON_BODY, 14);
-        ctx.lineWidth = 3.5;
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, startAngle, endAngle);
-        ctx.stroke();
-        clearGlow(ctx);
-        if (withTip && p < 1) {
-          const tipX = cx + r * Math.cos(endAngle);
-          const tipY = cy + r * Math.sin(endAngle);
-          drawPenTip(ctx, tipX, tipY, isDead ? NEON_DEAD_GLOW : NEON_BODY);
-        }
-        break;
-      }
-      case 5: { // 6: Body / Torso
-        const x1 = 145, y1 = 84, x2 = 145, y2 = 148;
-        const curY = y1 + p * (y2 - y1);
-        ctx.strokeStyle = isDead ? NEON_DEAD : NEON_BODY;
-        applyGlow(ctx, isDead ? NEON_DEAD_GLOW : NEON_BODY, 10);
-        ctx.lineWidth = 3.5;
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x1, curY);
-        ctx.stroke();
-        clearGlow(ctx);
-        if (withTip && p < 1) drawPenTip(ctx, x1, curY, isDead ? NEON_DEAD_GLOW : NEON_BODY);
-        break;
-      }
-      case 6: { // 7: Left Arm
-        const x1 = 145, y1 = 100, x2 = 112, y2 = 130;
-        const curX = x1 + p * (x2 - x1);
-        const curY = y1 + p * (y2 - y1);
-        ctx.strokeStyle = isDead ? NEON_DEAD : NEON_BODY;
-        applyGlow(ctx, isDead ? NEON_DEAD_GLOW : NEON_BODY, 10);
-        ctx.lineWidth = 3.5;
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(curX, curY);
-        ctx.stroke();
-        clearGlow(ctx);
-        if (withTip && p < 1) drawPenTip(ctx, curX, curY, isDead ? NEON_DEAD_GLOW : NEON_BODY);
-        break;
-      }
-      case 7: { // 8: Right Arm
-        const x1 = 145, y1 = 100, x2 = 178, y2 = 130;
-        const curX = x1 + p * (x2 - x1);
-        const curY = y1 + p * (y2 - y1);
-        ctx.strokeStyle = isDead ? NEON_DEAD : NEON_BODY;
-        applyGlow(ctx, isDead ? NEON_DEAD_GLOW : NEON_BODY, 10);
-        ctx.lineWidth = 3.5;
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(curX, curY);
-        ctx.stroke();
-        clearGlow(ctx);
-        if (withTip && p < 1) drawPenTip(ctx, curX, curY, isDead ? NEON_DEAD_GLOW : NEON_BODY);
-        break;
-      }
-      case 8: { // 9: Left Leg
-        const x1 = 145, y1 = 148, x2 = 112, y2 = 195;
-        const curX = x1 + p * (x2 - x1);
-        const curY = y1 + p * (y2 - y1);
-        ctx.strokeStyle = isDead ? NEON_DEAD : NEON_BODY;
-        applyGlow(ctx, isDead ? NEON_DEAD_GLOW : NEON_BODY, 10);
-        ctx.lineWidth = 3.5;
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(curX, curY);
-        ctx.stroke();
-        clearGlow(ctx);
-        if (withTip && p < 1) drawPenTip(ctx, curX, curY, isDead ? NEON_DEAD_GLOW : NEON_BODY);
-        break;
-      }
-      case 9: { // 10: Right Leg + X Eyes
-        const x1 = 145, y1 = 148, x2 = 178, y2 = 195;
-        ctx.strokeStyle = NEON_DEAD;
-        applyGlow(ctx, NEON_DEAD_GLOW, 14);
-        ctx.lineWidth = 3.5;
+    const w = 220;
+    const h = 240;
+    if (canvas.width !== w) canvas.width = w;
+    if (canvas.height !== h) canvas.height = h;
 
-        if (p <= 0.65) {
-          const legP = p / 0.65;
-          const curX = x1 + legP * (x2 - x1);
-          const curY = y1 + legP * (y2 - y1);
-          ctx.beginPath();
-          ctx.moveTo(x1, y1);
-          ctx.lineTo(curX, curY);
-          ctx.stroke();
-          clearGlow(ctx);
-          if (withTip) drawPenTip(ctx, curX, curY, NEON_DEAD_GLOW);
-        } else {
-          ctx.beginPath();
-          ctx.moveTo(x1, y1);
-          ctx.lineTo(x2, y2);
-          ctx.stroke();
-          clearGlow(ctx);
+    ctx.clearRect(0, 0, w, h);
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
 
-          // Draw X eyes fading in
-          const eyeAlpha = (p - 0.65) / 0.35;
-          ctx.save();
-          ctx.globalAlpha = eyeAlpha;
-          applyGlow(ctx, NEON_DEAD_GLOW, 10);
-          ctx.lineWidth = 2.5;
-          ctx.strokeStyle = NEON_DEAD;
-          // left X
-          ctx.beginPath();
-          ctx.moveTo(135, 57); ctx.lineTo(141, 63);
-          ctx.moveTo(141, 57); ctx.lineTo(135, 63);
-          ctx.stroke();
-          // right X
-          ctx.beginPath();
-          ctx.moveTo(149, 57); ctx.lineTo(155, 63);
-          ctx.moveTo(155, 57); ctx.lineTo(149, 63);
-          ctx.stroke();
-          clearGlow(ctx);
-          ctx.restore();
-        }
-        break;
-      }
-    }
-  }, []);
-
-  const drawStaticStep = useCallback((ctx, stepIndex, isDead) => {
-    drawProgressiveStep(ctx, stepIndex, 1.0, isDead, false);
-  }, [drawProgressiveStep]);
-
-  // ── Dynamic Stickman Facial Expressions & Speech Bubble (Happy vs Panic) ────
-  const drawPanicOverlays = useCallback((ctx, totalSteps, isDead) => {
-    if (totalSteps < 5 || isDead) return;
-
+    const t = timeMs * 0.001; // in seconds
     const mood = stickmanMoodRef.current;
     const dialogue = currentDialogueRef.current;
 
+    // 1. Natural Ambient Rope Swaying Physics
+    const ropeSway = Math.sin(t * 1.8) * 0.045;
+    const ropeLength = 36;
+    const beamRopeX = 145;
+    const beamRopeY = 18;
+    const ropeEndX = beamRopeX + Math.sin(ropeSway) * ropeLength;
+    const ropeEndY = beamRopeY + Math.cos(ropeSway) * ropeLength;
+
+    // 2. Always draw the full glowing Neon Gallows Scaffold
+    ctx.strokeStyle = isDead ? NEON_DEAD : NEON_GALLOWS;
+    applyGlow(ctx, isDead ? NEON_DEAD_GLOW : NEON_GALLOWS_GLOW, 12);
+    ctx.lineWidth = 5;
+
+    // Base
+    ctx.beginPath();
+    ctx.moveTo(15, 225);
+    ctx.lineTo(185, 225);
+    ctx.stroke();
+
+    // Vertical Mast Pole
+    ctx.beginPath();
+    ctx.moveTo(55, 225);
+    ctx.lineTo(55, 18);
+    ctx.stroke();
+
+    // Top Overhead Beam
+    ctx.beginPath();
+    ctx.moveTo(55, 18);
+    ctx.lineTo(155, 18);
+    ctx.stroke();
+
+    // Corner Angle Brace Strut
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.moveTo(55, 50);
+    ctx.lineTo(85, 18);
+    ctx.stroke();
+
+    // 3. Hanging Rope with Swaying Motion
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = isDead ? NEON_DEAD : '#f59e0b';
+    applyGlow(ctx, isDead ? NEON_DEAD_GLOW : '#f59e0b', 8);
+    ctx.beginPath();
+    ctx.moveTo(beamRopeX, beamRopeY);
+    ctx.lineTo(ropeEndX, ropeEndY);
+    ctx.stroke();
+
+    // If 0 mistakes: Draw a dangling rope noose loop swinging gently
+    if (mistakes === 0) {
+      ctx.beginPath();
+      ctx.arc(ropeEndX, ropeEndY + 8, 8, 0, Math.PI * 2);
+      ctx.stroke();
+      clearGlow(ctx);
+      ctx.restore();
+      return;
+    }
+
+    clearGlow(ctx);
+
+    // 4. Draw Animated Hanging Stickman from Rope End
     ctx.save();
+    ctx.translate(ropeEndX, ropeEndY);
+    ctx.rotate(ropeSway);
 
-    if (mood === 'happy') {
-      // ── Happy Face Expression ─────────────────────────────────────────────
-      // 1. Happy Smiling Eyes (Cheer / Joy)
-      ctx.strokeStyle = '#22c55e';
-      applyGlow(ctx, '#22c55e', 8);
-      ctx.lineWidth = 2.2;
+    const isHappy = mood === 'happy';
+    const isPanic = mistakes >= 5 && !isDead;
+    const isBlinking = Math.sin(t * 1.2) > 0.94;
+    const breathOffset = Math.sin(t * 2.5) * 1.2;
+    const cheerHopY = isHappy ? -Math.abs(Math.sin(t * 8)) * 5 : 0;
 
-      // Left eye happy arch (^_^)
+    ctx.translate(0, cheerHopY);
+
+    // ── Head (Mistake >= 1) ──────────────────────────────────
+    if (mistakes >= 1) {
+      ctx.strokeStyle = isDead ? NEON_DEAD : NEON_BODY;
+      applyGlow(ctx, isDead ? NEON_DEAD_GLOW : NEON_BODY, 12);
+      ctx.lineWidth = 3.5;
+
+      const headCenterY = 18;
+      const headRadius = 16;
       ctx.beginPath();
-      ctx.arc(139, 62, 3, Math.PI, 0, false);
-      ctx.stroke();
-
-      // Right eye happy arch (^_^)
-      ctx.beginPath();
-      ctx.arc(151, 62, 3, Math.PI, 0, false);
-      ctx.stroke();
-
-      // 2. Wide Happy Smile (arc)
-      ctx.beginPath();
-      ctx.arc(145, 68, 6, 0.1 * Math.PI, 0.9 * Math.PI, false);
+      ctx.arc(0, headCenterY, headRadius, 0, Math.PI * 2);
       ctx.stroke();
       clearGlow(ctx);
 
-      // 3. Cheerful Speech Bubble
-      const happyText = dialogue || "Yes! Keep going!";
-      drawSpeechBubble(ctx, 145, 64, happyText, 'left', 'rgba(34, 197, 94, 0.9)', 'rgba(15, 23, 42, 0.95)', '#4ade80');
-    } else {
-      // ── Panic / Nervous Expression (Mistakes >= 5) ────────────────────────
-      // 1. Wide Nervous Eyes
-      ctx.fillStyle = NEON_BODY;
-      applyGlow(ctx, NEON_BODY, 8);
-      ctx.beginPath();
-      ctx.arc(139, 61, 2.2, 0, Math.PI * 2);
-      ctx.arc(151, 61, 2.2, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 2. Nervous Frowning/Wavy Mouth
-      ctx.strokeStyle = NEON_BODY;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(138, 73);
-      ctx.quadraticCurveTo(145, 69, 152, 73);
-      ctx.stroke();
-
-      // 3. Cyan Sweat Bead (Mistakes >= 6)
-      if (totalSteps >= 6) {
-        ctx.fillStyle = '#06b6d4';
-        applyGlow(ctx, 'rgba(6,182,212,0.8)', 6);
+      // Facial Features
+      ctx.save();
+      if (isDead) {
+        // X X dead eyes
+        ctx.strokeStyle = NEON_DEAD;
+        ctx.lineWidth = 2.2;
         ctx.beginPath();
-        ctx.arc(162, 54, 2.5, 0, Math.PI * 2);
+        ctx.moveTo(-6, 12); ctx.lineTo(-2, 18);
+        ctx.moveTo(-2, 12); ctx.lineTo(-6, 18);
+        ctx.moveTo(2, 12);  ctx.lineTo(6, 18);
+        ctx.moveTo(6, 12);  ctx.lineTo(2, 18);
+        ctx.stroke();
+      } else if (isHappy) {
+        // Joyful (^_^) smiling eyes
+        ctx.strokeStyle = '#22c55e';
+        applyGlow(ctx, '#22c55e', 8);
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.arc(-5, 16, 2.5, Math.PI, 0, false);
+        ctx.arc(5, 16, 2.5, Math.PI, 0, false);
+        ctx.stroke();
+        // Happy open smile
+        ctx.beginPath();
+        ctx.arc(0, 20, 4.5, 0.1 * Math.PI, 0.9 * Math.PI, false);
+        ctx.stroke();
+        clearGlow(ctx);
+      } else if (isPanic) {
+        // Panic wide eyes
+        ctx.fillStyle = NEON_BODY;
+        applyGlow(ctx, NEON_BODY, 8);
+        ctx.beginPath();
+        ctx.arc(-5, 15, isBlinking ? 0.5 : 2.5, 0, Math.PI * 2);
+        ctx.arc(5, 15, isBlinking ? 0.5 : 2.5, 0, Math.PI * 2);
         ctx.fill();
+        // Wavy mouth
+        ctx.strokeStyle = NEON_BODY;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-5, 24);
+        ctx.quadraticCurveTo(0, 21, 5, 24);
+        ctx.stroke();
+        // Flying sweat drop
+        const sweatY = 8 + ((t * 30) % 20);
+        ctx.fillStyle = '#06b6d4';
+        applyGlow(ctx, '#06b6d4', 6);
+        ctx.beginPath();
+        ctx.arc(16, sweatY, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+        clearGlow(ctx);
+      } else {
+        // Neutral cute curious eyes
+        ctx.fillStyle = NEON_BODY;
+        applyGlow(ctx, NEON_BODY, 8);
+        ctx.beginPath();
+        if (isBlinking) {
+          ctx.rect(-6, 15, 3, 1);
+          ctx.rect(3, 15, 3, 1);
+        } else {
+          ctx.arc(-5, 15, 2, 0, Math.PI * 2);
+          ctx.arc(5, 15, 2, 0, Math.PI * 2);
+        }
+        ctx.fill();
+        // Calm mouth
+        ctx.strokeStyle = NEON_BODY;
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.arc(0, 22, 3, 0.1 * Math.PI, 0.9 * Math.PI, false);
+        ctx.stroke();
+        clearGlow(ctx);
       }
+      ctx.restore();
+    }
+
+    // ── Body Torso (Mistake >= 2) ───────────────────────────
+    if (mistakes >= 2) {
+      ctx.strokeStyle = isDead ? NEON_DEAD : NEON_BODY;
+      applyGlow(ctx, isDead ? NEON_DEAD_GLOW : NEON_BODY, 10);
+      ctx.lineWidth = 3.5;
+      const torsoStartY = 34;
+      const torsoEndY = 90 + breathOffset;
+      ctx.beginPath();
+      ctx.moveTo(0, torsoStartY);
+      ctx.lineTo(0, torsoEndY);
+      ctx.stroke();
       clearGlow(ctx);
 
-      // 4. Floating Panic Speech Bubble (Lives <= 5)
-      if (totalSteps >= 5 && totalSteps < 10) {
-        const phrase = PANIC_PHRASES[(totalSteps - 5) % PANIC_PHRASES.length];
-        drawSpeechBubble(ctx, 145, 64, phrase, 'left', 'rgba(168, 85, 247, 0.85)', 'rgba(15, 23, 42, 0.95)', '#f8fafc');
+      // ── Left Arm (Mistake >= 3) ───────────────────────────
+      if (mistakes >= 3) {
+        ctx.strokeStyle = isDead ? NEON_DEAD : NEON_BODY;
+        applyGlow(ctx, isDead ? NEON_DEAD_GLOW : NEON_BODY, 8);
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(0, 48);
+        if (isHappy) {
+          ctx.lineTo(-24, 28);
+        } else {
+          ctx.lineTo(-24, 76 + breathOffset * 0.5);
+        }
+        ctx.stroke();
+        clearGlow(ctx);
       }
+
+      // ── Right Arm (Mistake >= 4) ──────────────────────────
+      if (mistakes >= 4) {
+        ctx.strokeStyle = isDead ? NEON_DEAD : NEON_BODY;
+        applyGlow(ctx, isDead ? NEON_DEAD_GLOW : NEON_BODY, 8);
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(0, 48);
+        if (isHappy) {
+          ctx.lineTo(24, 28);
+        } else {
+          ctx.lineTo(24, 76 + breathOffset * 0.5);
+        }
+        ctx.stroke();
+        clearGlow(ctx);
+      }
+
+      // ── Left Leg (Mistake >= 5) ───────────────────────────
+      if (mistakes >= 5) {
+        ctx.strokeStyle = isDead ? NEON_DEAD : NEON_BODY;
+        applyGlow(ctx, isDead ? NEON_DEAD_GLOW : NEON_BODY, 8);
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(0, torsoEndY);
+        ctx.lineTo(-20, torsoEndY + 45);
+        ctx.stroke();
+        clearGlow(ctx);
+      }
+
+      // ── Right Leg (Mistake >= 6) ──────────────────────────
+      if (mistakes >= 6) {
+        ctx.strokeStyle = isDead ? NEON_DEAD : NEON_BODY;
+        applyGlow(ctx, isDead ? NEON_DEAD_GLOW : NEON_BODY, 8);
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(0, torsoEndY);
+        ctx.lineTo(20, torsoEndY + 45);
+        ctx.stroke();
+        clearGlow(ctx);
+      }
+
+      // ── Left Hand Detail (Mistake >= 7) ───────────────────
+      if (mistakes >= 7) {
+        ctx.strokeStyle = isDead ? NEON_DEAD : NEON_BODY;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        if (isHappy) {
+          ctx.arc(-24, 26, 2.5, 0, Math.PI * 2);
+        } else {
+          ctx.arc(-24, 78, 2.5, 0, Math.PI * 2);
+        }
+        ctx.stroke();
+      }
+
+      // ── Right Hand Detail (Mistake >= 8) ──────────────────
+      if (mistakes >= 8) {
+        ctx.strokeStyle = isDead ? NEON_DEAD : NEON_BODY;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        if (isHappy) {
+          ctx.arc(24, 26, 2.5, 0, Math.PI * 2);
+        } else {
+          ctx.arc(24, 78, 2.5, 0, Math.PI * 2);
+        }
+        ctx.stroke();
+      }
+
+      // ── Left Foot (Mistake >= 9) ──────────────────────────
+      if (mistakes >= 9) {
+        ctx.strokeStyle = isDead ? NEON_DEAD : NEON_BODY;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(-20, torsoEndY + 45);
+        ctx.lineTo(-28, torsoEndY + 46);
+        ctx.stroke();
+      }
+
+      // ── Right Foot (Mistake >= 10) ────────────────────────
+      if (mistakes >= 10) {
+        ctx.strokeStyle = isDead ? NEON_DEAD : NEON_BODY;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(20, torsoEndY + 45);
+        ctx.lineTo(28, torsoEndY + 46);
+        ctx.stroke();
+      }
+    }
+
+    ctx.restore(); // restore stickman transform
+
+    // ── Floating Dynamic Speech Bubble ───────────────────────
+    if (!isDead && (isHappy || isPanic)) {
+      const bubbleText = isHappy
+        ? (dialogue || "Awesome! Keep it up! ✨")
+        : (PANIC_PHRASES[(mistakes - 5) % PANIC_PHRASES.length] || "Careful!");
+      const bubbleBorder = isHappy ? 'rgba(34, 197, 94, 0.9)' : 'rgba(168, 85, 247, 0.85)';
+      const bubbleTextCol = isHappy ? '#4ade80' : '#f8fafc';
+      drawSpeechBubble(ctx, ropeEndX, ropeEndY + 18, bubbleText, 'left', bubbleBorder, 'rgba(15, 23, 42, 0.95)', bubbleTextCol);
     }
 
     ctx.restore();
   }, [PANIC_PHRASES]);
-
-  // ── Helper to draw all steps statically on canvas ──────────────────────────
-  const drawAllStepsStatic = useCallback((canvas, steps, isDead) => {
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (steps > 0) {
-      ctx.save();
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      for (let i = 0; i < steps; i++) {
-        drawStaticStep(ctx, i, isDead);
-      }
-      drawPanicOverlays(ctx, steps, isDead);
-      ctx.restore();
-    }
-  }, [drawStaticStep, drawPanicOverlays]);
-
-  // ── Robust Stroke-by-Stroke Drawing Engine ────────────────────────────────
-  const animateHangmanDrawing = useCallback((canvas, animStateRef, livesLeft, maxLives = 10, animate = true) => {
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    const targetSteps = Math.min(Math.max(0, maxLives - livesLeft), 10);
-    const isDead = livesLeft <= 0;
-    const state = animStateRef.current;
-
-    // 1. Cancel any in-flight animation frame to prevent conflicting draw cycles
-    if (state.animId) {
-      cancelAnimationFrame(state.animId);
-      state.animId = null;
-    }
-
-    // 2. Instant static render if resetting, decreasing, or explicitly non-animated
-    if (targetSteps === 0 || targetSteps <= state.drawnSteps || !animate) {
-      drawAllStepsStatic(canvas, targetSteps, isDead);
-      state.drawnSteps = targetSteps;
-      return;
-    }
-
-    // 3. Progressive animation for the newly added mistake:
-    // Instantly commit and draw all prior confirmed steps up to (targetSteps - 1),
-    // and smoothly animate ONLY the single latest step.
-    const latestStepIdx = targetSteps - 1;
-    state.drawnSteps = targetSteps; // Update immediately so state is never stale during fast clicks
-
-    const STEP_DURATION = 180; // Fast, snappy 180ms stroke animation
-    const startTime = performance.now();
-
-    function stepFrame(now) {
-      const elapsed = now - startTime;
-      const p = Math.min(1, elapsed / STEP_DURATION);
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.save();
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-
-      // Always draw all completed prior steps statically (prevents previously drawn lines from vanishing)
-      for (let i = 0; i < latestStepIdx; i++) {
-        drawStaticStep(ctx, i, isDead);
-      }
-
-      // Draw the single latest progressive step
-      drawProgressiveStep(ctx, latestStepIdx, p, isDead, p < 1);
-
-      if (targetSteps >= 5 && p > 0.4) {
-        drawPanicOverlays(ctx, targetSteps, isDead);
-      }
-
-      ctx.restore();
-
-      if (p < 1) {
-        state.animId = requestAnimationFrame(stepFrame);
-      } else {
-        state.animId = null;
-        // Final complete static draw pass to guarantee crystal clear anti-aliased strokes
-        drawAllStepsStatic(canvas, targetSteps, isDead);
-      }
-    }
-
-    state.animId = requestAnimationFrame(stepFrame);
-  }, [drawStaticStep, drawProgressiveStep, drawPanicOverlays, drawAllStepsStatic]);
 
 
   // ── 5-Stage Physics Death Sequence Animation (~3.5s total) ────────────────
@@ -1293,7 +1254,7 @@ export default function HangmanDuelApp() {
   }, [ESCAPE_PHRASES]);
 
   // ── Trigger Happy Stickman Expression on Correct Guess ────────────────────
-  const triggerHappyGuess = useCallback((currentLives = 10, maxL = 10) => {
+  const triggerHappyGuess = useCallback(() => {
     if (dialogueTimeoutRef.current) clearTimeout(dialogueTimeoutRef.current);
 
     const phrase = HAPPY_GUESS_PHRASES[Math.floor(Math.random() * HAPPY_GUESS_PHRASES.length)];
@@ -1302,30 +1263,14 @@ export default function HangmanDuelApp() {
     currentDialogueRef.current = phrase;
     stickmanMoodRef.current = 'happy';
 
-    // Immediate canvas redraw to show smiling face
-    if (hangmanCanvasRef.current) {
-      animateHangmanDrawing(hangmanCanvasRef.current, canvasAnimStateRef, currentLives, maxL, false);
-    }
-    if (hangmanWatchCanvasRef.current) {
-      animateHangmanDrawing(hangmanWatchCanvasRef.current, watchCanvasAnimStateRef, currentLives, maxL, false);
-    }
-
     // 2.5s temporary dialogue timeout to reset back to neutral/panic
     dialogueTimeoutRef.current = setTimeout(() => {
       setCurrentDialogue('');
       currentDialogueRef.current = '';
-      const fallbackMood = currentLives <= 5 ? 'panic' : 'neutral';
-      setStickmanMood(fallbackMood);
-      stickmanMoodRef.current = fallbackMood;
-
-      if (hangmanCanvasRef.current) {
-        animateHangmanDrawing(hangmanCanvasRef.current, canvasAnimStateRef, currentLives, maxL, false);
-      }
-      if (hangmanWatchCanvasRef.current) {
-        animateHangmanDrawing(hangmanWatchCanvasRef.current, watchCanvasAnimStateRef, currentLives, maxL, false);
-      }
+      setStickmanMood('neutral');
+      stickmanMoodRef.current = 'neutral';
     }, 2500);
-  }, [HAPPY_GUESS_PHRASES, animateHangmanDrawing]);
+  }, [HAPPY_GUESS_PHRASES]);
 
   // ── Apply Room State Updates ──────────────────────────────────────────────
   const applyState = useCallback((roomData) => {
@@ -1351,7 +1296,7 @@ export default function HangmanDuelApp() {
 
       // Trigger happy stickman reaction on correct letter guess
       if (newG.length > 0 && newW.length === 0 && prevGuessedRef.current.length > 0) {
-        triggerHappyGuess(g.livesLeft, g.maxLives || 10);
+        triggerHappyGuess();
       }
 
       // Trigger gallows swing animation on new wrong guess
@@ -1362,16 +1307,6 @@ export default function HangmanDuelApp() {
 
       prevGuessedRef.current = [...currentGuessed];
       prevWrongRef.current = [...currentWrong];
-
-      // Draw hangman on active canvas
-      if (roomData.state === 'guessing' || (roomData.state === 'roundover' && g.roundResult !== 'guesser_wins')) {
-        if (hangmanCanvasRef.current) {
-          animateHangmanDrawing(hangmanCanvasRef.current, canvasAnimStateRef, g.livesLeft, g.maxLives || 10, true);
-        }
-        if (hangmanWatchCanvasRef.current) {
-          animateHangmanDrawing(hangmanWatchCanvasRef.current, watchCanvasAnimStateRef, g.livesLeft, g.maxLives || 10, true);
-        }
-      }
     }
 
     // ── Round Over Special Transitions ──────────────────────────────────────
@@ -1410,7 +1345,7 @@ export default function HangmanDuelApp() {
       setIsRoundOverModalOpen(false);
       setIsWaitingOpponent(false);
     }
-  }, [myPlayerId, triggerConfettiShower, animateHangmanDrawing, runDeathAnimation, runEscapeAnimation]);
+  }, [myPlayerId, triggerConfettiShower, triggerHappyGuess, runDeathAnimation, runEscapeAnimation]);
 
   // ── Forceful Reset / Modal Close on Round Transition (Anti-Softlock) ─────
   const forceResetRoundState = useCallback(() => {
@@ -2376,21 +2311,37 @@ export default function HangmanDuelApp() {
     }
   }
 
-  // ── Guaranteed Active Canvas Sync (Prevents disappearing lines on re-renders) ──
+  // ── Continuous 60fps Physics & Idle Animation Loop (Active during Gameplay) ──
   useEffect(() => {
-    if (screen !== 'game' || gameState !== 'guessing') return;
-    const mistakes = Math.min(Math.max(0, (game?.maxLives || MAX_LIVES) - livesLeft), 10);
-    const isDead = livesLeft <= 0;
+    if (screen !== 'game' || (gameState !== 'guessing' && gameState !== 'roundover')) return;
 
-    if (hangmanCanvasRef.current && !canvasAnimStateRef.current.animId) {
-      drawAllStepsStatic(hangmanCanvasRef.current, mistakes, isDead);
-      canvasAnimStateRef.current.drawnSteps = mistakes;
-    }
-    if (hangmanWatchCanvasRef.current && !watchCanvasAnimStateRef.current.animId) {
-      drawAllStepsStatic(hangmanWatchCanvasRef.current, mistakes, isDead);
-      watchCanvasAnimStateRef.current.drawnSteps = mistakes;
-    }
-  }, [screen, gameState, livesLeft, stickmanMood, game?.maxLives, drawAllStepsStatic]);
+    let animId = null;
+    const startTime = performance.now();
+
+    const loop = (now) => {
+      const elapsed = now - startTime;
+      const mistakes = Math.min(Math.max(0, (game?.maxLives || MAX_LIVES) - livesLeft), 10);
+      const isDead = livesLeft <= 0;
+
+      // Only draw continuous idle if not currently running the special death/escape cutscene
+      if (!specialAnimIdRef.current) {
+        if (hangmanCanvasRef.current) {
+          drawFrame(hangmanCanvasRef.current, mistakes, isDead, elapsed);
+        }
+        if (hangmanWatchCanvasRef.current) {
+          drawFrame(hangmanWatchCanvasRef.current, mistakes, isDead, elapsed);
+        }
+      }
+
+      animId = requestAnimationFrame(loop);
+    };
+
+    animId = requestAnimationFrame(loop);
+
+    return () => {
+      if (animId) cancelAnimationFrame(animId);
+    };
+  }, [screen, gameState, livesLeft, stickmanMood, game?.maxLives, drawFrame]);
 
   // Guessed set & collections
   const guessedSet = new Set((game?.guessedLetters || []).map(l => l.toUpperCase()));

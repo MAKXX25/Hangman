@@ -25,6 +25,7 @@ export default function HangmanCanvas({
 }) {
   const canvasRef = useRef(null);
   const animFrameRef = useRef(null);
+  const startTimeRef = useRef(performance.now());
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -38,7 +39,8 @@ export default function HangmanCanvas({
     canvas.width = width;
     canvas.height = height;
 
-    const mistakes = Math.max(0, maxLives - livesLeft);
+    const mistakes = Math.min(Math.max(0, maxLives - livesLeft), 10);
+    const isDead = livesLeft <= 0;
 
     // If death animation triggered
     if (isRoundOver && roundResult === 'setter_wins') {
@@ -56,136 +58,263 @@ export default function HangmanCanvas({
       };
     }
 
-    // Normal static / live draw
-    drawHangmanStatic(ctx, width, height, mistakes);
+    // Continuous 60fps Idle Physics & Liveliness Loop
+    const loop = (now) => {
+      const elapsed = now - startTimeRef.current;
+      drawAnimatedFrame(ctx, width, height, mistakes, isDead, stickmanMood, elapsed);
+      animFrameRef.current = requestAnimationFrame(loop);
+    };
+
+    animFrameRef.current = requestAnimationFrame(loop);
 
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
-  }, [livesLeft, maxLives, isRoundOver, roundResult, stickmanMood]);
+  }, [livesLeft, maxLives, isRoundOver, roundResult, stickmanMood, onSpecialAnimComplete]);
 
-  function drawHangmanStatic(ctx, w, h, mistakes) {
+  function drawAnimatedFrame(ctx, w, h, mistakes, isDead, mood, timeMs) {
     ctx.clearRect(0, 0, w, h);
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = '#a855f7';
-    ctx.shadowColor = '#a855f7';
-    ctx.shadowBlur = 12;
+    ctx.save();
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
-    const is6Lives = maxLives <= 6;
+    const t = timeMs * 0.001; // in seconds
 
-    // Gallows (always drawn in 6-lives mode, or stepped in 10-lives mode)
-    if (is6Lives || mistakes >= 1) {
+    // 1. Natural Ambient Rope Swaying Physics
+    const ropeSway = Math.sin(t * 1.8) * 0.045;
+    const ropeLength = 36;
+    const beamRopeX = 145;
+    const beamRopeY = 18;
+    const ropeEndX = beamRopeX + Math.sin(ropeSway) * ropeLength;
+    const ropeEndY = beamRopeY + Math.cos(ropeSway) * ropeLength;
+
+    // 2. Always draw the full glowing Neon Gallows Scaffold
+    ctx.strokeStyle = isDead ? '#ef4444' : '#7c3aed';
+    ctx.shadowColor = isDead ? '#fca5a5' : '#a855f7';
+    ctx.shadowBlur = 12;
+    ctx.lineWidth = 5;
+
+    // Base
+    ctx.beginPath();
+    ctx.moveTo(15, 225);
+    ctx.lineTo(185, 225);
+    ctx.stroke();
+
+    // Vertical Mast Pole
+    ctx.beginPath();
+    ctx.moveTo(55, 225);
+    ctx.lineTo(55, 18);
+    ctx.stroke();
+
+    // Top Overhead Beam
+    ctx.beginPath();
+    ctx.moveTo(55, 18);
+    ctx.lineTo(155, 18);
+    ctx.stroke();
+
+    // Corner Angle Brace Strut
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.moveTo(55, 50);
+    ctx.lineTo(85, 18);
+    ctx.stroke();
+
+    // 3. Hanging Rope with Swaying Motion
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = isDead ? '#ef4444' : '#f59e0b';
+    ctx.shadowColor = isDead ? '#fca5a5' : '#f59e0b';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.moveTo(beamRopeX, beamRopeY);
+    ctx.lineTo(ropeEndX, ropeEndY);
+    ctx.stroke();
+
+    // If 0 mistakes: Draw a dangling rope noose loop swinging gently
+    if (mistakes === 0) {
       ctx.beginPath();
-      ctx.moveTo(20, 220);
-      ctx.lineTo(100, 220);
+      ctx.arc(ropeEndX, ropeEndY + 8, 8, 0, Math.PI * 2);
       ctx.stroke();
-    }
-    if (is6Lives || mistakes >= 2) {
-      ctx.beginPath();
-      ctx.moveTo(50, 220);
-      ctx.lineTo(50, 20);
-      ctx.stroke();
-    }
-    if (is6Lives || mistakes >= 3) {
-      ctx.beginPath();
-      ctx.moveTo(50, 20);
-      ctx.lineTo(150, 20);
-      ctx.moveTo(50, 50);
-      ctx.lineTo(80, 20);
-      ctx.stroke();
-    }
-    if (is6Lives || mistakes >= 4) {
-      ctx.strokeStyle = '#f59e0b';
-      ctx.shadowColor = '#f59e0b';
-      ctx.beginPath();
-      ctx.moveTo(150, 20);
-      ctx.lineTo(150, 50);
-      ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.shadowColor = 'transparent';
+      ctx.restore();
+      return;
     }
 
-    const stepOffset = is6Lives ? 0 : 4;
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = 'transparent';
 
-    // 1. Head + Facial Expression
-    if (mistakes >= 1 + stepOffset) {
-      ctx.strokeStyle = '#06b6d4';
-      ctx.shadowColor = '#06b6d4';
+    // 4. Draw Animated Hanging Stickman from Rope End
+    ctx.save();
+    ctx.translate(ropeEndX, ropeEndY);
+    ctx.rotate(ropeSway);
+
+    const isHappy = mood === 'happy';
+    const isPanic = mistakes >= 5 && !isDead;
+    const isBlinking = Math.sin(t * 1.2) > 0.94;
+    const breathOffset = Math.sin(t * 2.5) * 1.2;
+    const cheerHopY = isHappy ? -Math.abs(Math.sin(t * 8)) * 5 : 0;
+
+    ctx.translate(0, cheerHopY);
+
+    // ── Head (Mistake >= 1) ──────────────────────────────────
+    if (mistakes >= 1) {
+      ctx.strokeStyle = isDead ? '#ef4444' : '#c084fc';
+      ctx.shadowColor = isDead ? '#fca5a5' : '#c084fc';
+      ctx.shadowBlur = 12;
+      ctx.lineWidth = 3.5;
+
+      const headCenterY = 18;
+      const headRadius = 16;
       ctx.beginPath();
-      ctx.arc(150, 65, 15, 0, Math.PI * 2);
+      ctx.arc(0, headCenterY, headRadius, 0, Math.PI * 2);
       ctx.stroke();
+      ctx.shadowBlur = 0;
 
       // Facial Features
       ctx.save();
-      if (stickmanMood === 'happy') {
+      if (isDead) {
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.moveTo(-6, 12); ctx.lineTo(-2, 18);
+        ctx.moveTo(-2, 12); ctx.lineTo(-6, 18);
+        ctx.moveTo(2, 12);  ctx.lineTo(6, 18);
+        ctx.moveTo(6, 12);  ctx.lineTo(2, 18);
+        ctx.stroke();
+      } else if (isHappy) {
         ctx.strokeStyle = '#22c55e';
-        ctx.shadowColor = '#22c55e';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.arc(-5, 16, 2.5, Math.PI, 0, false);
+        ctx.arc(5, 16, 2.5, Math.PI, 0, false);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(0, 20, 4.5, 0.1 * Math.PI, 0.9 * Math.PI, false);
+        ctx.stroke();
+      } else if (isPanic) {
+        ctx.fillStyle = '#c084fc';
+        ctx.beginPath();
+        ctx.arc(-5, 15, isBlinking ? 0.5 : 2.5, 0, Math.PI * 2);
+        ctx.arc(5, 15, isBlinking ? 0.5 : 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#c084fc';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(145, 63, 2.5, Math.PI, 0, false);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(155, 63, 2.5, Math.PI, 0, false);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(150, 68, 5, 0.1 * Math.PI, 0.9 * Math.PI, false);
+        ctx.moveTo(-5, 24);
+        ctx.quadraticCurveTo(0, 21, 5, 24);
         ctx.stroke();
       } else {
-        ctx.fillStyle = '#06b6d4';
+        ctx.fillStyle = '#c084fc';
         ctx.beginPath();
-        ctx.arc(145, 63, 1.8, 0, Math.PI * 2);
-        ctx.arc(155, 63, 1.8, 0, Math.PI * 2);
+        if (isBlinking) {
+          ctx.rect(-6, 15, 3, 1);
+          ctx.rect(3, 15, 3, 1);
+        } else {
+          ctx.arc(-5, 15, 2, 0, Math.PI * 2);
+          ctx.arc(5, 15, 2, 0, Math.PI * 2);
+        }
         ctx.fill();
-
-        ctx.strokeStyle = '#06b6d4';
+        ctx.strokeStyle = '#c084fc';
         ctx.lineWidth = 1.8;
         ctx.beginPath();
-        ctx.moveTo(144, 73);
-        ctx.quadraticCurveTo(150, 69, 156, 73);
+        ctx.arc(0, 22, 3, 0.1 * Math.PI, 0.9 * Math.PI, false);
         ctx.stroke();
       }
       ctx.restore();
     }
 
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = '#06b6d4';
-    ctx.shadowColor = '#06b6d4';
+    // ── Body Torso (Mistake >= 2) ───────────────────────────
+    if (mistakes >= 2) {
+      ctx.strokeStyle = isDead ? '#ef4444' : '#c084fc';
+      ctx.lineWidth = 3.5;
+      const torsoStartY = 34;
+      const torsoEndY = 90 + breathOffset;
+      ctx.beginPath();
+      ctx.moveTo(0, torsoStartY);
+      ctx.lineTo(0, torsoEndY);
+      ctx.stroke();
 
-    // 2. Body
-    if (mistakes >= 2 + stepOffset) {
-      ctx.beginPath();
-      ctx.moveTo(150, 80);
-      ctx.lineTo(150, 140);
-      ctx.stroke();
+      // ── Left Arm (Mistake >= 3) ───────────────────────────
+      if (mistakes >= 3) {
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(0, 48);
+        if (isHappy) {
+          ctx.lineTo(-24, 28);
+        } else {
+          ctx.lineTo(-24, 76 + breathOffset * 0.5);
+        }
+        ctx.stroke();
+      }
+
+      // ── Right Arm (Mistake >= 4) ──────────────────────────
+      if (mistakes >= 4) {
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(0, 48);
+        if (isHappy) {
+          ctx.lineTo(24, 28);
+        } else {
+          ctx.lineTo(24, 76 + breathOffset * 0.5);
+        }
+        ctx.stroke();
+      }
+
+      // ── Left Leg (Mistake >= 5) ───────────────────────────
+      if (mistakes >= 5) {
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(0, torsoEndY);
+        ctx.lineTo(-20, torsoEndY + 45);
+        ctx.stroke();
+      }
+
+      // ── Right Leg (Mistake >= 6) ──────────────────────────
+      if (mistakes >= 6) {
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(0, torsoEndY);
+        ctx.lineTo(20, torsoEndY + 45);
+        ctx.stroke();
+      }
+
+      // ── Left Hand Detail (Mistake >= 7) ───────────────────
+      if (mistakes >= 7) {
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(isHappy ? -24 : -24, isHappy ? 26 : 78, 2.5, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // ── Right Hand Detail (Mistake >= 8) ──────────────────
+      if (mistakes >= 8) {
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(isHappy ? 24 : 24, isHappy ? 26 : 78, 2.5, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // ── Left Foot (Mistake >= 9) ──────────────────────────
+      if (mistakes >= 9) {
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(-20, torsoEndY + 45);
+        ctx.lineTo(-28, torsoEndY + 46);
+        ctx.stroke();
+      }
+
+      // ── Right Foot (Mistake >= 10) ────────────────────────
+      if (mistakes >= 10) {
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(20, torsoEndY + 45);
+        ctx.lineTo(28, torsoEndY + 46);
+        ctx.stroke();
+      }
     }
-    // 3. Left Arm
-    if (mistakes >= 3 + stepOffset) {
-      ctx.beginPath();
-      ctx.moveTo(150, 95);
-      ctx.lineTo(125, 120);
-      ctx.stroke();
-    }
-    // 4. Right Arm
-    if (mistakes >= 4 + stepOffset) {
-      ctx.beginPath();
-      ctx.moveTo(150, 95);
-      ctx.lineTo(175, 120);
-      ctx.stroke();
-    }
-    // 5. Left Leg
-    if (mistakes >= 5 + stepOffset) {
-      ctx.beginPath();
-      ctx.moveTo(150, 140);
-      ctx.lineTo(130, 185);
-      ctx.stroke();
-    }
-    // 6. Right Leg
-    if (mistakes >= 6 + stepOffset) {
-      ctx.beginPath();
-      ctx.moveTo(150, 140);
-      ctx.lineTo(170, 185);
-      ctx.stroke();
-    }
+
+    ctx.restore();
+    ctx.restore();
   }
 
   function runDeathAnimation(ctx, w, h, onComplete) {
