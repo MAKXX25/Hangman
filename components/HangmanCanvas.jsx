@@ -73,22 +73,22 @@ export default function HangmanCanvas({
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
-    // 1. Base
-    if (mistakes >= 1) {
+    const is6Lives = maxLives <= 6;
+
+    // Gallows (always drawn in 6-lives mode, or stepped in 10-lives mode)
+    if (is6Lives || mistakes >= 1) {
       ctx.beginPath();
       ctx.moveTo(20, 220);
       ctx.lineTo(100, 220);
       ctx.stroke();
     }
-    // 2. Pole
-    if (mistakes >= 2) {
+    if (is6Lives || mistakes >= 2) {
       ctx.beginPath();
       ctx.moveTo(50, 220);
       ctx.lineTo(50, 20);
       ctx.stroke();
     }
-    // 3. Beam
-    if (mistakes >= 3) {
+    if (is6Lives || mistakes >= 3) {
       ctx.beginPath();
       ctx.moveTo(50, 20);
       ctx.lineTo(150, 20);
@@ -96,8 +96,7 @@ export default function HangmanCanvas({
       ctx.lineTo(80, 20);
       ctx.stroke();
     }
-    // 4. Rope
-    if (mistakes >= 4) {
+    if (is6Lives || mistakes >= 4) {
       ctx.strokeStyle = '#f59e0b';
       ctx.shadowColor = '#f59e0b';
       ctx.beginPath();
@@ -105,8 +104,11 @@ export default function HangmanCanvas({
       ctx.lineTo(150, 50);
       ctx.stroke();
     }
-    // 5. Head + Facial Expression
-    if (mistakes >= 5) {
+
+    const stepOffset = is6Lives ? 0 : 4;
+
+    // 1. Head + Facial Expression
+    if (mistakes >= 1 + stepOffset) {
       ctx.strokeStyle = '#06b6d4';
       ctx.shadowColor = '#06b6d4';
       ctx.beginPath();
@@ -116,7 +118,6 @@ export default function HangmanCanvas({
       // Facial Features
       ctx.save();
       if (stickmanMood === 'happy') {
-        // Happy Smiling Eyes (^_^)
         ctx.strokeStyle = '#22c55e';
         ctx.shadowColor = '#22c55e';
         ctx.lineWidth = 2;
@@ -126,20 +127,16 @@ export default function HangmanCanvas({
         ctx.beginPath();
         ctx.arc(155, 63, 2.5, Math.PI, 0, false);
         ctx.stroke();
-
-        // Happy Smile Arc
         ctx.beginPath();
         ctx.arc(150, 68, 5, 0.1 * Math.PI, 0.9 * Math.PI, false);
         ctx.stroke();
       } else {
-        // Nervous / Panic Eyes
         ctx.fillStyle = '#06b6d4';
         ctx.beginPath();
         ctx.arc(145, 63, 1.8, 0, Math.PI * 2);
         ctx.arc(155, 63, 1.8, 0, Math.PI * 2);
         ctx.fill();
 
-        // Wavy / Frown Mouth
         ctx.strokeStyle = '#06b6d4';
         ctx.lineWidth = 1.8;
         ctx.beginPath();
@@ -149,36 +146,41 @@ export default function HangmanCanvas({
       }
       ctx.restore();
     }
-    // 6. Body
-    if (mistakes >= 6) {
+
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#06b6d4';
+    ctx.shadowColor = '#06b6d4';
+
+    // 2. Body
+    if (mistakes >= 2 + stepOffset) {
       ctx.beginPath();
       ctx.moveTo(150, 80);
       ctx.lineTo(150, 140);
       ctx.stroke();
     }
-    // 7. Left Arm
-    if (mistakes >= 7) {
+    // 3. Left Arm
+    if (mistakes >= 3 + stepOffset) {
       ctx.beginPath();
       ctx.moveTo(150, 95);
       ctx.lineTo(125, 120);
       ctx.stroke();
     }
-    // 8. Right Arm
-    if (mistakes >= 8) {
+    // 4. Right Arm
+    if (mistakes >= 4 + stepOffset) {
       ctx.beginPath();
       ctx.moveTo(150, 95);
       ctx.lineTo(175, 120);
       ctx.stroke();
     }
-    // 9. Left Leg
-    if (mistakes >= 9) {
+    // 5. Left Leg
+    if (mistakes >= 5 + stepOffset) {
       ctx.beginPath();
       ctx.moveTo(150, 140);
       ctx.lineTo(130, 185);
       ctx.stroke();
     }
-    // 10. Right Leg
-    if (mistakes >= 10) {
+    // 6. Right Leg
+    if (mistakes >= 6 + stepOffset) {
       ctx.beginPath();
       ctx.moveTo(150, 140);
       ctx.lineTo(170, 185);
