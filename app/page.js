@@ -2255,38 +2255,52 @@ export default function HangmanDuelApp() {
         </div>
 
         {/* ─── 1. NAVBAR ────────────────────────────────────────────────── */}
-        <header className="sticky top-0 z-50 backdrop-blur-md bg-[#0a0a10]/80 border-b border-white/5 transition-all">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+        <header className="sticky top-0 z-50 w-full bg-[#09090b]/95 backdrop-blur-sm border-b border-white/10 transition-colors">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 relative flex items-center justify-between">
             
             {/* Left: Brand Logo */}
-            <a href="#" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-purple-800 p-0.5 shadow-lg shadow-purple-600/20 group-hover:shadow-purple-500/40 transition-all duration-300">
-                <div className="w-full h-full bg-[#0d0c18] rounded-[10px] flex items-center justify-center">
-                  <svg className="w-5 h-5 text-purple-400 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 6H9a7 7 0 00-7 7v1a4 4 0 004 4h12a4 4 0 004-4v-1a7 7 0 00-7-7z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 12h4m-2-2v4m9-3a1 1 0 11-2 0 1 1 0 012 0zm3 2a1 1 0 11-2 0 1 1 0 012 0z" />
-                  </svg>
-                </div>
+            <a href="#" className="inline-flex items-center gap-3 group select-none" aria-label="Hangman Duel Home">
+              <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-purple-950/40 border border-purple-500/30 text-purple-400 group-hover:border-purple-400/60 group-hover:bg-purple-900/30 transition-all">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="w-5 h-5 transition-transform duration-200 group-hover:scale-105"
+                >
+                  <path d="M3 21h10" />
+                  <path d="M6 21V3h10" />
+                  <path d="M6 7l4-4" />
+                  <path d="M16 3v3" />
+                  <circle cx="16" cy="8.5" r="2.2" />
+                  <path d="M16 10.7v4.3" />
+                  <path d="M13.5 13.2L16 11.8l2.5 1.4" />
+                  <path d="M14 19l2-4 2 4" />
+                </svg>
               </div>
-              <span className="font-display text-xl font-bold tracking-wider text-white uppercase group-hover:text-purple-300 transition-colors">
-                Hangman <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400">Duel</span>
-              </span>
+              <div className="font-display font-black text-xl sm:text-2xl tracking-wider uppercase">
+                <span className="text-white group-hover:text-slate-100 transition-colors">
+                  HANGMAN
+                </span>
+                <span className="ml-1.5 bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent group-hover:from-purple-300 group-hover:to-pink-400 transition-colors">
+                  DUEL
+                </span>
+              </div>
             </a>
 
-            {/* Center: Navigation Links */}
-            <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
-              <a href="#features" className="hover:text-white transition-colors duration-200">
+            {/* Center: Dead-Center Navigation Links */}
+            <nav className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2" aria-label="Main Navigation">
+              <a href="#features" className="text-sm font-medium text-slate-400 hover:text-white transition-colors cursor-pointer">
                 Features
               </a>
-              <a href="#how-to-play" className="hover:text-white transition-colors duration-200">
+              <a href="#how-to-play" className="text-sm font-medium text-slate-400 hover:text-white transition-colors cursor-pointer">
                 How to Play
-              </a>
-              <a href="#modes" className="hover:text-white transition-colors duration-200">
-                Modes
               </a>
             </nav>
 
-            {/* Right: Vibrant 'Play Now' CTA */}
+            {/* Right: Solid Flat "Play Now" CTA */}
             <div className="flex items-center gap-4">
               <button
                 onClick={() => {
@@ -2296,15 +2310,9 @@ export default function HangmanDuelApp() {
                     el.focus();
                   }
                 }}
-                className="relative group px-6 py-2.5 rounded-xl font-semibold text-sm text-white overflow-hidden shadow-lg shadow-purple-600/30 hover:shadow-purple-500/50 hover:scale-[1.03] active:scale-[0.98] transition-all duration-200"
+                className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-purple-600 hover:bg-purple-500 active:scale-[0.98] transition-all cursor-pointer shadow-sm"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-500 transition-all duration-300 group-hover:opacity-90" />
-                <div className="relative flex items-center gap-2">
-                  <span>Play Now</span>
-                  <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </div>
+                Play Now
               </button>
             </div>
           </div>
