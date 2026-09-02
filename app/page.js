@@ -345,24 +345,51 @@ export default function HangmanDuelApp() {
   }, []);
 
   // ── Canvas Glow & Speech Bubble Helpers ────────────────────────────────────
-  const PANIC_PHRASES = [
-    "Uh oh...",
-    "Please be careful!",
-    "Sweating here!",
-    "Don't mess up!",
-    "Think hard!",
-    "Help me!",
-    "Yikes!"
+  const INITIAL_IDLE_PHRASES = [
+    "Let's see what you got! 🤔",
+    "Pick a letter... save my neck! 🪢",
+    "I'm watching your every move 👀",
+    "Choose wisely, mortal! ⚔️",
+    "Don't mess this up! 😬",
+    "I believe in you... barely 😅",
+    "Type something smart! 🧠",
+    "Show me you know English! 📖"
+  ];
+
+  const MEAN_WRONG_PHRASES = [
+    "Seriously? That letter?! 💀",
+    "My grandma guesses better! 🤦‍♂️",
+    "Are you trying to get me killed?! 😡",
+    "Bro... not even close! 🗑️",
+    "You call that a guess?! 🙄",
+    "Did you close your eyes typing?! 🙈",
+    "Thanks for nothing, genius! 🤡",
+    "Zero braincells detected! 🧠❌",
+    "Are you playing for the opponent?! 😤",
+    "Wow. Absolutely terrible guess 📉",
+    "Do you even know the alphabet?! 🔤",
+    "One step closer to the afterlife! 🪦",
+    "Is this a joke to you?! 😭",
+    "My cat guessed better on the keyboard! 🐱"
+  ];
+
+  const DANGER_PHRASES = [
+    "I'M LITERALLY ABOUT TO DIE! 😱",
+    "ONE MORE WRONG GUESS AND I'M GONE! 💀",
+    "USE YOUR BRAIN PLEASE! 🆘",
+    "I SWEAR IF YOU PICK WRONG AGAIN... 🔥",
+    "I'm writing you out of my will! 📜",
+    "Lord help me, this player is doomed! 🪢"
   ];
 
   const HAPPY_GUESS_PHRASES = [
-    "Yes! Keep going!",
-    "Phew, good guess!",
-    "You're a genius!",
-    "I can breathe! 💨",
-    "Great letter! ✨",
-    "That's the one!",
-    "Keep it up! 🎯"
+    "Phew! Finally a braincell! 🎉",
+    "Not bad, smarty pants! ✨",
+    "Keep it going, don't stop! 🚀",
+    "Saved my neck for now! 🙌",
+    "Okay, I take back 10% of what I said 😂",
+    "That's what I'm talking about! 🎯",
+    "Great guess! I live to see another second! 💨"
   ];
 
   const ESCAPE_PHRASES = [
@@ -546,6 +573,12 @@ export default function HangmanDuelApp() {
       ctx.arc(ropeEndX, ropeEndY + 8, 8, 0, Math.PI * 2);
       ctx.stroke();
       clearGlow(ctx);
+
+      // Draw initial dialogue speech bubble from round start
+      if (dialogue) {
+        drawSpeechBubble(ctx, ropeEndX, ropeEndY + 18, dialogue, 'left', 'rgba(168, 85, 247, 0.85)', 'rgba(15, 23, 42, 0.95)', '#f8fafc');
+      }
+
       ctx.restore();
       return;
     }
@@ -770,17 +803,23 @@ export default function HangmanDuelApp() {
     ctx.restore(); // restore stickman transform
 
     // ── Floating Dynamic Speech Bubble ───────────────────────
-    if (!isDead && (isHappy || isPanic)) {
-      const bubbleText = isHappy
-        ? (dialogue || "Awesome! Keep it up! ✨")
-        : (PANIC_PHRASES[(mistakes - 5) % PANIC_PHRASES.length] || "Careful!");
-      const bubbleBorder = isHappy ? 'rgba(34, 197, 94, 0.9)' : 'rgba(168, 85, 247, 0.85)';
-      const bubbleTextCol = isHappy ? '#4ade80' : '#f8fafc';
-      drawSpeechBubble(ctx, ropeEndX, ropeEndY + 18, bubbleText, 'left', bubbleBorder, 'rgba(15, 23, 42, 0.95)', bubbleTextCol);
+    if (!isDead && dialogue) {
+      const isMean = mood === 'mean' || mistakes >= 6;
+      const bubbleBorder = mood === 'happy'
+        ? 'rgba(34, 197, 94, 0.9)'
+        : isMean
+        ? 'rgba(239, 68, 68, 0.9)'
+        : 'rgba(168, 85, 247, 0.85)';
+      const bubbleTextCol = mood === 'happy'
+        ? '#4ade80'
+        : isMean
+        ? '#fca5a5'
+        : '#f8fafc';
+      drawSpeechBubble(ctx, ropeEndX, ropeEndY + 18, dialogue, 'left', bubbleBorder, 'rgba(15, 23, 42, 0.95)', bubbleTextCol);
     }
 
     ctx.restore();
-  }, [PANIC_PHRASES]);
+  }, []);
 
 
   // ── 5-Stage Physics Death Sequence Animation (~3.5s total) ────────────────
@@ -1272,14 +1311,39 @@ export default function HangmanDuelApp() {
     currentDialogueRef.current = phrase;
     stickmanMoodRef.current = 'happy';
 
-    // 2.5s temporary dialogue timeout to reset back to neutral/panic
     dialogueTimeoutRef.current = setTimeout(() => {
-      setCurrentDialogue('');
-      currentDialogueRef.current = '';
+      const idle = INITIAL_IDLE_PHRASES[Math.floor(Math.random() * INITIAL_IDLE_PHRASES.length)];
+      setCurrentDialogue(idle);
+      currentDialogueRef.current = idle;
       setStickmanMood('neutral');
       stickmanMoodRef.current = 'neutral';
-    }, 2500);
-  }, [HAPPY_GUESS_PHRASES]);
+    }, 3500);
+  }, [HAPPY_GUESS_PHRASES, INITIAL_IDLE_PHRASES]);
+
+  // ── Trigger Mean / Sarcastic Stickman Roast on Wrong Guess ────────────────
+  const triggerMeanWrongGuess = useCallback((mistakesCount = 1) => {
+    if (dialogueTimeoutRef.current) clearTimeout(dialogueTimeoutRef.current);
+
+    let phrase;
+    if (mistakesCount >= 8) {
+      phrase = DANGER_PHRASES[Math.floor(Math.random() * DANGER_PHRASES.length)];
+    } else {
+      phrase = MEAN_WRONG_PHRASES[Math.floor(Math.random() * MEAN_WRONG_PHRASES.length)];
+    }
+
+    setCurrentDialogue(phrase);
+    setStickmanMood('mean');
+    currentDialogueRef.current = phrase;
+    stickmanMoodRef.current = 'mean';
+
+    dialogueTimeoutRef.current = setTimeout(() => {
+      const idle = INITIAL_IDLE_PHRASES[Math.floor(Math.random() * INITIAL_IDLE_PHRASES.length)];
+      setCurrentDialogue(idle);
+      currentDialogueRef.current = idle;
+      setStickmanMood('neutral');
+      stickmanMoodRef.current = 'neutral';
+    }, 4000);
+  }, [DANGER_PHRASES, MEAN_WRONG_PHRASES, INITIAL_IDLE_PHRASES]);
 
   // ── Apply Room State Updates ──────────────────────────────────────────────
   const applyState = useCallback((roomData) => {
@@ -1308,8 +1372,9 @@ export default function HangmanDuelApp() {
         triggerHappyGuess();
       }
 
-      // Trigger gallows swing animation on new wrong guess
+      // Trigger mean stickman roast and gallows swing on wrong guess
       if (newW.length > 0) {
+        triggerMeanWrongGuess(currentWrong.length);
         setIsGallowsSwinging(true);
         setTimeout(() => setIsGallowsSwinging(false), 900);
       }
@@ -1384,6 +1449,28 @@ export default function HangmanDuelApp() {
       ctx.clearRect(0, 0, hangmanWatchCanvasRef.current.width, hangmanWatchCanvasRef.current.height);
     }
   }, []);
+
+  // ── Auto-Initialize and Rotate Idle Dialogues during Guessing Phase ────────
+  useEffect(() => {
+    if (gameState !== 'guessing') return;
+
+    if (!currentDialogueRef.current) {
+      const initial = INITIAL_IDLE_PHRASES[Math.floor(Math.random() * INITIAL_IDLE_PHRASES.length)];
+      setCurrentDialogue(initial);
+      currentDialogueRef.current = initial;
+      setStickmanMood('neutral');
+    }
+
+    const interval = setInterval(() => {
+      if (stickmanMoodRef.current === 'neutral') {
+        const next = INITIAL_IDLE_PHRASES[Math.floor(Math.random() * INITIAL_IDLE_PHRASES.length)];
+        setCurrentDialogue(next);
+        currentDialogueRef.current = next;
+      }
+    }, 7000);
+
+    return () => clearInterval(interval);
+  }, [gameState, INITIAL_IDLE_PHRASES]);
 
   // ── Setup Reusable Event Listeners Binding Helper ────────────────────────
   const attachSocketListeners = useCallback((sock) => {
@@ -1984,6 +2071,11 @@ export default function HangmanDuelApp() {
       }
     };
 
+    const initialIdle = INITIAL_IDLE_PHRASES[Math.floor(Math.random() * INITIAL_IDLE_PHRASES.length)];
+    setCurrentDialogue(initialIdle);
+    currentDialogueRef.current = initialIdle;
+    setStickmanMood('neutral');
+
     setRoomCode(pveRoom.roomCode);
     setPlayers(pveRoom.players);
     setGame(pveRoom.game);
@@ -2033,7 +2125,10 @@ export default function HangmanDuelApp() {
     recordGuessStats(isCorrect);
 
     if (isCorrect) {
-      triggerHappyGuess(game.livesLeft, game.maxLives || 10);
+      triggerHappyGuess();
+    } else {
+      const nextWrongCount = (game.wrongGuesses?.length || 0) + 1;
+      triggerMeanWrongGuess(nextWrongCount);
     }
 
     if (isPveMode) {
@@ -3569,6 +3664,22 @@ export default function HangmanDuelApp() {
                   <div className={`w-full max-w-[120px] sm:max-w-[170px] md:max-w-[220px] aspect-[11/12] flex items-center justify-center bg-black/30 rounded-lg sm:rounded-xl md:rounded-2xl border border-white/5 shadow-inner p-1 sm:p-2 ${isGallowsSwinging ? 'hangman-swing' : ''}`}>
                     <canvas id="hangman-canvas" ref={hangmanCanvasRef} width={220} height={240} className="w-full h-full object-contain max-h-[100px] sm:max-h-[150px] md:max-h-[200px]" />
                   </div>
+
+                  {/* Stickman Live Dialogue Speech Pill */}
+                  {currentDialogue && (
+                    <div className={`w-full max-w-[220px] px-2.5 py-1.5 rounded-xl border backdrop-blur-md text-center transition-all duration-300 shadow-md ${
+                      stickmanMood === 'happy'
+                        ? 'bg-emerald-950/80 border-emerald-500/40 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.25)]'
+                        : stickmanMood === 'mean' || stickmanMood === 'panic'
+                        ? 'bg-rose-950/90 border-rose-500/50 text-rose-300 shadow-[0_0_12px_rgba(244,63,94,0.3)] animate-shake'
+                        : 'bg-purple-950/80 border-purple-500/40 text-purple-200 shadow-[0_0_12px_rgba(168,85,247,0.2)]'
+                    }`}>
+                      <div className="text-[10px] sm:text-xs font-mono font-bold leading-snug flex items-center justify-center gap-1">
+                        <span>{stickmanMood === 'happy' ? '😄' : stickmanMood === 'mean' ? '😈' : stickmanMood === 'panic' ? '😱' : '💬'}</span>
+                        <span>&ldquo;{currentDialogue}&rdquo;</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Right Column: Secret Word Display + Clue (7 cols) */}
@@ -3733,6 +3844,22 @@ export default function HangmanDuelApp() {
                   <div className={`w-full max-w-[120px] sm:max-w-[170px] md:max-w-[220px] aspect-[11/12] flex items-center justify-center bg-black/30 rounded-lg sm:rounded-xl md:rounded-2xl border border-white/5 shadow-inner p-1 sm:p-2 ${isGallowsSwinging ? 'hangman-swing' : ''}`}>
                     <canvas id="hangman-canvas-watch" ref={hangmanWatchCanvasRef} width={220} height={240} className="w-full h-full object-contain max-h-[100px] sm:max-h-[150px] md:max-h-[200px]" />
                   </div>
+
+                  {/* Stickman Live Dialogue Speech Pill */}
+                  {currentDialogue && (
+                    <div className={`w-full max-w-[220px] px-2.5 py-1.5 rounded-xl border backdrop-blur-md text-center transition-all duration-300 shadow-md ${
+                      stickmanMood === 'happy'
+                        ? 'bg-emerald-950/80 border-emerald-500/40 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.25)]'
+                        : stickmanMood === 'mean' || stickmanMood === 'panic'
+                        ? 'bg-rose-950/90 border-rose-500/50 text-rose-300 shadow-[0_0_12px_rgba(244,63,94,0.3)] animate-shake'
+                        : 'bg-purple-950/80 border-purple-500/40 text-purple-200 shadow-[0_0_12px_rgba(168,85,247,0.2)]'
+                    }`}>
+                      <div className="text-[10px] sm:text-xs font-mono font-bold leading-snug flex items-center justify-center gap-1">
+                        <span>{stickmanMood === 'happy' ? '😄' : stickmanMood === 'mean' ? '😈' : stickmanMood === 'panic' ? '😱' : '💬'}</span>
+                        <span>&ldquo;{currentDialogue}&rdquo;</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Right Column: Secret Word Display for Chooser (7 cols) */}
