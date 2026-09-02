@@ -3335,6 +3335,19 @@ export default function HangmanDuelApp() {
             <div className={`flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl bg-purple-500/15 border border-purple-400/30 transition-all ${p2Scored ? 'scale-110 border-purple-300 shadow-[0_0_12px_rgba(168,85,247,0.6)]' : ''}`}>
               <span className="font-mono text-xs sm:text-sm md:text-base font-black text-purple-400 min-w-[16px] sm:min-w-[20px] text-center bg-purple-950/70 px-1 py-0.5 rounded border border-purple-500/40 drop-shadow-[0_0_8px_rgba(168,85,247,0.4)]">{p2.score}</span>
               <span className="text-[10px] sm:text-xs font-semibold text-purple-200 max-w-[44px] sm:max-w-[85px] md:max-w-[120px] truncate">{p2.name}</span>
+              {isPveMode && (
+                <span className={`text-[8px] sm:text-[9px] font-mono font-black tracking-wider uppercase px-1.5 py-0.5 rounded border shadow-sm ${
+                  pveDifficulty === 'easy'
+                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                    : pveDifficulty === 'hard'
+                    ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                    : pveDifficulty === 'nightmare'
+                    ? 'bg-red-950/80 text-red-400 border-red-500/60 shadow-[0_0_8px_rgba(239,68,68,0.5)]'
+                    : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                }`}>
+                  {pveDifficulty === 'nightmare' ? '💀 NIGHTMARE' : pveDifficulty.toUpperCase()}
+                </span>
+              )}
             </div>
           </div>
 
@@ -3362,10 +3375,22 @@ export default function HangmanDuelApp() {
 
         <main className="game-main">
           {/* Role Banner */}
-          <div id="role-banner" className="role-banner" aria-live="polite">
-            {gameState === 'setting'
-              ? (isWordSetter ? '👑 You are the Word Setter — Choose a secret word' : '⏳ Opponent is choosing a secret word…')
-              : (isWordSetter ? '👁 Watching — You set the word' : '🤔 Guess the secret word!')}
+          <div id="role-banner" className="role-banner flex items-center justify-center gap-2 flex-wrap" aria-live="polite">
+            <span>
+              {gameState === 'setting'
+                ? (isWordSetter ? '👑 You are the Word Setter — Choose a secret word' : '⏳ Opponent is choosing a secret word…')
+                : (isWordSetter ? '👁 Watching — You set the word' : '🤔 Guess the secret word!')}
+            </span>
+            {isPveMode && (
+              <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-mono px-2.5 py-0.5 rounded-full bg-white/10 border border-white/15 text-slate-200 shadow-sm">
+                <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${
+                  pveDifficulty === 'easy' ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : pveDifficulty === 'hard' ? 'bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.8)]' : pveDifficulty === 'nightmare' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]' : 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]'
+                }`} />
+                <span className="font-bold text-yellow-300 uppercase">{pveDifficulty}</span>
+                <span className="text-slate-500">•</span>
+                <span>Round {pveRound}/{pveMaxRounds}</span>
+              </span>
+            )}
           </div>
 
           {/* ─── WORD SETTER PANEL (Keyboard is hidden) ───────────────────── */}
