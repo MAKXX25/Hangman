@@ -277,13 +277,19 @@ export default function HangmanDuelApp() {
           setTimeout(() => {
             const inputEl = document.getElementById('input-name');
             if (inputEl) {
-              inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              inputEl.focus();
+              try {
+                inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                if (window.innerWidth >= 768) {
+                  inputEl.focus();
+                }
+              } catch {}
             }
           }, 400);
         }
       }
-    } catch {}
+    } catch (e) {
+      console.warn('Invite link parsing error:', e);
+    }
   }, [showToast]);
 
   const handlePlayerNameChange = (val) => {
