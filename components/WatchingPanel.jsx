@@ -77,15 +77,15 @@ export default function WatchingPanel({
       </div>
 
       {/* ─── 1. TOP ROW: Opponent's Gallows & Secret Word Display ───────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-2 sm:gap-4 md:gap-5 lg:gap-6 items-stretch flex-1 min-h-0">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-2 sm:gap-3 md:gap-4 items-stretch flex-1 min-h-0">
         
         {/* Left Column: Visuals & Canvas (5 cols) */}
-        <div className="md:col-span-5 lg:col-span-5 flex flex-col items-center justify-center gap-2 sm:gap-3 p-3 sm:p-4 md:p-6 rounded-2xl md:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl min-h-0">
-          <div className="font-mono text-[10px] sm:text-xs md:text-sm text-slate-300 uppercase tracking-widest font-bold">
+        <div className="md:col-span-5 lg:col-span-5 flex flex-col items-center justify-center gap-1.5 p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl min-h-0">
+          <div className="font-mono text-[10px] sm:text-xs text-slate-300 uppercase tracking-widest font-bold">
             Opponent&apos;s Gallows
           </div>
 
-          <div className="w-full max-w-[280px] sm:max-w-[340px] md:max-w-[380px] lg:max-w-[420px] aspect-[11/12] flex items-center justify-center bg-black/40 rounded-xl sm:rounded-2xl md:rounded-3xl border border-white/10 shadow-2xl p-2 sm:p-3.5">
+          <div className="w-full max-w-[190px] sm:max-w-[220px] md:max-w-[250px] lg:max-w-[270px] max-h-[160px] sm:max-h-[190px] md:max-h-[220px] lg:max-h-[240px] aspect-[11/12] flex items-center justify-center bg-black/40 rounded-xl sm:rounded-2xl border border-white/10 shadow-2xl p-1.5 sm:p-2">
             <HangmanCanvas
               livesLeft={livesLeft}
               maxLives={maxLives}
@@ -97,21 +97,21 @@ export default function WatchingPanel({
         </div>
 
         {/* Right Column: Secret Word Display for Chooser (7 cols) */}
-        <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-center gap-2 sm:gap-3 p-3 sm:p-5 md:p-6 lg:p-7 rounded-2xl md:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl text-center min-h-[120px] sm:min-h-0">
+        <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-2 sm:p-3 md:p-3.5 rounded-xl sm:rounded-2xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl text-center min-h-0">
           <div className="flex items-center justify-between w-full px-1">
-            <div className="font-mono text-[10px] sm:text-xs md:text-sm font-bold uppercase tracking-widest text-slate-400">
+            <div className="font-mono text-[10px] sm:text-xs font-bold uppercase tracking-widest text-slate-400">
               SECRET WORD ({wordChars.length} LETTERS)
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 md:gap-2.5 lg:gap-3.5 font-mono max-w-full my-0.5">
+          <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-1.5 md:gap-2 font-mono max-w-full my-0.5">
             {wordChars.map((char, index) => {
               const isGuessed = guessedSet.has(char);
 
               return (
                 <div
                   key={index}
-                  className={`min-w-[32px] min-h-[42px] px-1 sm:w-10 sm:h-12 md:w-13 md:h-15 lg:w-16 lg:h-18 flex items-center justify-center rounded-lg sm:rounded-xl md:rounded-2xl text-lg sm:text-2xl md:text-3xl lg:text-4xl font-extrabold uppercase transition-all duration-300 select-none shadow-sm ${
+                  className={`min-w-[28px] min-h-[36px] px-1 sm:w-9 sm:h-11 md:w-11 md:h-13 lg:w-13 lg:h-14 flex items-center justify-center rounded-lg sm:rounded-xl text-base sm:text-xl md:text-2xl lg:text-3xl font-extrabold uppercase transition-all duration-300 select-none shadow-sm ${
                     isGuessed
                       ? 'border-2 border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_18px_rgba(34,211,238,0.5)] scale-100'
                       : 'bg-white/5 border-2 border-dashed border-white/20 text-white/40 scale-95'
@@ -124,34 +124,34 @@ export default function WatchingPanel({
           </div>
 
           {activeHint && (
-            <div className="w-full mt-1 px-3 py-2 rounded-xl bg-purple-950/40 border border-purple-500/30 backdrop-blur-md flex items-start sm:items-center justify-center gap-2 text-center animate-fadeIn shadow-sm">
-              <span className="text-sm flex-shrink-0">💡</span>
-              <p className="text-xs sm:text-sm text-purple-200 font-medium leading-snug">
-                <strong className="text-purple-300 font-semibold uppercase tracking-wider text-[10px] sm:text-xs mr-1">Clue:</strong>
+            <div className="w-full mt-0.5 px-2.5 py-1 rounded-lg bg-purple-950/40 border border-purple-500/30 backdrop-blur-md flex items-start sm:items-center justify-center gap-1.5 text-center animate-fadeIn shadow-sm">
+              <span className="text-xs flex-shrink-0">💡</span>
+              <p className="text-[11px] sm:text-xs text-purple-200 font-medium leading-snug">
+                <strong className="text-purple-300 font-semibold uppercase tracking-wider text-[9px] sm:text-[10px] mr-1">Clue:</strong>
                 {activeHint}
               </p>
             </div>
           )}
 
-          <div className="text-[10px] sm:text-xs font-mono text-purple-300/80 bg-purple-950/40 border border-purple-500/20 px-2.5 py-0.5 rounded-full">
+          <div className="text-[9px] sm:text-[10px] font-mono text-purple-300/80 bg-purple-950/40 border border-purple-500/20 px-2 py-0.5 rounded-full">
             Dashed boxes indicate letters your opponent has not guessed yet.
           </div>
         </div>
       </div>
 
       {/* ─── 2. MIDDLE ROW: Opponent Health Bar & Wrong Letters ─────────────── */}
-      <div className="w-full px-2.5 py-1.5 sm:px-5 sm:py-2.5 md:py-3.5 rounded-xl sm:rounded-2xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl flex flex-col sm:flex-row items-center justify-between gap-1.5 sm:gap-4">
+      <div className="w-full px-2.5 py-1 sm:px-4 sm:py-1.5 rounded-xl sm:rounded-2xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl flex flex-col sm:flex-row items-center justify-between gap-1 sm:gap-2">
         {/* Health & Big Hearts */}
-        <div className="flex items-center gap-1.5 sm:gap-3 md:gap-4 flex-wrap justify-center sm:justify-start">
-          <span className="font-mono text-[10px] sm:text-xs md:text-sm font-bold tracking-widest uppercase text-slate-400 flex-shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-center sm:justify-start">
+          <span className="font-mono text-[10px] sm:text-xs font-bold tracking-widest uppercase text-slate-400 flex-shrink-0">
             OPPONENT HEALTH:
           </span>
-          <div className="flex items-center gap-0.5 sm:gap-1.5 flex-wrap justify-center">
+          <div className="flex items-center gap-0.5 sm:gap-1 flex-wrap justify-center">
             {Array.from({ length: maxLives }).map((_, i) => (
               <svg
                 key={i}
                 viewBox="0 0 24 24"
-                className={`w-3.5 h-3.5 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 transition-all duration-300 ${
+                className={`w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 transition-all duration-300 ${
                   i < livesLeft
                     ? 'fill-rose-500 text-rose-500 drop-shadow-[0_0_10px_rgba(244,63,94,0.75)] scale-100'
                     : 'fill-white/10 text-white/10 scale-90'
@@ -161,22 +161,22 @@ export default function WatchingPanel({
               </svg>
             ))}
           </div>
-          <span className="font-mono text-xs sm:text-sm md:text-base lg:text-lg font-bold text-rose-400 ml-0.5 flex-shrink-0">
+          <span className="font-mono text-xs sm:text-sm font-bold text-rose-400 ml-0.5 flex-shrink-0">
             ({livesLeft})
           </span>
         </div>
 
         {/* Opponent's Wrong Letters */}
-        <div className="flex items-center gap-1.5 sm:gap-3 flex-wrap justify-center sm:justify-end">
-          <span className="font-mono text-[10px] sm:text-xs md:text-sm font-semibold uppercase tracking-wider text-slate-400 flex-shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-center sm:justify-end">
+          <span className="font-mono text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400 flex-shrink-0">
             WRONG LETTERS:
           </span>
-          <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 min-h-[20px] sm:min-h-[26px]">
+          <div className="flex flex-wrap items-center gap-1 min-h-[18px] sm:min-h-[22px]">
             {wrongGuesses.length === 0 ? (
-              <span className="text-[10px] sm:text-xs md:text-sm text-slate-500 italic">None yet</span>
+              <span className="text-[10px] sm:text-xs text-slate-500 italic">None yet</span>
             ) : (
               wrongGuesses.map((l, i) => (
-                <span key={i} className="px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded sm:rounded-md bg-rose-950/70 border border-rose-500/40 text-rose-300 font-mono font-bold text-[10px] sm:text-xs md:text-sm shadow-sm">
+                <span key={i} className="px-1.5 py-0.5 rounded bg-rose-950/70 border border-rose-500/40 text-rose-300 font-mono font-bold text-[10px] sm:text-xs shadow-sm">
                   {l}
                 </span>
               ))
@@ -186,12 +186,12 @@ export default function WatchingPanel({
       </div>
 
       {/* ─── 3. BOTTOM ROW: Trivia / Facts Card ─────────────────────────────── */}
-      <div className="w-full p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md flex flex-col gap-1 sm:gap-1.5">
-        <div className="flex items-center gap-1.5 font-mono text-[10px] sm:text-xs font-semibold uppercase text-purple-300">
+      <div className="w-full p-2 sm:p-2.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md flex flex-col gap-0.5">
+        <div className="flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase text-purple-300">
           <span>💡</span>
           <span>Hangman Trivia</span>
         </div>
-        <p className="text-[11px] sm:text-xs md:text-sm text-slate-300 leading-relaxed italic">
+        <p className="text-[11px] sm:text-xs text-slate-300 leading-snug italic">
           &ldquo;{currentFact}&rdquo;
         </p>
       </div>

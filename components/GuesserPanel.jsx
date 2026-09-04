@@ -74,12 +74,12 @@ export default function GuesserPanel({
   return (
     <div
       id="panel-guesser"
-      className="w-full max-w-7xl mx-auto flex-1 flex flex-col justify-between gap-2 sm:gap-4 md:gap-5 py-1 sm:py-2"
+      className="w-full max-w-7xl mx-auto flex-1 min-h-0 flex flex-col justify-between gap-1 sm:gap-1.5 md:gap-2 py-0.5 sm:py-1"
     >
       {/* ─── TOP STATUS BAR: Header & Leave Game ──────────────────────────── */}
-      <div className="w-full flex items-center justify-between px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-xl sm:rounded-2xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div className="flex items-center gap-1.5 bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2.5 py-1 rounded-lg text-xs sm:text-sm font-semibold">
+      <div className="w-full flex items-center justify-between px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-lg text-xs font-semibold">
             <span>🎮</span>
             <span>Guesser Mode</span>
           </div>
@@ -93,10 +93,10 @@ export default function GuesserPanel({
         <button
           type="button"
           onClick={handleLeave}
-          className="bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30 hover:text-rose-300 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all backdrop-blur-md flex items-center gap-1.5 sm:gap-2 cursor-pointer shadow-sm active:scale-95"
+          className="bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30 hover:text-rose-300 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all backdrop-blur-md flex items-center gap-1 cursor-pointer shadow-sm active:scale-95"
           aria-label="Leave Game"
         >
-          <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
             <polyline points="16 17 21 12 16 7" />
             <line x1="21" y1="12" x2="9" y2="12" />
@@ -106,15 +106,15 @@ export default function GuesserPanel({
       </div>
 
       {/* ─── 1. TOP ROW: Gallows View & Secret Word Display ─────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-2 sm:gap-4 md:gap-5 lg:gap-6 items-stretch flex-1 min-h-0">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-1.5 sm:gap-2.5 md:gap-3 items-stretch flex-1 min-h-0">
         
         {/* Left Column: Visuals & Canvas (5 cols) */}
-        <div className="md:col-span-5 lg:col-span-5 flex flex-col items-center justify-center gap-2 sm:gap-3 p-3 sm:p-4 md:p-6 rounded-2xl md:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl min-h-0">
-          <div className="font-mono text-[10px] sm:text-xs md:text-sm text-slate-300 uppercase tracking-widest font-bold">
+        <div className="md:col-span-5 lg:col-span-5 flex flex-col items-center justify-center gap-1 sm:gap-1.5 p-2 sm:p-2.5 md:p-3 rounded-xl sm:rounded-2xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl min-h-0">
+          <div className="font-mono text-[9px] sm:text-[10px] md:text-xs text-slate-300 uppercase tracking-widest font-bold">
             Gallows View
           </div>
 
-          <div className="w-full max-w-[280px] sm:max-w-[340px] md:max-w-[380px] lg:max-w-[420px] aspect-[11/12] flex items-center justify-center bg-black/40 rounded-xl sm:rounded-2xl md:rounded-3xl border border-white/10 shadow-2xl p-2 sm:p-3.5">
+          <div className="w-full max-w-[190px] sm:max-w-[220px] md:max-w-[250px] lg:max-w-[270px] aspect-[11/12] max-h-[160px] sm:max-h-[190px] md:max-h-[220px] lg:max-h-[240px] flex items-center justify-center bg-black/40 rounded-xl sm:rounded-2xl border border-white/10 shadow-2xl p-1.5 sm:p-2">
             <HangmanCanvas
               livesLeft={livesLeft}
               maxLives={maxLives}
@@ -126,9 +126,9 @@ export default function GuesserPanel({
         </div>
 
         {/* Right Column: Secret Word Display + Clue (7 cols) */}
-        <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-center gap-2 sm:gap-3 p-3 sm:p-5 md:p-6 lg:p-7 rounded-2xl md:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl text-center min-h-[120px] sm:min-h-0">
+        <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-2 sm:p-3 md:p-3.5 rounded-xl sm:rounded-2xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl text-center min-h-0">
           <div className="flex items-center justify-between w-full px-1">
-            <div className="font-mono text-[10px] sm:text-xs md:text-sm font-bold uppercase tracking-widest text-slate-400">
+            <div className="font-mono text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-widest text-slate-400">
               SECRET WORD ({hiddenSlots.length} LETTERS)
             </div>
             {activeHint && (
@@ -138,13 +138,13 @@ export default function GuesserPanel({
                   playMechanicalClick();
                   setShowHint((prev) => {
                     const next = !prev;
-                    if (next && activeHint) {
+                    if (next && activeHint && !isRoundOver) {
                       speakDialogue(`Clue: ${activeHint}`);
                     }
                     return next;
                   });
                 }}
-                className="px-2.5 py-1 rounded-full bg-yellow-400/10 hover:bg-yellow-400/20 border border-yellow-400/30 text-yellow-300 text-[10px] sm:text-xs font-mono font-bold flex items-center gap-1 transition-all cursor-pointer shadow-sm active:scale-95"
+                className="px-2 py-0.5 rounded-full bg-yellow-400/10 hover:bg-yellow-400/20 border border-yellow-400/30 text-yellow-300 text-[9px] sm:text-[10px] font-mono font-bold flex items-center gap-1 transition-all cursor-pointer shadow-sm active:scale-95"
                 title={showHint ? 'Hide Clue' : 'Show Clue'}
               >
                 <span>💡</span>
@@ -153,32 +153,34 @@ export default function GuesserPanel({
             )}
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 md:gap-2.5 lg:gap-3.5 font-mono max-w-full my-0.5">
-            {hiddenSlots.map((slot, index) => {
-              const isRevealed = slot !== '_';
+          <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-1.5 md:gap-2 font-mono max-w-full my-0.5">
+            {hiddenSlots.map((char, index) => {
+              const isRevealed = char !== '_';
 
               return (
                 <div
                   key={index}
                   onClick={() => playMechanicalClick()}
-                  className={`min-w-[32px] min-h-[42px] px-1 sm:w-10 sm:h-12 md:w-13 md:h-15 lg:w-16 lg:h-18 flex items-center justify-center rounded-lg sm:rounded-xl md:rounded-2xl text-lg sm:text-2xl md:text-3xl lg:text-4xl font-extrabold uppercase transition-all duration-300 select-none shadow-sm cursor-pointer ${
+                  className={`min-w-[28px] min-h-[36px] px-1 sm:w-9 sm:h-11 md:w-11 md:h-13 lg:w-13 lg:h-14 flex items-center justify-center rounded-lg sm:rounded-xl text-base sm:text-xl md:text-2xl lg:text-3xl font-extrabold uppercase transition-all duration-300 select-none shadow-sm cursor-pointer ${
                     isRevealed
-                      ? 'border-2 border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_18px_rgba(34,211,238,0.5)] scale-100'
+                      ? 'border-2 border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_14px_rgba(34,211,238,0.5)] scale-100'
                       : 'bg-white/5 border border-white/10 text-white/30'
                   }`}
                 >
-                  {isRevealed ? slot : '_'}
+                  {isRevealed ? char : '_'}
                 </div>
               );
             })}
           </div>
 
-          {/* Word Hint / Clue Banner */}
+          {/* Clue / Hint Box */}
           {activeHint && showHint && (
-            <div className="w-full mt-1 px-3 py-2 rounded-xl bg-purple-950/40 border border-purple-500/30 backdrop-blur-md flex items-start sm:items-center justify-center gap-2 text-center animate-fadeIn shadow-sm">
-              <span className="text-sm flex-shrink-0">💡</span>
-              <p className="text-xs sm:text-sm text-purple-200 font-medium leading-snug">
-                <strong className="text-purple-300 font-semibold uppercase tracking-wider text-[10px] sm:text-xs mr-1">Clue:</strong>
+            <div className="w-full mt-1 px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl bg-purple-950/70 border border-purple-500/40 backdrop-blur-md flex items-center justify-center gap-1.5 text-center animate-fadeIn shadow-sm">
+              <span className="text-xs sm:text-sm flex-shrink-0">💡</span>
+              <p className="text-[11px] sm:text-xs md:text-sm text-purple-100 font-medium leading-snug">
+                <span className="text-yellow-300 font-bold uppercase tracking-wider text-[9px] sm:text-[10px] mr-1">
+                  Clue:
+                </span>
                 {activeHint}
               </p>
             </div>
@@ -186,21 +188,21 @@ export default function GuesserPanel({
         </div>
       </div>
 
-      {/* ─── 2. MIDDLE ROW: Separated Health Bar & Wrong Letters ─────── */}
-      <div className="w-full px-2.5 py-1.5 sm:px-5 sm:py-2.5 md:py-3.5 rounded-xl sm:rounded-2xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl flex flex-col sm:flex-row items-center justify-between gap-1.5 sm:gap-4">
+      {/* ─── 2. MIDDLE ROW: Separated Health Bar & Wrong Letters ──────────────── */}
+      <div className="w-full px-2.5 py-1 sm:px-4 sm:py-1.5 rounded-xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl flex flex-col sm:flex-row items-center justify-between gap-1 sm:gap-3 flex-shrink-0">
         {/* Health & Big Hearts */}
-        <div className="flex items-center gap-1.5 sm:gap-3 md:gap-4 flex-wrap justify-center sm:justify-start">
-          <span className="font-mono text-[10px] sm:text-xs md:text-sm font-bold tracking-widest uppercase text-slate-300 flex-shrink-0">
+        <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-center sm:justify-start">
+          <span className="font-mono text-[9px] sm:text-[11px] md:text-xs font-bold tracking-widest uppercase text-slate-300 flex-shrink-0">
             HEALTH:
           </span>
-          <div className="flex items-center gap-0.5 sm:gap-1.5 flex-wrap justify-center">
+          <div className="flex items-center gap-0.5 sm:gap-1 flex-wrap justify-center">
             {Array.from({ length: maxLives }).map((_, i) => (
               <svg
                 key={i}
                 viewBox="0 0 24 24"
-                className={`w-3.5 h-3.5 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 transition-all duration-300 ${
+                className={`w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 transition-all duration-300 ${
                   i < livesLeft
-                    ? 'fill-rose-500 text-rose-500 drop-shadow-[0_0_10px_rgba(244,63,94,0.75)] scale-100'
+                    ? 'fill-rose-500 text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.75)] scale-100'
                     : 'fill-white/10 text-white/10 scale-90'
                 }`}
               >
@@ -208,24 +210,24 @@ export default function GuesserPanel({
               </svg>
             ))}
           </div>
-          <span className="font-mono text-xs sm:text-sm md:text-base lg:text-lg font-bold text-rose-400 ml-0.5 flex-shrink-0">
+          <span className="font-mono text-[11px] sm:text-xs md:text-sm font-bold text-rose-400 ml-0.5 flex-shrink-0">
             ({livesLeft})
           </span>
         </div>
 
         {/* Wrong Letters */}
-        <div className="flex items-center gap-1.5 sm:gap-3 flex-wrap justify-center sm:justify-end">
-          <span className="font-mono text-[10px] sm:text-xs md:text-sm font-semibold uppercase tracking-wider text-slate-400 flex-shrink-0">
+        <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-center sm:justify-end">
+          <span className="font-mono text-[9px] sm:text-[11px] md:text-xs font-semibold uppercase tracking-wider text-slate-400 flex-shrink-0">
             WRONG LETTERS:
           </span>
-          <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 min-h-[20px] sm:min-h-[26px]">
+          <div className="flex flex-wrap items-center gap-1 min-h-[20px]">
             {wrongGuesses.length === 0 ? (
-              <span className="text-[10px] sm:text-xs md:text-sm text-slate-500 italic">None yet</span>
+              <span className="text-[10px] sm:text-xs text-slate-500 italic">None yet</span>
             ) : (
               wrongGuesses.map((l, i) => (
                 <span
                   key={i}
-                  className="px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded sm:rounded-md bg-rose-950/70 border border-rose-500/40 text-rose-300 font-mono font-bold text-[10px] sm:text-xs md:text-sm shadow-sm"
+                  className="px-1.5 py-0.5 rounded bg-rose-950/70 border border-rose-500/40 text-rose-300 font-mono font-bold text-[10px] sm:text-xs shadow-sm"
                 >
                   {l}
                 </span>
@@ -236,16 +238,16 @@ export default function GuesserPanel({
       </div>
 
       {/* ─── 3. BOTTOM ROW: Interactive QWERTY Keyboard (Optimized for Mobile & Desktop) ─────────────────────── */}
-      <div className="w-full p-3 sm:p-4 md:p-5 rounded-2xl md:rounded-3xl bg-[#12111f]/95 border border-white/10 backdrop-blur-2xl shadow-xl flex flex-col items-center gap-1.5 sm:gap-2.5">
-        <div className="font-mono text-[10px] sm:text-xs md:text-sm text-slate-300 uppercase tracking-widest text-center font-bold">
+      <div className="w-full p-2 sm:p-2.5 md:p-3 rounded-xl sm:rounded-2xl bg-[#12111f]/95 border border-white/10 backdrop-blur-2xl shadow-xl flex flex-col items-center gap-1 sm:gap-1.5 flex-shrink-0">
+        <div className="font-mono text-[9px] sm:text-[10px] md:text-xs text-slate-300 uppercase tracking-widest text-center font-bold">
           Interactive Virtual Keyboard
         </div>
 
-        <div className="flex flex-col gap-1.5 sm:gap-2.5 md:gap-3 w-full max-w-5xl mx-auto touch-manipulation items-center px-1 sm:px-2">
+        <div className="flex flex-col gap-1 sm:gap-1.5 md:gap-2 w-full max-w-5xl mx-auto touch-manipulation items-center px-1">
           {KEYBOARD_ROWS.map((row, rowIndex) => {
             const rowWidthClass = rowIndex === 0 ? 'w-full' : rowIndex === 1 ? 'w-full max-w-[95%]' : 'w-full max-w-[80%]';
             return (
-              <div key={rowIndex} className={`flex justify-center gap-1.5 sm:gap-2 md:gap-2.5 lg:gap-3 ${rowWidthClass} touch-manipulation`}>
+              <div key={rowIndex} className={`flex justify-center gap-1 sm:gap-1.5 md:gap-2 ${rowWidthClass} touch-manipulation`}>
                 {row.map((letter) => {
                   const isGuessed = guessedSet.has(letter);
                   const isCorrect = isGuessed && upperWord.includes(letter);
@@ -254,13 +256,13 @@ export default function GuesserPanel({
                   let keyClasses = '';
                   if (isCorrect) {
                     keyClasses =
-                      'bg-emerald-500 text-white shadow-[0_0_18px_rgba(16,185,129,0.6)] border-2 border-emerald-400 scale-95 cursor-default font-black';
+                      'bg-emerald-500 text-white shadow-[0_0_12px_rgba(16,185,129,0.6)] border-2 border-emerald-400 scale-95 cursor-default font-black';
                   } else if (isWrong) {
                     keyClasses =
                       'bg-rose-950/70 text-rose-500/70 line-through border border-rose-900/50 cursor-not-allowed scale-95 opacity-60';
                   } else {
                     keyClasses =
-                      'bg-[#252338] text-white hover:bg-[#34314c] hover:border-purple-500/50 border border-white/15 active:scale-95 cursor-pointer shadow-lg hover:shadow-purple-500/30';
+                      'bg-[#252338] text-white hover:bg-[#34314c] hover:border-purple-500/50 border border-white/15 active:scale-95 cursor-pointer shadow-md hover:shadow-purple-500/30';
                   }
 
                   return (
@@ -274,7 +276,7 @@ export default function GuesserPanel({
                           onGuessLetter(letter);
                         }
                       }}
-                      className={`flex-1 min-w-[28px] sm:min-w-[40px] md:min-w-[48px] max-w-[82px] h-12 sm:h-14 md:h-16 lg:h-18 rounded-xl sm:rounded-2xl font-mono font-black text-sm sm:text-lg md:text-xl lg:text-2xl flex items-center justify-center uppercase transition-all select-none touch-manipulation active:scale-95 ${keyClasses}`}
+                      className={`flex-1 min-w-[24px] sm:min-w-[34px] md:min-w-[42px] max-w-[80px] h-9 sm:h-10 md:h-11 lg:h-12 xl:h-13 rounded-lg sm:rounded-xl font-mono font-black text-xs sm:text-base md:text-lg flex items-center justify-center uppercase transition-all select-none touch-manipulation active:scale-95 ${keyClasses}`}
                       aria-label={`Letter ${letter}`}
                     >
                       {letter}

@@ -37,21 +37,21 @@ export default function GameArena({
   ];
 
   return (
-    <div className="w-full max-w-4xl mx-auto flex flex-col gap-4 sm:gap-6 p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] transition-all">
+    <div className="w-full max-w-4xl mx-auto flex flex-col gap-2 sm:gap-3 p-2.5 sm:p-3.5 md:p-4 rounded-xl sm:rounded-2xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] transition-all">
       
       {/* ─── 1. SECRET WORD DISPLAY (MULTIPLAYER LOGIC) ──────────────── */}
       <section className="flex flex-col items-center justify-center text-center">
         {/* Dynamic Header */}
-        <div className="font-mono text-xs sm:text-sm font-bold uppercase tracking-widest text-slate-400 mb-3 sm:mb-4">
+        <div className="font-mono text-[10px] sm:text-xs font-bold uppercase tracking-widest text-slate-400 mb-1.5 sm:mb-2">
           SECRET WORD ({letterCount} {letterCount === 1 ? 'LETTER' : 'LETTERS'})
         </div>
 
         {/* Letter Boxes */}
-        <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2.5 md:gap-3 lg:gap-3.5 font-mono max-w-full">
+        <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-1.5 md:gap-2 font-mono max-w-full my-0.5">
           {secretLetters.map((char, index) => {
             // Space separator for multi-word phrases
             if (char === ' ') {
-              return <div key={index} className="w-3 sm:w-5" aria-hidden="true" />;
+              return <div key={index} className="w-2 sm:w-4" aria-hidden="true" />;
             }
 
             const isGuessed = guessedSet.has(char);
@@ -89,7 +89,7 @@ export default function GameArena({
               <div
                 key={index}
                 onClick={() => playMechanicalClick()}
-                className={`w-9 h-11 sm:w-12 sm:h-14 md:w-14 md:h-16 lg:w-16 lg:h-18 flex items-center justify-center rounded-xl sm:rounded-2xl text-xl sm:text-3xl md:text-4xl font-extrabold uppercase transition-all duration-300 select-none shadow-sm cursor-pointer ${boxStyles}`}
+                className={`min-w-[28px] min-h-[36px] px-1 sm:w-9 sm:h-11 md:w-11 md:h-13 lg:w-13 lg:h-14 flex items-center justify-center rounded-lg sm:rounded-xl text-base sm:text-xl md:text-2xl lg:text-3xl font-extrabold uppercase transition-all duration-300 select-none shadow-sm cursor-pointer ${boxStyles}`}
               >
                 {boxContent}
               </div>
@@ -99,22 +99,22 @@ export default function GameArena({
 
         {/* Chooser Info Pill */}
         {isChooser && (
-          <div className="mt-3 text-[11px] font-mono text-purple-300/80 bg-purple-950/40 border border-purple-500/20 px-3 py-1 rounded-full">
+          <div className="mt-1 text-[9px] sm:text-[10px] font-mono text-purple-300/80 bg-purple-950/40 border border-purple-500/20 px-2.5 py-0.5 rounded-full">
             👁️ You are viewing as Chooser. Dashed boxes indicate letters hidden from your opponent.
           </div>
         )}
       </section>
 
       {/* ─── 2. SHARED GALLOWS HEALTH BAR ────────────────────────────── */}
-      <section className="w-full px-3.5 py-2.5 sm:px-6 sm:py-3.5 rounded-xl sm:rounded-2xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-4">
+      <section className="w-full px-2.5 py-1 sm:px-4 sm:py-1.5 rounded-xl sm:rounded-2xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl flex flex-col sm:flex-row items-center justify-between gap-1 sm:gap-2">
         {/* Left Label */}
-        <span className="font-mono text-xs sm:text-sm font-bold tracking-widest uppercase text-slate-300 flex-shrink-0">
+        <span className="font-mono text-[10px] sm:text-xs font-bold tracking-widest uppercase text-slate-300 flex-shrink-0">
           {isChooser ? "OPPONENT HEALTH:" : "HEALTH:"}
         </span>
 
         {/* Right Hearts & Lives Counter */}
-        <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-center sm:justify-end">
-          <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap justify-center" aria-label={`Lives: ${lives} of ${maxLives}`}>
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-center sm:justify-end">
+          <div className="flex items-center gap-0.5 sm:gap-1 flex-wrap justify-center" aria-label={`Lives: ${lives} of ${maxLives}`}>
             {Array.from({ length: maxLives }).map((_, index) => {
               const isActive = index < lives;
 
@@ -122,7 +122,7 @@ export default function GameArena({
                 <svg
                   key={index}
                   viewBox="0 0 24 24"
-                  className={`w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 transition-all duration-300 ${
+                  className={`w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 transition-all duration-300 ${
                     isActive
                       ? 'fill-rose-500 text-rose-500 drop-shadow-[0_0_10px_rgba(244,63,94,0.75)] scale-100'
                       : 'fill-white/10 text-white/10 scale-90'
@@ -135,19 +135,19 @@ export default function GameArena({
             })}
           </div>
 
-          <span className="font-mono text-sm sm:text-base md:text-lg font-bold text-rose-400 ml-1 flex-shrink-0">
+          <span className="font-mono text-xs sm:text-sm font-bold text-rose-400 ml-0.5 flex-shrink-0">
             ({lives})
           </span>
         </div>
       </section>
 
       {/* ─── 3. QWERTY VIRTUAL KEYBOARD (INTERACTIVE vs LIVE-MIRROR) ─── */}
-      <section className={`flex flex-col gap-1.5 sm:gap-2 mt-1 ${isChooser ? 'pointer-events-none opacity-90' : ''}`}>
+      <section className={`flex flex-col gap-1 sm:gap-1.5 ${isChooser ? 'pointer-events-none opacity-90' : ''}`}>
         {/* Dynamic Context Header */}
-        <div className="font-mono text-[10px] sm:text-xs text-slate-400 uppercase tracking-wider text-center mb-1 flex items-center justify-center gap-2">
+        <div className="font-mono text-[9px] sm:text-[10px] text-slate-400 uppercase tracking-wider text-center flex items-center justify-center gap-1.5">
           {isChooser ? (
             <>
-              <span className="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
               <span>Opponent&apos;s Keyboard (Live):</span>
             </>
           ) : (
@@ -156,11 +156,11 @@ export default function GameArena({
         </div>
 
         {/* Keyboard Key Rows */}
-        <div className="flex flex-col gap-1.5 sm:gap-2.5 md:gap-3 w-full max-w-5xl mx-auto touch-manipulation px-1 sm:px-2">
+        <div className="flex flex-col gap-1 sm:gap-1.5 md:gap-2 w-full max-w-5xl mx-auto touch-manipulation px-1 sm:px-2">
           {KEYBOARD_ROWS.map((row, rowIndex) => {
             const rowWidthClass = rowIndex === 0 ? 'w-full' : rowIndex === 1 ? 'w-full max-w-[95%]' : 'w-full max-w-[80%]';
             return (
-              <div key={rowIndex} className={`flex justify-center gap-1.5 sm:gap-2 md:gap-2.5 lg:gap-3 ${rowWidthClass} touch-manipulation`}>
+              <div key={rowIndex} className={`flex justify-center gap-1 sm:gap-1.5 md:gap-2 ${rowWidthClass} touch-manipulation`}>
                 {row.map((letter) => {
                   const isGuessed = guessedSet.has(letter);
                   const isCorrect = isGuessed && upperSecretWord.includes(letter);
@@ -193,7 +193,7 @@ export default function GameArena({
                           onGuessLetter(letter);
                         }
                       }}
-                      className={`flex-1 min-w-[28px] sm:min-w-[40px] md:min-w-[48px] max-w-[82px] h-11 sm:h-13 md:h-15 lg:h-17 rounded-xl sm:rounded-2xl font-mono font-black text-sm sm:text-lg md:text-xl flex items-center justify-center uppercase transition-all select-none touch-manipulation active:scale-95 shadow-md ${keyClasses}`}
+                      className={`flex-1 min-w-[24px] sm:min-w-[32px] md:min-w-[40px] max-w-[82px] h-9 sm:h-10 md:h-11 lg:h-12 xl:h-13 rounded-lg sm:rounded-xl font-mono font-black text-xs sm:text-base md:text-lg flex items-center justify-center uppercase transition-all select-none touch-manipulation active:scale-95 shadow-md ${keyClasses}`}
                       aria-label={`Letter ${letter}`}
                     >
                       {letter}

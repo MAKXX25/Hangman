@@ -1,7 +1,7 @@
 'use client';
 import { useState, useMemo, useEffect } from 'react';
 import { getRandomPerformanceDialogue } from '../lib/gameLogic.js';
-import { playMechanicalClick, speakDialogue } from '../lib/audio.js';
+import { playMechanicalClick, stopDialogue } from '../lib/audio.js';
 
 export default function GameOverModal({
   isOpen = false,
@@ -76,10 +76,10 @@ export default function GameOverModal({
   const guessedSet = new Set((game.guessedLetters || []).map(l => l.toUpperCase()));
 
   useEffect(() => {
-    if (isOpen && title) {
-      speakDialogue(title);
+    if (isOpen) {
+      stopDialogue();
     }
-  }, [isOpen, title]);
+  }, [isOpen]);
 
   return (
     <div className={`overlay-roundover ${themeClass}`}>
