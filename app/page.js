@@ -4,6 +4,14 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import confetti from 'canvas-confetti';
 import Navbar from '../components/Navbar.jsx';
 import InteractiveHeroCard from '../components/InteractiveHeroCard.jsx';
+import {
+  playMechanicalClick,
+  speakDialogue,
+  isVoiceMuted,
+  setVoiceMuted,
+  isSfxMuted,
+  setSfxMuted
+} from '../lib/audio.js';
 import { getSocket, isBackendConfigured, getBackendUrl } from '../lib/socket.js';
 import { ServerlessSocket } from '../lib/serverlessSocket.js';
 import { getRandomWord, isValidWord, getRandomSuggestions, getWordMeaning } from '../lib/dictionary.js';
@@ -72,6 +80,15 @@ export default function HangmanDuelApp() {
   const dialogueTimeoutRef = useRef(null);
   const stickmanMoodRef = useRef('neutral');
   const currentDialogueRef = useRef('');
+
+  // Voice (TTS) & Mechanical Click Sound States
+  const [voiceMuted, setVoiceMutedState] = useState(false);
+  const [sfxMuted, setSfxMutedState] = useState(false);
+
+  useEffect(() => {
+    setVoiceMutedState(isVoiceMuted());
+    setSfxMutedState(isSfxMuted());
+  }, []);
 
   // Multiplayer Game State
   const [myPlayerId, setMyPlayerId] = useState('');
@@ -399,6 +416,14 @@ export default function HangmanDuelApp() {
     "Not today, death!",
     "You saved me! 🎉",
     "Close call! Thanks!"
+  ];
+
+  const DEATH_PHRASES = [
+    "Noooo, not like this!",
+    "Goodbye, cruel world!",
+    "Tell my mother I tried!",
+    "Aaaagh! The rope snapped!",
+    "I was too young to hang!"
   ];
 
   const applyGlow = (ctx, color, blur = 10) => {
@@ -861,6 +886,8 @@ export default function HangmanDuelApp() {
   //  Stage 5 [3.20s+]       Modal Trigger       – only after body leaves canvas
   const runDeathAnimation = useCallback((canvas, callback) => {
     if (!canvas) { callback?.(); return; }
+    const deathPhrase = DEATH_PHRASES[Math.floor(Math.random() * DEATH_PHRASES.length)];
+    speakDialogue(deathPhrase);
     const ctx = canvas.getContext('2d');
 
     // ── Timing constants (seconds) ────────────────────────────────────────
@@ -1111,6 +1138,7 @@ export default function HangmanDuelApp() {
     const dustParticles = [];
     const token = currentRoundTokenRef.current;
     const escapePhrase = ESCAPE_PHRASES[Math.floor(Math.random() * ESCAPE_PHRASES.length)];
+    speakDialogue(escapePhrase);
 
     function animate(now) {
       if (token !== currentRoundTokenRef.current) return;
@@ -1503,6 +1531,14 @@ export default function HangmanDuelApp() {
 
     return () => clearInterval(interval);
   }, [gameState, game?.wrongGuesses, INITIAL_IDLE_PHRASES]);
+
+  // ── Universal Stickman Dialogue Speech Synthesizer ───────────────────────
+  useEffect(() => {
+    if (gameState === 'guessing' && currentDialogue) {
+      speakDialogue(currentDialogue);
+    }
+  }, [gameState, currentDialogue]);
+
 
   // ── Setup Reusable Event Listeners Binding Helper ────────────────────────
   const attachSocketListeners = useCallback((sock) => {
@@ -2147,6 +2183,9 @@ export default function HangmanDuelApp() {
 
   // ── 5. Guess Letter (Guesser) ─────────────────────────────────────────────
   const handleGuessLetter = (letter) => {
+    // Satisfying mechanical keyboard switch click sound on every press
+    playMechanicalClick();
+
     if (gameState !== 'guessing' || !game) return;
     const l = letter.toUpperCase();
     if (game.guessedLetters.includes(l)) return;
@@ -2170,7 +2209,8 @@ export default function HangmanDuelApp() {
         recordDuelEndStats(won);
         // Freeze the random dialogue exactly once when the round ends
         const mistakes = nextRoom.game.wrongGuesses?.length ?? 0;
-        setFrozenDialogue(getRandomPerformanceDialogue(mistakes, won));
+        const dialogue = getRandomPerformanceDialogue(mistakes, won);
+        setFrozenDialogue(dialogue);
 
         if (won) {
           setPveScore(s => ({ ...s, human: s.human + 1 }));
@@ -2378,9 +2418,7 @@ export default function HangmanDuelApp() {
       // Validate single alphabetical character
       if (/^[a-zA-Z]$/.test(e.key)) {
         const key = e.key.toUpperCase();
-        if (!game.guessedLetters.includes(key)) {
-          handleGuessLetter(key);
-        }
+        handleGuessLetter(key);
       }
     };
 
@@ -2473,6 +2511,25 @@ export default function HangmanDuelApp() {
       roundoverSubtitle = `${game.guesserName || 'Guesser'} figured out your word!`;
     }
   }
+
+  // ── Read Round-Over & Match Announcements Aloud ──────────────────────────
+  useEffect(() => {
+    if (isRoundOverModalOpen) {
+      if (isPveMatchOver) {
+        const matchPhrase = pveMatchWinner === 'human'
+          ? 'You beat the Computer! Congratulations!'
+          : pveMatchWinner === 'draw'
+          ? "It's a Draw! Well played!"
+          : 'The Computer outsmarted you! Better luck next time!';
+        speakDialogue(matchPhrase);
+      } else {
+        const announcement = frozenDialogue || roundoverTitle;
+        if (announcement) {
+          speakDialogue(announcement);
+        }
+      }
+    }
+  }, [isRoundOverModalOpen, isPveMatchOver, pveMatchWinner, frozenDialogue, roundoverTitle]);
 
   // ── Continuous 60fps Physics & Idle Animation Loop (Active during Gameplay) ──
   useEffect(() => {
@@ -3411,8 +3468,50 @@ export default function HangmanDuelApp() {
             </div>
           </div>
 
-          {/* Leave Game CTA */}
-          <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
+          {/* Controls: Voice Toggle, Keys SFX Toggle & Leave Game CTA */}
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+            {/* Dialogue Voice (TTS) Toggle */}
+            <button
+              type="button"
+              onClick={() => {
+                const next = !voiceMuted;
+                setVoiceMuted(next);
+                setVoiceMutedState(next);
+                if (!next) speakDialogue("Dialogue voice active!");
+              }}
+              className={`px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-semibold border transition-all flex items-center gap-1 cursor-pointer backdrop-blur-md ${
+                voiceMuted
+                  ? 'bg-slate-800/60 border-white/10 text-slate-400 hover:text-slate-200'
+                  : 'bg-purple-500/20 border-purple-500/40 text-purple-300 shadow-[0_0_10px_rgba(168,85,247,0.25)]'
+              }`}
+              title={voiceMuted ? 'Dialogue Speech: MUTED (Click to Unmute)' : 'Dialogue Speech: ACTIVE (Click to Mute)'}
+              aria-label="Toggle Dialogue Speech"
+            >
+              <span>{voiceMuted ? '🔇' : '🗣️'}</span>
+              <span className="hidden sm:inline">{voiceMuted ? 'Voice Off' : 'Voice On'}</span>
+            </button>
+
+            {/* Mechanical Keyboard Click Sound Toggle */}
+            <button
+              type="button"
+              onClick={() => {
+                const next = !sfxMuted;
+                setSfxMuted(next);
+                setSfxMutedState(next);
+                if (!next) playMechanicalClick();
+              }}
+              className={`px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-semibold border transition-all flex items-center gap-1 cursor-pointer backdrop-blur-md ${
+                sfxMuted
+                  ? 'bg-slate-800/60 border-white/10 text-slate-400 hover:text-slate-200'
+                  : 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300 shadow-[0_0_10px_rgba(6,182,212,0.25)]'
+              }`}
+              title={sfxMuted ? 'Keyboard Sound: MUTED (Click to Unmute)' : 'Keyboard Click: ACTIVE (Click to Mute)'}
+              aria-label="Toggle Keyboard Click Sound"
+            >
+              <span>⌨️</span>
+              <span className="hidden sm:inline">{sfxMuted ? 'Keys Off' : 'Keys On'}</span>
+            </button>
+
             <span className="hidden md:inline-block px-3 py-1 rounded-full bg-white/5 border border-white/10 font-mono text-xs text-slate-400">
               {isPveMode ? `BOT: ${pveDifficulty.toUpperCase()}` : `ROOM: ${roomCode}`}
             </span>
@@ -3495,6 +3594,9 @@ export default function HangmanDuelApp() {
                       setWordValidationMsg('');
                     }}
                     onKeyDown={(e) => {
+                      if (/^[a-zA-Z]$/.test(e.key) || e.key === 'Backspace' || e.key === ' ') {
+                        playMechanicalClick();
+                      }
                       if (e.key === 'Enter') handleSubmitWord();
                     }}
                     spellCheck="false"
@@ -3525,7 +3627,10 @@ export default function HangmanDuelApp() {
                       id="btn-refresh-suggestions"
                       className="btn-refresh-suggestions"
                       type="button"
-                      onClick={refreshSuggestions}
+                      onClick={() => {
+                        playMechanicalClick();
+                        refreshSuggestions();
+                      }}
                       title="Get new suggestions"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="refresh-icon">
@@ -3543,6 +3648,7 @@ export default function HangmanDuelApp() {
                         type="button"
                         className="suggestion-card"
                         onClick={() => {
+                          playMechanicalClick();
                           const w = item.word.toUpperCase();
                           setSecretWordInput(w);
                           handleSubmitWord(w);
@@ -3655,7 +3761,16 @@ export default function HangmanDuelApp() {
                     ) : activeHint ? (
                       <button
                         type="button"
-                        onClick={() => setShowHint(prev => !prev)}
+                        onClick={() => {
+                          playMechanicalClick();
+                          setShowHint(prev => {
+                            const next = !prev;
+                            if (next && activeHint) {
+                              speakDialogue(`Clue: ${activeHint}`);
+                            }
+                            return next;
+                          });
+                        }}
                         className="px-2.5 py-1 rounded-full bg-yellow-400/10 hover:bg-yellow-400/20 border border-yellow-400/30 text-yellow-300 text-[10px] sm:text-xs font-mono font-bold flex items-center gap-1 transition-all cursor-pointer shadow-sm active:scale-95"
                         title={showHint ? "Hide Clue" : "Show Clue"}
                       >
@@ -3673,7 +3788,8 @@ export default function HangmanDuelApp() {
                       return (
                         <div
                           key={index}
-                          className={`min-w-[32px] min-h-[42px] px-1 sm:w-10 sm:h-12 md:w-13 md:h-15 lg:w-16 lg:h-18 flex items-center justify-center rounded-lg sm:rounded-xl md:rounded-2xl text-lg sm:text-2xl md:text-3xl lg:text-4xl font-extrabold uppercase transition-all duration-300 select-none shadow-sm ${
+                          onClick={() => playMechanicalClick()}
+                          className={`min-w-[32px] min-h-[42px] px-1 sm:w-10 sm:h-12 md:w-13 md:h-15 lg:w-16 lg:h-18 flex items-center justify-center rounded-lg sm:rounded-xl md:rounded-2xl text-lg sm:text-2xl md:text-3xl lg:text-4xl font-extrabold uppercase transition-all duration-300 select-none shadow-sm cursor-pointer ${
                             isRevealed
                               ? `border-2 border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_18px_rgba(34,211,238,0.5)] ${isNew ? 'letter-pop scale-105' : 'scale-100'}`
                               : 'bg-white/5 border border-white/10 text-white/30'
@@ -3777,7 +3893,7 @@ export default function HangmanDuelApp() {
                             key={letter}
                             type="button"
                             className={`flex-1 max-w-[34px] sm:max-w-none sm:flex-initial sm:w-10 md:w-11 lg:w-12 h-10 sm:h-11 md:h-12 lg:h-13 rounded-lg sm:rounded-xl font-mono font-bold text-xs sm:text-base md:text-lg flex items-center justify-center uppercase transition-all select-none touch-manipulation active:scale-95 ${keyClasses}`}
-                            disabled={isGuessed || gameState === 'roundover'}
+                            aria-disabled={isGuessed || gameState === 'roundover'}
                             onClick={() => handleGuessLetter(letter)}
                             aria-label={`Letter ${letter}`}
                           >
@@ -3957,7 +4073,7 @@ export default function HangmanDuelApp() {
                     {cleanWord && (
                       <div className="roundover-word" id="roundover-word" style={{ marginTop: '0.75rem' }}>
                         {cleanWord.split('').map((ch, idx) => (
-                          <span key={idx} className="word-letter-span word-letter-unlocked" style={{ '--index': idx }}>{ch}</span>
+                          <span key={idx} className="word-letter-span word-letter-unlocked cursor-pointer" style={{ '--index': idx }} onClick={() => playMechanicalClick()}>{ch}</span>
                         ))}
                       </div>
                     )}
@@ -4029,7 +4145,7 @@ export default function HangmanDuelApp() {
                           letterClass += guessedSet.has(ch) ? 'word-letter-guessed' : 'word-letter-missed';
                         }
                         return (
-                          <span key={idx} className={letterClass} style={{ '--index': idx }}>{ch}</span>
+                          <span key={idx} className={`${letterClass} cursor-pointer`} style={{ '--index': idx }} onClick={() => playMechanicalClick()}>{ch}</span>
                         );
                       })}
                     </div>

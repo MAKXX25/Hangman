@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { getRandomFact } from '../lib/facts.js';
 import { getRandomSuggestions, isValidWord } from '../lib/dictionary.js';
+import { playMechanicalClick } from '../lib/audio.js';
 
 export default function WordSetterPanel({
   timerSecondsLeft = 60,
@@ -97,6 +98,9 @@ export default function WordSetterPanel({
               setErrorText('');
             }}
             onKeyDown={(e) => {
+              if (/^[a-zA-Z]$/.test(e.key) || e.key === 'Backspace' || e.key === ' ') {
+                playMechanicalClick();
+              }
               if (e.key === 'Enter') handleSubmit();
             }}
             autoComplete="off"
@@ -104,7 +108,10 @@ export default function WordSetterPanel({
           />
           <button
             className="btn btn-primary btn-submit-word"
-            onClick={() => handleSubmit()}
+            onClick={() => {
+              playMechanicalClick();
+              handleSubmit();
+            }}
           >
             SET WORD ↵
           </button>
@@ -122,6 +129,7 @@ export default function WordSetterPanel({
               type="button"
               className="chip-word"
               onClick={() => {
+                playMechanicalClick();
                 setInputVal(w);
                 handleSubmit(w);
               }}

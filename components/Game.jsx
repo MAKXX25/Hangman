@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { playMechanicalClick } from '../lib/audio.js';
 
 /**
  * Complete Hangman Game Component
@@ -197,8 +198,11 @@ export default function Game({
     const handleKeyDown = (e) => {
       if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
       const key = e.key.toUpperCase();
-      if (/^[A-Z]$/.test(key) && !guessedSet.has(key)) {
-        onGuessLetter(key);
+      if (/^[A-Z]$/.test(key)) {
+        playMechanicalClick();
+        if (!guessedSet.has(key)) {
+          onGuessLetter(key);
+        }
       }
     };
 
@@ -371,8 +375,13 @@ export default function Game({
                   <button
                     key={letter}
                     type="button"
-                    disabled={isGuessed || isRoundOver || isChooser}
-                    onClick={() => onGuessLetter(letter)}
+                    aria-disabled={isGuessed || isRoundOver || isChooser}
+                    onClick={() => {
+                      playMechanicalClick();
+                      if (!isGuessed && !isRoundOver && !isChooser) {
+                        onGuessLetter(letter);
+                      }
+                    }}
                     className={`flex-1 max-w-[34px] sm:max-w-[44px] md:max-w-[50px] h-9 sm:h-11 md:h-12 rounded-md sm:rounded-lg font-mono font-bold text-xs sm:text-sm md:text-base flex items-center justify-center uppercase transition-all select-none touch-manipulation active:scale-90 ${keyClasses}`}
                     aria-label={`Letter ${letter}`}
                   >

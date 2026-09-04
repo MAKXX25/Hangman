@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { playMechanicalClick, speakDialogue } from '../lib/audio.js';
 
 // Gentle web audio synthesizer for neon sound effects (no external assets needed)
 function playTone(freq = 440, type = 'sine', duration = 0.15, vol = 0.08) {
@@ -108,6 +109,7 @@ export default function InteractiveHeroCard({ onPlayNow }) {
     if (speechTimerRef.current) clearTimeout(speechTimerRef.current);
     const text = customText || QUIPS[Math.floor(Math.random() * QUIPS.length)];
     setSpeech(text);
+    speakDialogue(text);
     speechTimerRef.current = setTimeout(() => {
       setSpeech(null);
     }, 2800);
@@ -226,6 +228,7 @@ export default function InteractiveHeroCard({ onPlayNow }) {
 
   const handleLetterClick = (index, char) => {
     setBouncedIndex(index);
+    playMechanicalClick();
     playTone(CHIME_FREQS[index % CHIME_FREQS.length] * 1.5, 'triangle', 0.25, 0.12);
     // Trigger stickman comment
     triggerSpeech(`Letter "${char}"? You got it!`);

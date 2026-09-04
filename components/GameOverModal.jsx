@@ -1,6 +1,7 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { getRandomPerformanceDialogue } from '../lib/gameLogic.js';
+import { playMechanicalClick, speakDialogue } from '../lib/audio.js';
 
 export default function GameOverModal({
   isOpen = false,
@@ -74,6 +75,12 @@ export default function GameOverModal({
   const cleanWord = (game.word || '').toUpperCase();
   const guessedSet = new Set((game.guessedLetters || []).map(l => l.toUpperCase()));
 
+  useEffect(() => {
+    if (isOpen && title) {
+      speakDialogue(title);
+    }
+  }, [isOpen, title]);
+
   return (
     <div className={`overlay-roundover ${themeClass}`}>
       <div className="roundover-card">
@@ -102,8 +109,9 @@ export default function GameOverModal({
               return (
                 <span
                   key={idx}
-                  className={letterClass}
+                  className={`${letterClass} cursor-pointer`}
                   style={{ '--index': idx }}
+                  onClick={() => playMechanicalClick()}
                 >
                   {ch}
                 </span>
@@ -130,7 +138,10 @@ export default function GameOverModal({
             className="btn btn-primary"
             id="btn-next-round"
             disabled={isWaitingOpponent}
-            onClick={onNextRound}
+            onClick={() => {
+              playMechanicalClick();
+              if (onNextRound) onNextRound();
+            }}
           >
             {isWaitingOpponent
               ? 'Waiting for opponent…'

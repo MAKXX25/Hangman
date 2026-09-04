@@ -3,6 +3,7 @@
 import React, { useEffect } from 'react';
 import HangmanCanvas from './HangmanCanvas.jsx';
 import { useRouter } from 'next/navigation';
+import { playMechanicalClick, speakDialogue } from '../lib/audio.js';
 
 const KEYBOARD_ROWS = [
   ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
@@ -35,8 +36,11 @@ export default function GuesserPanel({
     const handleKeyDown = (e) => {
       if (isRoundOver || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
       const key = e.key.toUpperCase();
-      if (/^[A-Z]$/.test(key) && !guessedLetters.includes(key)) {
-        onGuessLetter(key);
+      if (/^[A-Z]$/.test(key)) {
+        playMechanicalClick();
+        if (!guessedLetters.includes(key)) {
+          onGuessLetter(key);
+        }
       }
     };
 
@@ -130,7 +134,16 @@ export default function GuesserPanel({
             {activeHint && (
               <button
                 type="button"
-                onClick={() => setShowHint((prev) => !prev)}
+                onClick={() => {
+                  playMechanicalClick();
+                  setShowHint((prev) => {
+                    const next = !prev;
+                    if (next && activeHint) {
+                      speakDialogue(`Clue: ${activeHint}`);
+                    }
+                    return next;
+                  });
+                }}
                 className="px-2.5 py-1 rounded-full bg-yellow-400/10 hover:bg-yellow-400/20 border border-yellow-400/30 text-yellow-300 text-[10px] sm:text-xs font-mono font-bold flex items-center gap-1 transition-all cursor-pointer shadow-sm active:scale-95"
                 title={showHint ? 'Hide Clue' : 'Show Clue'}
               >
@@ -147,7 +160,8 @@ export default function GuesserPanel({
               return (
                 <div
                   key={index}
-                  className={`min-w-[32px] min-h-[42px] px-1 sm:w-10 sm:h-12 md:w-13 md:h-15 lg:w-16 lg:h-18 flex items-center justify-center rounded-lg sm:rounded-xl md:rounded-2xl text-lg sm:text-2xl md:text-3xl lg:text-4xl font-extrabold uppercase transition-all duration-300 select-none shadow-sm ${
+                  onClick={() => playMechanicalClick()}
+                  className={`min-w-[32px] min-h-[42px] px-1 sm:w-10 sm:h-12 md:w-13 md:h-15 lg:w-16 lg:h-18 flex items-center justify-center rounded-lg sm:rounded-xl md:rounded-2xl text-lg sm:text-2xl md:text-3xl lg:text-4xl font-extrabold uppercase transition-all duration-300 select-none shadow-sm cursor-pointer ${
                     isRevealed
                       ? 'border-2 border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-[0_0_18px_rgba(34,211,238,0.5)] scale-100'
                       : 'bg-white/5 border border-white/10 text-white/30'
@@ -251,8 +265,13 @@ export default function GuesserPanel({
                   <button
                     key={letter}
                     type="button"
-                    disabled={isGuessed || isRoundOver}
-                    onClick={() => onGuessLetter(letter)}
+                    aria-disabled={isGuessed || isRoundOver}
+                    onClick={() => {
+                      playMechanicalClick();
+                      if (!isGuessed && !isRoundOver) {
+                        onGuessLetter(letter);
+                      }
+                    }}
                     className={`flex-1 max-w-[34px] sm:max-w-none sm:flex-initial sm:w-10 md:w-11 lg:w-12 h-10 sm:h-11 md:h-12 lg:h-13 rounded-lg sm:rounded-xl font-mono font-bold text-xs sm:text-base md:text-lg flex items-center justify-center uppercase transition-all select-none touch-manipulation active:scale-95 ${keyClasses}`}
                     aria-label={`Letter ${letter}`}
                   >

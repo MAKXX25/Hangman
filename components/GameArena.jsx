@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { playMechanicalClick } from '../lib/audio.js';
 
 /**
  * Dual-Mode Hangman Game Arena (Guesser View vs Chooser View)
@@ -87,7 +88,8 @@ export default function GameArena({
             return (
               <div
                 key={index}
-                className={`w-9 h-11 sm:w-12 sm:h-14 md:w-14 md:h-16 lg:w-16 lg:h-18 flex items-center justify-center rounded-xl sm:rounded-2xl text-xl sm:text-3xl md:text-4xl font-extrabold uppercase transition-all duration-300 select-none shadow-sm ${boxStyles}`}
+                onClick={() => playMechanicalClick()}
+                className={`w-9 h-11 sm:w-12 sm:h-14 md:w-14 md:h-16 lg:w-16 lg:h-18 flex items-center justify-center rounded-xl sm:rounded-2xl text-xl sm:text-3xl md:text-4xl font-extrabold uppercase transition-all duration-300 select-none shadow-sm cursor-pointer ${boxStyles}`}
               >
                 {boxContent}
               </div>
@@ -182,8 +184,13 @@ export default function GameArena({
                   <button
                     key={letter}
                     type="button"
-                    disabled={isGuessed || disabled || isChooser}
-                    onClick={() => onGuessLetter(letter)}
+                    aria-disabled={isGuessed || disabled || isChooser}
+                    onClick={() => {
+                      playMechanicalClick();
+                      if (!isGuessed && !disabled && !isChooser) {
+                        onGuessLetter(letter);
+                      }
+                    }}
                     className={`flex-1 max-w-[34px] sm:max-w-[44px] md:max-w-[50px] h-9 sm:h-11 md:h-12 rounded-md sm:rounded-lg font-mono font-bold text-xs sm:text-sm md:text-base flex items-center justify-center uppercase transition-all select-none touch-manipulation active:scale-90 ${keyClasses}`}
                     aria-label={`Letter ${letter}`}
                   >
