@@ -122,7 +122,13 @@ export default function HangmanDuelApp() {
 
   // Round Over Modal State
   const [isRoundOverModalOpen, setIsRoundOverModalOpen] = useState(false);
+  const isRoundOverModalOpenRef = useRef(false);
+  const roundOverHandledRef = useRef(false);
   const [isWaitingOpponent, setIsWaitingOpponent] = useState(false);
+
+  useEffect(() => {
+    isRoundOverModalOpenRef.current = isRoundOverModalOpen;
+  }, [isRoundOverModalOpen]);
 
   // Animation tracking
   const [newlyGuessedLetters, setNewlyGuessedLetters] = useState([]);
@@ -918,6 +924,22 @@ export default function HangmanDuelApp() {
     const startTime = performance.now();
     let callbackFired = false;
 
+    const fireCallback = () => {
+      if (!callbackFired) {
+        callbackFired = true;
+        clearTimeout(safetyTimer);
+        if (specialAnimIdRef.current) {
+          cancelAnimationFrame(specialAnimIdRef.current);
+          specialAnimIdRef.current = null;
+        }
+        callback?.();
+      }
+    };
+
+    const safetyTimer = setTimeout(() => {
+      fireCallback();
+    }, (T_MODAL + 0.5) * 1000);
+
     // ── Per-limb ragdoll offsets (secondary motion lag) ──────────────────
     // These are multiplied by swingAngle to give limbs a 1-frame lag feel.
     const ARM_LAG_SCALE  = 3.5;
@@ -1012,124 +1034,130 @@ export default function HangmanDuelApp() {
 
     // ── Main animation loop ───────────────────────────────────────────────
     function animate(now) {
-      if (token !== currentRoundTokenRef.current) return;
-
-      const elapsed = (now - startTime) / 1000; // seconds
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.save();
-      const scale = canvas.width / 220;
-      ctx.scale(scale, scale);
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-
-      // ── Stage 1: Trapdoor hinge-physics drop ─────────────────────────
-      // Opens with a cosine ease over 0.30s then stays fully open.
-      const doorT      = Math.min(1, elapsed / 0.30);
-      const doorAngle  = (1 - Math.cos(doorT * Math.PI / 2)) * (Math.PI * 0.44);
-      drawGallows(ctx, doorAngle);
-
-      // ── Stage 2 & 3: Rope + swinging body ────────────────────────────
-      if (elapsed < T_SNAP) {
-
-        // Stage 2: body accelerates from 0 → ROPE_LENGTH over 0.20s
-        const dropT      = Math.max(0, Math.min(1, (elapsed - T_DROP_START) / 0.20));
-        const easeDropT  = 1 - Math.pow(1 - dropT, 3); // cubic ease-in
-        const curRope    = ROPE_LENGTH * easeDropT;
-
-        // Impact jerk: a brief 0-to-1-to-0 pulse at the moment rope goes taut
-        const jerkWin    = 0.18; // seconds the jerk lasts
-        const jerkRaw    = Math.max(0, elapsed - T_JERK);
-        const jerkCompress = jerkRaw < jerkWin
-          ? Math.sin((jerkRaw / jerkWin) * Math.PI) // smooth half-sine pulse
-          : 0;
-
-        // Stage 3: θ(t) = θ_max · e^(−γt) · cos(ωt) — starts after jerk
-        const swingT     = Math.max(0, elapsed - T_JERK);
-        const theta      = THETA_MAX * Math.exp(-GAMMA * swingT) * Math.cos(OMEGA * swingT);
-
-        // Rope attachment position along the pendulum arc
-        const neckX = ANCHOR_X + Math.sin(theta) * curRope;
-        const neckY = ANCHOR_Y + Math.cos(theta) * curRope;
-
-        // Draw taut rope
-        ctx.strokeStyle = NEON_DEAD;
-        applyGlow(ctx, NEON_DEAD_GLOW, 10);
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(ANCHOR_X, ANCHOR_Y);
-        ctx.lineTo(neckX, neckY);
-        ctx.stroke();
-        clearGlow(ctx);
-
-        // Draw rigged ragdoll rotating as single rig around neckX/neckY
-        ctx.save();
-        ctx.translate(neckX, neckY);
-        ctx.rotate(theta);
-        ctx.strokeStyle = NEON_DEAD;
-        applyGlow(ctx, NEON_DEAD_GLOW, 12);
-        drawRagdoll(ctx, theta, jerkCompress);
-        clearGlow(ctx);
-        ctx.restore();
-
-      } else {
-        // ── Stage 4: Rope snap ──────────────────────────────────────────
-        // Draw frayed stub at beam anchor (rope end left on beam)
-        ctx.strokeStyle = NEON_DEAD;
-        applyGlow(ctx, NEON_DEAD_GLOW, 10);
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(ANCHOR_X,     ANCHOR_Y);
-        ctx.lineTo(ANCHOR_X - 3, ANCHOR_Y + 6);
-        ctx.lineTo(ANCHOR_X + 3, ANCHOR_Y + 10);
-        ctx.lineTo(ANCHOR_X - 1, ANCHOR_Y + 14);
-        ctx.stroke();
-        clearGlow(ctx);
-
-        // Free-fall: y = y0 + ½ · g · t²  (g = 850 px/s² for cinematic feel)
-        const fallT  = elapsed - T_SNAP;
-        const fallY  = (ANCHOR_Y + ROPE_LENGTH) + 0.5 * 850 * fallT * fallT;
-        const tumble = fallT * 0.42; // gentle tumble rotation (rad/s)
-
-        // Only render body if still on-screen
-        if (fallY < CANVAS_H + 200) {
-          ctx.save();
-          ctx.translate(ANCHOR_X, fallY);
-          ctx.rotate(tumble);
-          ctx.strokeStyle = NEON_DEAD;
-          applyGlow(ctx, NEON_DEAD_GLOW, 12);
-          // Pass swingAngle=0 — fully limp in free-fall, no secondary motion
-          drawRagdoll(ctx, 0, 0);
-          clearGlow(ctx);
-          ctx.restore();
-        }
-      }
-
-      ctx.restore();
-
-      // ── Stage 5: Modal trigger — deferred until body is off screen ────
-      const bodyY = elapsed >= T_SNAP
-        ? (ANCHOR_Y + ROPE_LENGTH) + 0.5 * 850 * Math.pow(elapsed - T_SNAP, 2)
-        : 0;
-      const bodyOffScreen = elapsed >= T_SNAP && bodyY > CANVAS_H + 160;
-
-      if (bodyOffScreen && !callbackFired) {
-        callbackFired = true;
-        specialAnimIdRef.current = null;
-        // Small grace delay so the canvas is visually clear before modal appears
-        setTimeout(() => callback?.(), 300);
-        return; // stop rAF loop
-      }
-
-      // Hard fallback: fire modal at T_MODAL even if geometry is off
-      if (elapsed >= T_MODAL && !callbackFired) {
-        callbackFired = true;
-        specialAnimIdRef.current = null;
-        callback?.();
+      if (token !== currentRoundTokenRef.current) {
+        fireCallback();
         return;
       }
 
-      specialAnimIdRef.current = requestAnimationFrame(animate);
+      try {
+        const elapsed = (now - startTime) / 1000; // seconds
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.save();
+        const scale = canvas.width / 220;
+        ctx.scale(scale, scale);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        // ── Stage 1: Trapdoor hinge-physics drop ─────────────────────────
+        // Opens with a cosine ease over 0.30s then stays fully open.
+        const doorT      = Math.min(1, elapsed / 0.30);
+        const doorAngle  = (1 - Math.cos(doorT * Math.PI / 2)) * (Math.PI * 0.44);
+        drawGallows(ctx, doorAngle);
+
+        // ── Stage 2 & 3: Rope + swinging body ────────────────────────────
+        if (elapsed < T_SNAP) {
+
+          // Stage 2: body accelerates from 0 → ROPE_LENGTH over 0.20s
+          const dropT      = Math.max(0, Math.min(1, (elapsed - T_DROP_START) / 0.20));
+          const easeDropT  = 1 - Math.pow(1 - dropT, 3); // cubic ease-in
+          const curRope    = ROPE_LENGTH * easeDropT;
+
+          // Impact jerk: a brief 0-to-1-to-0 pulse at the moment rope goes taut
+          const jerkWin    = 0.18; // seconds the jerk lasts
+          const jerkRaw    = Math.max(0, elapsed - T_JERK);
+          const jerkCompress = jerkRaw < jerkWin
+            ? Math.sin((jerkRaw / jerkWin) * Math.PI) // smooth half-sine pulse
+            : 0;
+
+          // Stage 3: θ(t) = θ_max · e^(−γt) · cos(ωt) — starts after jerk
+          const swingT     = Math.max(0, elapsed - T_JERK);
+          const theta      = THETA_MAX * Math.exp(-GAMMA * swingT) * Math.cos(OMEGA * swingT);
+
+          // Rope attachment position along the pendulum arc
+          const neckX = ANCHOR_X + Math.sin(theta) * curRope;
+          const neckY = ANCHOR_Y + Math.cos(theta) * curRope;
+
+          // Draw taut rope
+          ctx.strokeStyle = NEON_DEAD;
+          applyGlow(ctx, NEON_DEAD_GLOW, 10);
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(ANCHOR_X, ANCHOR_Y);
+          ctx.lineTo(neckX, neckY);
+          ctx.stroke();
+          clearGlow(ctx);
+
+          // Draw rigged ragdoll rotating as single rig around neckX/neckY
+          ctx.save();
+          ctx.translate(neckX, neckY);
+          ctx.rotate(theta);
+          ctx.strokeStyle = NEON_DEAD;
+          applyGlow(ctx, NEON_DEAD_GLOW, 12);
+          drawRagdoll(ctx, theta, jerkCompress);
+          clearGlow(ctx);
+          ctx.restore();
+
+        } else {
+          // ── Stage 4: Rope snap ──────────────────────────────────────────
+          // Draw frayed stub at beam anchor (rope end left on beam)
+          ctx.strokeStyle = NEON_DEAD;
+          applyGlow(ctx, NEON_DEAD_GLOW, 10);
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(ANCHOR_X,     ANCHOR_Y);
+          ctx.lineTo(ANCHOR_X - 3, ANCHOR_Y + 6);
+          ctx.lineTo(ANCHOR_X + 3, ANCHOR_Y + 10);
+          ctx.lineTo(ANCHOR_X - 1, ANCHOR_Y + 14);
+          ctx.stroke();
+          clearGlow(ctx);
+
+          // Free-fall: y = y0 + ½ · g · t²  (g = 850 px/s² for cinematic feel)
+          const fallT  = elapsed - T_SNAP;
+          const fallY  = (ANCHOR_Y + ROPE_LENGTH) + 0.5 * 850 * fallT * fallT;
+          const tumble = fallT * 0.42; // gentle tumble rotation (rad/s)
+
+          // Only render body if still on-screen
+          if (fallY < CANVAS_H + 200) {
+            ctx.save();
+            ctx.translate(ANCHOR_X, fallY);
+            ctx.rotate(tumble);
+            ctx.strokeStyle = NEON_DEAD;
+            applyGlow(ctx, NEON_DEAD_GLOW, 12);
+            // Pass swingAngle=0 — fully limp in free-fall, no secondary motion
+            drawRagdoll(ctx, 0, 0);
+            clearGlow(ctx);
+            ctx.restore();
+          }
+        }
+
+        ctx.restore();
+
+        // ── Stage 5: Modal trigger — deferred until body is off screen ────
+        const bodyY = elapsed >= T_SNAP
+          ? (ANCHOR_Y + ROPE_LENGTH) + 0.5 * 850 * Math.pow(elapsed - T_SNAP, 2)
+          : 0;
+        const bodyOffScreen = elapsed >= T_SNAP && bodyY > CANVAS_H + 160;
+
+        if (bodyOffScreen && !callbackFired) {
+          specialAnimIdRef.current = null;
+          // Small grace delay so the canvas is visually clear before modal appears
+          setTimeout(() => fireCallback(), 300);
+          return; // stop rAF loop
+        }
+
+        // Hard fallback: fire modal at T_MODAL even if geometry is off
+        if (elapsed >= T_MODAL && !callbackFired) {
+          specialAnimIdRef.current = null;
+          fireCallback();
+          return;
+        }
+
+        specialAnimIdRef.current = requestAnimationFrame(animate);
+      } catch (err) {
+        console.error('Death animation error:', err);
+        fireCallback();
+      }
     }
 
     specialAnimIdRef.current = requestAnimationFrame(animate);
@@ -1139,6 +1167,8 @@ export default function HangmanDuelApp() {
   const runEscapeAnimation = useCallback((canvas, livesLeft, maxLives, callback) => {
     if (!canvas) { callback?.(); return; }
     const ctx = canvas.getContext('2d');
+    if (!ctx) { callback?.(); return; }
+
     const wrongGuessesCount = maxLives - livesLeft;
     const startTime = performance.now();
     const DURATION = 2800; // 2.8s multi-phase sequence
@@ -1146,39 +1176,57 @@ export default function HangmanDuelApp() {
     const token = currentRoundTokenRef.current;
     stopDialogue();
 
+    // Pick a celebratory survival speech bubble phrase
+    const escapePhrase = (ESCAPE_PHRASES && ESCAPE_PHRASES.length > 0)
+      ? ESCAPE_PHRASES[Math.floor(Math.random() * ESCAPE_PHRASES.length)]
+      : 'Phew, thanks!';
+
+    let callbackFired = false;
+    const fireCallback = () => {
+      if (!callbackFired) {
+        callbackFired = true;
+        clearTimeout(safetyTimer);
+        if (specialAnimIdRef.current) {
+          cancelAnimationFrame(specialAnimIdRef.current);
+          specialAnimIdRef.current = null;
+        }
+        callback?.();
+      }
+    };
+
+    // Failsafe timer: guarantees callback executes even if canvas or rAF gets interrupted
+    const safetyTimer = setTimeout(() => {
+      fireCallback();
+    }, DURATION + 200);
+
     function animate(now) {
-      if (token !== currentRoundTokenRef.current) return;
-      const elapsed = now - startTime;
-      const progress = Math.min(1, elapsed / DURATION);
+      if (token !== currentRoundTokenRef.current) {
+        fireCallback();
+        return;
+      }
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.save();
-      const scale = canvas.width / 220;
-      ctx.scale(scale, scale);
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
+      try {
+        const elapsed = now - startTime;
+        const progress = Math.min(1, elapsed / DURATION);
 
-      // 1. Static gallows parts
-      if (wrongGuessesCount >= 1) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.save();
+        const scale = canvas.width / 220;
+        ctx.scale(scale, scale);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        // 1. Static gallows parts (always draw glowing gallows clearly)
         ctx.strokeStyle = NEON_GALLOWS;
         applyGlow(ctx, NEON_GALLOWS_GLOW, 10);
         ctx.lineWidth = 5;
         ctx.beginPath();
         ctx.moveTo(20, 225); ctx.lineTo(90, 225);
-        ctx.stroke();
-        clearGlow(ctx);
-      }
-      if (wrongGuessesCount >= 2) {
-        ctx.strokeStyle = NEON_GALLOWS;
-        applyGlow(ctx, NEON_GALLOWS_GLOW, 10);
-        ctx.lineWidth = 5;
-        ctx.beginPath();
         ctx.moveTo(55, 225); ctx.lineTo(55, 18); ctx.lineTo(145, 18);
         ctx.stroke();
         clearGlow(ctx);
-      }
-      // Broken snapped rope dangling
-      if (wrongGuessesCount >= 4) {
+
+        // Broken snapped rope dangling
         ctx.strokeStyle = '#f59e0b';
         applyGlow(ctx, 'rgba(245, 158, 11, 0.7)', 8);
         ctx.lineWidth = 3;
@@ -1186,181 +1234,184 @@ export default function HangmanDuelApp() {
         ctx.moveTo(145, 18); ctx.lineTo(145, 30);
         ctx.stroke();
         clearGlow(ctx);
-      }
 
-      // Ground Line
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(0, 225); ctx.lineTo(canvas.width, 225);
-      ctx.stroke();
+        // Ground Line
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, 225); ctx.lineTo(canvas.width, 225);
+        ctx.stroke();
 
-      // 2. Kinematics across 3 Timed Phases:
-      // Phase 1 (0ms - 350ms): Drop to floor
-      // Phase 2 (350ms - 1700ms): Pause & Speak (1.35s grateful pause with happy face & bubble)
-      // Phase 3 (1700ms - 2800ms): Escape Sprint off-screen
-      const groundY = 225;
-      let figX = 145;
-      let hipY = 178;
-      let legCycle = 0;
-      let isRunning = false;
-      let showSpeechBubble = false;
+        // 2. Kinematics across 3 Timed Phases:
+        // Phase 1 (0ms - 350ms): Drop to floor
+        // Phase 2 (350ms - 1700ms): Pause & Speak (1.35s grateful pause with happy face & bubble)
+        // Phase 3 (1700ms - 2800ms): Escape Sprint off-screen
+        const groundY = 225;
+        let figX = 145;
+        let hipY = 178;
+        let legCycle = 0;
+        let isRunning = false;
+        let showSpeechBubble = false;
 
-      if (elapsed < 350) {
-        // Phase 1: Drop
-        const dropP = elapsed / 350;
-        hipY = 135 + dropP * dropP * 43;
-      } else if (elapsed < 1700) {
-        // Phase 2: Pause & Speak
-        hipY = 178;
-        figX = 145;
-        showSpeechBubble = true;
-      } else {
-        // Phase 3: Escape Sprint
-        isRunning = true;
-        showSpeechBubble = false;
-        const runElapsed = elapsed - 1700;
-        figX = 145 + runElapsed * (0.24 + (runElapsed / 1000) * 0.28);
-        legCycle = runElapsed * 0.024;
-        hipY = 176 + Math.sin(legCycle * 2) * 3.5;
-      }
-
-      // Dust particles kick-up during sprint
-      if (isRunning && Math.random() < 0.4 && dustParticles.length < 16) {
-        dustParticles.push({
-          x: figX - 8 + (Math.random() - 0.5) * 6,
-          y: groundY - 2 + Math.random() * 4,
-          vx: -(1.5 + Math.random() * 2.5),
-          vy: -(0.5 + Math.random()),
-          alpha: 0.85,
-          radius: 1.5 + Math.random() * 2.5
-        });
-      }
-
-      dustParticles.forEach((d) => {
-        d.x += d.vx;
-        d.y += d.vy;
-        d.alpha -= 0.035;
-        if (d.alpha > 0) {
-          ctx.fillStyle = `rgba(16, 185, 129, ${d.alpha * 0.6})`;
-          ctx.beginPath();
-          ctx.arc(d.x, d.y, d.radius, 0, Math.PI * 2);
-          ctx.fill();
+        if (elapsed < 350) {
+          // Phase 1: Drop
+          const dropP = elapsed / 350;
+          hipY = 135 + dropP * dropP * 43;
+        } else if (elapsed < 1700) {
+          // Phase 2: Pause & Speak
+          hipY = 178;
+          figX = 145;
+          showSpeechBubble = true;
+        } else {
+          // Phase 3: Escape Sprint
+          isRunning = true;
+          showSpeechBubble = false;
+          const runElapsed = elapsed - 1700;
+          figX = 145 + runElapsed * (0.24 + (runElapsed / 1000) * 0.28);
+          legCycle = runElapsed * 0.024;
+          hipY = 176 + Math.sin(legCycle * 2) * 3.5;
         }
-      });
 
-      // 3. Draw Victorious Green Stick Figure
-      const NEON_WIN_BODY = '#10b981';
-      ctx.strokeStyle = NEON_WIN_BODY;
-      applyGlow(ctx, 'rgba(16, 185, 129, 0.6)', 14);
+        // Dust particles kick-up during sprint
+        if (isRunning && Math.random() < 0.4 && dustParticles.length < 16) {
+          dustParticles.push({
+            x: figX - 8 + (Math.random() - 0.5) * 6,
+            y: groundY - 2 + Math.random() * 4,
+            vx: -(1.5 + Math.random() * 2.5),
+            vy: -(0.5 + Math.random()),
+            alpha: 0.85,
+            radius: 1.5 + Math.random() * 2.5
+          });
+        }
 
-      const forwardTilt = isRunning ? 6 : 0;
-      const neckY = hipY - 42;
-      const headCy = neckY - 18;
+        dustParticles.forEach((d) => {
+          d.x += d.vx;
+          d.y += d.vy;
+          d.alpha -= 0.035;
+          if (d.alpha > 0) {
+            ctx.fillStyle = `rgba(16, 185, 129, ${d.alpha * 0.6})`;
+            ctx.beginPath();
+            ctx.arc(d.x, d.y, d.radius, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        });
 
-      // Torso
-      ctx.lineWidth = 3.5;
-      ctx.beginPath();
-      ctx.moveTo(figX + forwardTilt, neckY);
-      ctx.lineTo(figX, hipY);
-      ctx.stroke();
+        // 3. Draw Victorious Green Stick Figure
+        const NEON_WIN_BODY = '#10b981';
+        ctx.strokeStyle = NEON_WIN_BODY;
+        applyGlow(ctx, 'rgba(16, 185, 129, 0.6)', 14);
 
-      // Head
-      ctx.beginPath();
-      ctx.arc(figX + forwardTilt, headCy, 18, 0, Math.PI * 2);
-      ctx.stroke();
+        const forwardTilt = isRunning ? 6 : 0;
+        const neckY = hipY - 42;
+        const headCy = neckY - 18;
 
-      // Happy Smiling Face (^ ^ and :D)
-      ctx.lineWidth = 2.2;
-      ctx.strokeStyle = NEON_WIN_BODY;
-      if (showSpeechBubble || !isRunning) {
-        // Happy ^ ^ eyes
+        // Torso
+        ctx.lineWidth = 3.5;
         ctx.beginPath();
-        ctx.moveTo(figX + forwardTilt - 8, headCy - 2);
-        ctx.lineTo(figX + forwardTilt - 4, headCy - 6);
-        ctx.lineTo(figX + forwardTilt, headCy - 2);
-
-        ctx.moveTo(figX + forwardTilt, headCy - 2);
-        ctx.lineTo(figX + forwardTilt + 4, headCy - 6);
-        ctx.lineTo(figX + forwardTilt + 8, headCy - 2);
+        ctx.moveTo(figX + forwardTilt, neckY);
+        ctx.lineTo(figX, hipY);
         ctx.stroke();
 
-        // Big smile
+        // Head
         ctx.beginPath();
-        ctx.arc(figX + forwardTilt, headCy + 2, 8, 0.1 * Math.PI, 0.9 * Math.PI, false);
+        ctx.arc(figX + forwardTilt, headCy, 18, 0, Math.PI * 2);
         ctx.stroke();
-      } else {
-        // Running eyes & smile
-        ctx.fillStyle = NEON_WIN_BODY;
-        ctx.beginPath();
-        ctx.arc(figX + forwardTilt + 2, headCy - 3, 2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(figX + forwardTilt, headCy + 2, 7, 0.1 * Math.PI, 0.9 * Math.PI, false);
-        ctx.stroke();
-      }
 
-      // Arms
-      const shoulderY = neckY + 10;
-      ctx.lineWidth = 3.5;
-      if (showSpeechBubble) {
-        // Cheering / raised arms in gratitude (\o/)
-        ctx.beginPath();
-        ctx.moveTo(figX + forwardTilt, shoulderY);
-        ctx.lineTo(figX - 18, shoulderY - 20);
-        ctx.moveTo(figX + forwardTilt, shoulderY);
-        ctx.lineTo(figX + 18, shoulderY - 20);
-        ctx.stroke();
-      } else if (!isRunning) {
-        ctx.beginPath();
-        ctx.moveTo(figX + forwardTilt, shoulderY);
-        ctx.lineTo(figX - 14, shoulderY + 18);
-        ctx.moveTo(figX + forwardTilt, shoulderY);
-        ctx.lineTo(figX + 14, shoulderY + 18);
-        ctx.stroke();
-      } else {
-        const arm1Angle = Math.sin(legCycle + Math.PI);
-        const arm2Angle = Math.sin(legCycle);
-        ctx.beginPath();
-        ctx.moveTo(figX + forwardTilt, shoulderY);
-        ctx.lineTo(figX + forwardTilt + Math.sin(arm1Angle) * 26 + 4, shoulderY + Math.cos(arm1Angle) * 12);
-        ctx.moveTo(figX + forwardTilt, shoulderY);
-        ctx.lineTo(figX + forwardTilt + Math.sin(arm2Angle) * 26 + 4, shoulderY + Math.cos(arm2Angle) * 12);
-        ctx.stroke();
-      }
+        // Happy Smiling Face (^ ^ and :D)
+        ctx.lineWidth = 2.2;
+        ctx.strokeStyle = NEON_WIN_BODY;
+        if (showSpeechBubble || !isRunning) {
+          // Happy ^ ^ eyes
+          ctx.beginPath();
+          ctx.moveTo(figX + forwardTilt - 8, headCy - 2);
+          ctx.lineTo(figX + forwardTilt - 4, headCy - 6);
+          ctx.lineTo(figX + forwardTilt, headCy - 2);
 
-      // Legs
-      if (!isRunning) {
-        ctx.beginPath();
-        ctx.moveTo(figX, hipY); ctx.lineTo(figX - 12, groundY);
-        ctx.moveTo(figX, hipY); ctx.lineTo(figX + 12, groundY);
-        ctx.stroke();
-      } else {
-        const leg1Angle = Math.sin(legCycle);
-        const leg2Angle = Math.sin(legCycle + Math.PI);
-        const foot1X = figX + Math.sin(leg1Angle) * 22;
-        const foot1Y = Math.min(groundY, hipY + Math.cos(leg1Angle) * 42 + 6);
-        const foot2X = figX + Math.sin(leg2Angle) * 22;
-        const foot2Y = Math.min(groundY, hipY + Math.cos(leg2Angle) * 42 + 6);
-        ctx.beginPath();
-        ctx.moveTo(figX, hipY); ctx.lineTo(foot1X, foot1Y);
-        ctx.moveTo(figX, hipY); ctx.lineTo(foot2X, foot2Y);
-        ctx.stroke();
-      }
+          ctx.moveTo(figX + forwardTilt, headCy - 2);
+          ctx.lineTo(figX + forwardTilt + 4, headCy - 6);
+          ctx.lineTo(figX + forwardTilt + 8, headCy - 2);
+          ctx.stroke();
 
-      clearGlow(ctx);
-      ctx.restore();
+          // Big smile
+          ctx.beginPath();
+          ctx.arc(figX + forwardTilt, headCy + 2, 8, 0.1 * Math.PI, 0.9 * Math.PI, false);
+          ctx.stroke();
+        } else {
+          // Running eyes & smile
+          ctx.fillStyle = NEON_WIN_BODY;
+          ctx.beginPath();
+          ctx.arc(figX + forwardTilt + 2, headCy - 3, 2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(figX + forwardTilt, headCy + 2, 7, 0.1 * Math.PI, 0.9 * Math.PI, false);
+          ctx.stroke();
+        }
 
-      // Phase 2 Grateful Speech Bubble (dynamic text width & boundary clamped)
-      if (showSpeechBubble) {
-        drawSpeechBubble(ctx, figX, headCy, escapePhrase, 'left', 'rgba(16, 185, 129, 0.85)', 'rgba(6, 78, 59, 0.95)', '#ecfdf5');
-      }
+        // Arms
+        const shoulderY = neckY + 10;
+        ctx.lineWidth = 3.5;
+        if (showSpeechBubble) {
+          // Cheering / raised arms in gratitude (\o/)
+          ctx.beginPath();
+          ctx.moveTo(figX + forwardTilt, shoulderY);
+          ctx.lineTo(figX - 18, shoulderY - 20);
+          ctx.moveTo(figX + forwardTilt, shoulderY);
+          ctx.lineTo(figX + 18, shoulderY - 20);
+          ctx.stroke();
+        } else if (!isRunning) {
+          ctx.beginPath();
+          ctx.moveTo(figX + forwardTilt, shoulderY);
+          ctx.lineTo(figX - 14, shoulderY + 18);
+          ctx.moveTo(figX + forwardTilt, shoulderY);
+          ctx.lineTo(figX + 14, shoulderY + 18);
+          ctx.stroke();
+        } else {
+          const arm1Angle = Math.sin(legCycle + Math.PI);
+          const arm2Angle = Math.sin(legCycle);
+          ctx.beginPath();
+          ctx.moveTo(figX + forwardTilt, shoulderY);
+          ctx.lineTo(figX + forwardTilt + Math.sin(arm1Angle) * 26 + 4, shoulderY + Math.cos(arm1Angle) * 12);
+          ctx.moveTo(figX + forwardTilt, shoulderY);
+          ctx.lineTo(figX + forwardTilt + Math.sin(arm2Angle) * 26 + 4, shoulderY + Math.cos(arm2Angle) * 12);
+          ctx.stroke();
+        }
 
-      if (progress < 1) {
-        specialAnimIdRef.current = requestAnimationFrame(animate);
-      } else {
-        specialAnimIdRef.current = null;
-        callback?.();
+        // Legs
+        if (!isRunning) {
+          ctx.beginPath();
+          ctx.moveTo(figX, hipY); ctx.lineTo(figX - 12, groundY);
+          ctx.moveTo(figX, hipY); ctx.lineTo(figX + 12, groundY);
+          ctx.stroke();
+        } else {
+          const leg1Angle = Math.sin(legCycle);
+          const leg2Angle = Math.sin(legCycle + Math.PI);
+          const foot1X = figX + Math.sin(leg1Angle) * 22;
+          const foot1Y = Math.min(groundY, hipY + Math.cos(leg1Angle) * 42 + 6);
+          const foot2X = figX + Math.sin(leg2Angle) * 22;
+          const foot2Y = Math.min(groundY, hipY + Math.cos(leg2Angle) * 42 + 6);
+          ctx.beginPath();
+          ctx.moveTo(figX, hipY); ctx.lineTo(foot1X, foot1Y);
+          ctx.moveTo(figX, hipY); ctx.lineTo(foot2X, foot2Y);
+          ctx.stroke();
+        }
+
+        clearGlow(ctx);
+        ctx.restore();
+
+        // Phase 2 Grateful Speech Bubble (dynamic text width & boundary clamped)
+        if (showSpeechBubble) {
+          drawSpeechBubble(ctx, figX, headCy, escapePhrase, 'left', 'rgba(16, 185, 129, 0.85)', 'rgba(6, 78, 59, 0.95)', '#ecfdf5');
+        }
+
+        if (progress < 1) {
+          specialAnimIdRef.current = requestAnimationFrame(animate);
+        } else {
+          specialAnimIdRef.current = null;
+          fireCallback();
+        }
+      } catch (err) {
+        console.error('Escape animation error:', err);
+        fireCallback();
       }
     }
 
@@ -1451,10 +1502,30 @@ export default function HangmanDuelApp() {
 
     // ── Round Over Special Transitions ──────────────────────────────────────
     if (roomData.state === 'roundover') {
+      if (roundOverHandledRef.current || isRoundOverModalOpenRef.current) {
+        return;
+      }
+      roundOverHandledRef.current = true;
       currentRoundTokenRef.current++;
+
       const setterWon = roomData.game?.roundResult === 'setter_wins';
       const guesserWon = roomData.game?.roundResult === 'guesser_wins';
       const isSetter = roomData.game ? (roomData.game.wordSetterId === myPlayerId) : false;
+
+      // Master fallback timer: Under all circumstances, open the modal within 3.2s
+      const safetyFallback = setTimeout(() => {
+        setIsRoundOverModalOpen(true);
+        isRoundOverModalOpenRef.current = true;
+      }, 3200);
+
+      const openModal = () => {
+        clearTimeout(safetyFallback);
+        setIsRoundOverModalOpen(true);
+        isRoundOverModalOpenRef.current = true;
+      };
+
+      // Explicitly target the canvas that is active and mounted for the player's role
+      const activeCanvas = isSetter ? hangmanWatchCanvasRef.current : hangmanCanvasRef.current;
 
       if (setterWon) {
         // 1. Environmental Screen Shake & Red Flash
@@ -1464,32 +1535,38 @@ export default function HangmanDuelApp() {
         setTimeout(() => setIsScreenFlashing(false), 800);
 
         // 2. Hanging Trapdoor & Rope-Snap Physics Animation
-        const activeCanvas = hangmanCanvasRef.current || hangmanWatchCanvasRef.current;
-        runDeathAnimation(activeCanvas, () => {
-          setIsRoundOverModalOpen(true);
-        });
+        if (activeCanvas) {
+          runDeathAnimation(activeCanvas, openModal);
+        } else {
+          openModal();
+        }
       } else if (guesserWon) {
         // 1. Celebration Confetti Shower for winning guesser
         if (!isSetter) {
           triggerConfettiShower();
         }
         // 2. The Great Escape Sprint Animation
-        const activeCanvas = hangmanCanvasRef.current || hangmanWatchCanvasRef.current;
-        runEscapeAnimation(activeCanvas, roomData.game.livesLeft, roomData.game.maxLives || 10, () => {
-          setIsRoundOverModalOpen(true);
-        });
+        if (activeCanvas) {
+          runEscapeAnimation(activeCanvas, roomData.game?.livesLeft ?? 10, roomData.game?.maxLives || 10, openModal);
+        } else {
+          openModal();
+        }
       } else {
-        setIsRoundOverModalOpen(true);
+        openModal();
       }
     } else {
+      roundOverHandledRef.current = false;
+      isRoundOverModalOpenRef.current = false;
       setIsRoundOverModalOpen(false);
       setIsWaitingOpponent(false);
     }
-  }, [myPlayerId, triggerConfettiShower, triggerHappyGuess, runDeathAnimation, runEscapeAnimation]);
+  }, [myPlayerId, triggerConfettiShower, triggerHappyGuess, triggerMeanWrongGuess, runDeathAnimation, runEscapeAnimation]);
 
   // ── Forceful Reset / Modal Close on Round Transition (Anti-Softlock) ─────
   const forceResetRoundState = useCallback(() => {
     currentRoundTokenRef.current++;
+    roundOverHandledRef.current = false;
+    isRoundOverModalOpenRef.current = false;
     setIsRoundOverModalOpen(false);
     setIsWaitingOpponent(false);
     setSetterWordSubmitted(false);
@@ -2283,7 +2360,6 @@ export default function HangmanDuelApp() {
   };
 
   // ── 6. Next Round & Skip Countdown ────────────────────────────────────────
-  // ── 6. Next Round & Skip Countdown ────────────────────────────────────────
   const handleNextRound = useCallback(() => {
     if (isPveMode) {
       const nextRound = pveRound + 1;
@@ -2297,7 +2373,14 @@ export default function HangmanDuelApp() {
     if (socket) {
       socket.emit('next_round');
     }
-  }, [isPveMode, pveRound, pveDifficulty, pveMaxRounds, startPveGame]);
+    if (roomCode) {
+      fetch('/api/room/next-round', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomCode }),
+      }).catch(() => {});
+    }
+  }, [isPveMode, pveRound, pveDifficulty, pveMaxRounds, startPveGame, roomCode]);
 
   // Instant Skip for the 10-second Countdown
   const handleSkipCountdown = useCallback(() => {
