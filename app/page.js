@@ -103,6 +103,8 @@ export default function HangmanDuelApp() {
   const [secretWordInput, setSecretWordInput] = useState('');
   const [wordValidationMsg, setWordValidationMsg] = useState('');
   const [suggestions, setSuggestions] = useState([]);
+  const [liveWordDef, setLiveWordDef] = useState(null);
+  const [isLookingUpDef, setIsLookingUpDef] = useState(false);
 
   // Facts & Scramble State
   const [currentGuesserFact, setCurrentGuesserFact] = useState('');
@@ -567,13 +569,15 @@ export default function HangmanDuelApp() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const w = 220;
-    const h = 240;
+    const w = 330;
+    const h = 360;
     if (canvas.width !== w) canvas.width = w;
     if (canvas.height !== h) canvas.height = h;
 
     ctx.clearRect(0, 0, w, h);
     ctx.save();
+    const scale = w / 220; // 1.5x scale for high-DPI crisp rendering
+    ctx.scale(scale, scale);
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
@@ -1013,6 +1017,8 @@ export default function HangmanDuelApp() {
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.save();
+      const scale = canvas.width / 220;
+      ctx.scale(scale, scale);
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
 
@@ -1147,6 +1153,8 @@ export default function HangmanDuelApp() {
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.save();
+      const scale = canvas.width / 220;
+      ctx.scale(scale, scale);
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
 
@@ -1487,6 +1495,8 @@ export default function HangmanDuelApp() {
     setSetterWordSubmitted(false);
     setSecretWordInput('');
     setWordValidationMsg('');
+    setLiveWordDef(null);
+    setIsLookingUpDef(false);
     if (specialAnimIdRef.current) {
       cancelAnimationFrame(specialAnimIdRef.current);
       specialAnimIdRef.current = null;
@@ -1539,6 +1549,42 @@ export default function HangmanDuelApp() {
     }
   }, [gameState, currentDialogue]);
 
+  // ── Real-Time Online Dictionary Definition Lookup for Word Setter ─────────
+  useEffect(() => {
+    const clean = (secretWordInput || '').trim().toUpperCase();
+    if (clean.length < 3 || !/^[A-Z]+$/.test(clean)) {
+      setLiveWordDef(null);
+      setIsLookingUpDef(false);
+      return;
+    }
+
+    setIsLookingUpDef(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/dictionary/define?word=${encodeURIComponent(clean)}`);
+        const data = await res.json();
+        if (data && data.found) {
+          setLiveWordDef(data);
+        } else {
+          setLiveWordDef({
+            word: clean,
+            found: false,
+            reason: data?.reason || `No dictionary definition found for "${clean}".`
+          });
+        }
+      } catch {
+        setLiveWordDef({
+          word: clean,
+          found: false,
+          reason: 'Unable to connect to dictionary services.'
+        });
+      } finally {
+        setIsLookingUpDef(false);
+      }
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [secretWordInput]);
 
   // ── Setup Reusable Event Listeners Binding Helper ────────────────────────
   const attachSocketListeners = useCallback((sock) => {
@@ -3616,6 +3662,58 @@ export default function HangmanDuelApp() {
                   </div>
                 )}
 
+                {/* Real-Time Online Dictionary Meaning & Definition Card */}
+                {(isLookingUpDef || (secretWordInput.length >= 3 && liveWordDef)) && (
+                  <div className="w-full max-w-xl mx-auto my-3.5 p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-[#1b1830]/95 border border-purple-500/35 backdrop-blur-2xl shadow-xl transition-all animate-fadeIn">
+                    {isLookingUpDef ? (
+                      <div className="flex items-center justify-center gap-2.5 py-2 text-purple-300 font-mono text-xs sm:text-sm">
+                        <div className="w-4 h-4 rounded-full border-2 border-purple-400 border-t-transparent animate-spin"></div>
+                        <span>Parsing online dictionary for &ldquo;{secretWordInput}&rdquo;…</span>
+                      </div>
+                    ) : liveWordDef?.found ? (
+                      <div className="flex flex-col gap-1.5 text-left">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-mono font-black text-base sm:text-lg text-yellow-300 tracking-wider">
+                              📖 {liveWordDef.word}
+                            </span>
+                            {liveWordDef.partOfSpeech && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 italic">
+                                {liveWordDef.partOfSpeech}
+                              </span>
+                            )}
+                            {liveWordDef.phonetic && (
+                              <span className="text-[11px] sm:text-xs font-mono text-slate-400">
+                                {liveWordDef.phonetic}
+                              </span>
+                            )}
+                          </div>
+                          <span className="px-2 py-0.5 rounded-md text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                            ✓ Verified Dictionary Word
+                          </span>
+                        </div>
+                        <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-sans font-medium">
+                          {liveWordDef.definition}
+                        </p>
+                        {liveWordDef.example && (
+                          <p className="text-[11px] sm:text-xs text-purple-200/80 italic pl-2 border-l-2 border-purple-400/40 mt-0.5">
+                            &ldquo;{liveWordDef.example}&rdquo;
+                          </p>
+                        )}
+                        <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-slate-400 font-mono mt-1 pt-1 border-t border-white/5">
+                          <span>Source: {liveWordDef.source || 'Online Dictionary'}</span>
+                          <span className="text-yellow-400/80">💡 Meaning will be provided as a clue hint</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-rose-300 font-mono text-xs sm:text-sm">
+                        <span>⚠️</span>
+                        <span>{liveWordDef?.reason || `No dictionary definition found for "${secretWordInput}".`}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Always-visible Word Suggestions Panel for Setter */}
                 <div className="word-suggestions-panel" id="word-suggestions-panel">
                   <div className="suggestions-header">
@@ -3721,25 +3819,25 @@ export default function HangmanDuelApp() {
               <div className="grid grid-cols-1 md:grid-cols-12 gap-2 sm:gap-4 md:gap-5 lg:gap-6 items-stretch flex-1 min-h-0">
                 
                 {/* Left Column: Canvas (5 cols) */}
-                <div className="md:col-span-5 lg:col-span-5 flex flex-col items-center justify-center gap-1.5 sm:gap-2.5 p-2 sm:p-3 md:p-5 lg:p-6 rounded-2xl md:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl min-h-0">
-                  <div className="font-mono text-[9px] sm:text-[11px] md:text-xs text-slate-400 uppercase tracking-wider font-semibold">
+                <div className="md:col-span-5 lg:col-span-5 flex flex-col items-center justify-center gap-2 sm:gap-3 p-3 sm:p-4 md:p-6 rounded-2xl md:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl min-h-0">
+                  <div className="font-mono text-[10px] sm:text-xs md:text-sm text-slate-300 uppercase tracking-widest font-bold">
                     Gallows View
                   </div>
 
-                  <div className={`w-full max-w-[120px] sm:max-w-[170px] md:max-w-[220px] aspect-[11/12] flex items-center justify-center bg-black/30 rounded-lg sm:rounded-xl md:rounded-2xl border border-white/5 shadow-inner p-1 sm:p-2 ${isGallowsSwinging ? 'hangman-swing' : ''}`}>
-                    <canvas id="hangman-canvas" ref={hangmanCanvasRef} width={220} height={240} className="w-full h-full object-contain max-h-[100px] sm:max-h-[150px] md:max-h-[200px]" />
+                  <div className={`w-full max-w-[280px] sm:max-w-[340px] md:max-w-[380px] lg:max-w-[420px] aspect-[11/12] flex items-center justify-center bg-black/40 rounded-xl sm:rounded-2xl md:rounded-3xl border border-white/10 shadow-2xl p-2 sm:p-3.5 ${isGallowsSwinging ? 'hangman-swing' : ''}`}>
+                    <canvas id="hangman-canvas" ref={hangmanCanvasRef} width={330} height={360} className="w-full h-full object-contain max-h-[240px] sm:max-h-[300px] md:max-h-[360px]" />
                   </div>
 
                   {/* Stickman Live Dialogue Speech Pill - Only show after losing first life (mistakes >= 1) */}
                   {wrongGuesses.length >= 1 && currentDialogue && (
-                    <div className={`w-full max-w-[220px] px-2.5 py-1.5 rounded-xl border backdrop-blur-md text-center transition-all duration-300 shadow-md ${
+                    <div className={`w-full max-w-[300px] sm:max-w-[380px] px-3 py-2 rounded-xl sm:rounded-2xl border backdrop-blur-md text-center transition-all duration-300 shadow-md ${
                       stickmanMood === 'happy'
                         ? 'bg-emerald-950/80 border-emerald-500/40 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.25)]'
                         : stickmanMood === 'mean' || stickmanMood === 'panic'
                         ? 'bg-rose-950/90 border-rose-500/50 text-rose-300 shadow-[0_0_12px_rgba(244,63,94,0.3)] animate-shake'
                         : 'bg-purple-950/80 border-purple-500/40 text-purple-200 shadow-[0_0_12px_rgba(168,85,247,0.2)]'
                     }`}>
-                      <div className="text-[10px] sm:text-xs font-mono font-bold leading-snug flex items-center justify-center gap-1">
+                      <div className="text-[11px] sm:text-xs md:text-sm font-mono font-bold leading-snug flex items-center justify-center gap-1.5">
                         <span>{stickmanMood === 'happy' ? '😄' : stickmanMood === 'mean' ? '😈' : stickmanMood === 'panic' ? '😱' : '💬'}</span>
                         <span>&ldquo;{currentDialogue}&rdquo;</span>
                       </div>
@@ -3866,43 +3964,46 @@ export default function HangmanDuelApp() {
               </div>
 
               {/* 3. BOTTOM ROW: Interactive QWERTY Keyboard (Uniformly Responsive on Mobile & Laptop) */}
-              <div className="w-full p-2.5 sm:p-3.5 md:p-4 rounded-2xl md:rounded-3xl bg-[#12111f]/95 border border-white/10 backdrop-blur-2xl shadow-xl flex flex-col items-center gap-1 sm:gap-2">
-                <div className="font-mono text-[9px] sm:text-[11px] md:text-xs text-slate-400 uppercase tracking-wider text-center">
+              <div className="w-full p-3 sm:p-4 md:p-5 rounded-2xl md:rounded-3xl bg-[#12111f]/95 border border-white/10 backdrop-blur-2xl shadow-xl flex flex-col items-center gap-1.5 sm:gap-2.5">
+                <div className="font-mono text-[10px] sm:text-xs md:text-sm text-slate-300 uppercase tracking-widest text-center font-bold">
                   Interactive Virtual Keyboard
                 </div>
 
-                <div className="flex flex-col gap-1.5 sm:gap-2 w-full max-w-2xl mx-auto touch-manipulation items-center">
-                  {KEYBOARD_ROWS.map((row, rIdx) => (
-                    <div key={rIdx} className="flex justify-center gap-1 sm:gap-1.5 md:gap-2 w-full max-w-full touch-manipulation">
-                      {row.map((letter) => {
-                        const isGuessed = guessedSet.has(letter);
-                        const isWrong = wrongSet.has(letter);
-                        const isCorrect = isGuessed && !isWrong;
+                <div className="flex flex-col gap-1.5 sm:gap-2.5 md:gap-3 w-full max-w-5xl mx-auto touch-manipulation items-center px-1 sm:px-2">
+                  {KEYBOARD_ROWS.map((row, rIdx) => {
+                    const rowWidthClass = rIdx === 0 ? 'w-full' : rIdx === 1 ? 'w-full max-w-[95%]' : 'w-full max-w-[80%]';
+                    return (
+                      <div key={rIdx} className={`flex justify-center gap-1.5 sm:gap-2 md:gap-2.5 lg:gap-3 ${rowWidthClass} touch-manipulation`}>
+                        {row.map((letter) => {
+                          const isGuessed = guessedSet.has(letter);
+                          const isWrong = wrongSet.has(letter);
+                          const isCorrect = isGuessed && !isWrong;
 
-                        let keyClasses = '';
-                        if (isCorrect) {
-                          keyClasses = 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.5)] border border-emerald-400 scale-95 cursor-default font-black';
-                        } else if (isWrong) {
-                          keyClasses = 'bg-rose-950/70 text-rose-500/70 line-through border border-rose-900/50 cursor-not-allowed scale-95 opacity-60';
-                        } else {
-                          keyClasses = 'bg-[#252338] text-white hover:bg-[#34314c] hover:border-purple-500/40 border border-white/10 active:scale-95 cursor-pointer shadow-md hover:shadow-purple-500/20';
-                        }
+                          let keyClasses = '';
+                          if (isCorrect) {
+                            keyClasses = 'bg-emerald-500 text-white shadow-[0_0_18px_rgba(16,185,129,0.6)] border-2 border-emerald-400 scale-95 cursor-default font-black';
+                          } else if (isWrong) {
+                            keyClasses = 'bg-rose-950/70 text-rose-500/70 line-through border border-rose-900/50 cursor-not-allowed scale-95 opacity-60';
+                          } else {
+                            keyClasses = 'bg-[#252338] text-white hover:bg-[#34314c] hover:border-purple-500/50 border border-white/15 active:scale-95 cursor-pointer shadow-lg hover:shadow-purple-500/30';
+                          }
 
-                        return (
-                          <button
-                            key={letter}
-                            type="button"
-                            className={`flex-1 max-w-[34px] sm:max-w-none sm:flex-initial sm:w-10 md:w-11 lg:w-12 h-10 sm:h-11 md:h-12 lg:h-13 rounded-lg sm:rounded-xl font-mono font-bold text-xs sm:text-base md:text-lg flex items-center justify-center uppercase transition-all select-none touch-manipulation active:scale-95 ${keyClasses}`}
-                            aria-disabled={isGuessed || gameState === 'roundover'}
-                            onClick={() => handleGuessLetter(letter)}
-                            aria-label={`Letter ${letter}`}
-                          >
-                            {letter}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ))}
+                          return (
+                            <button
+                              key={letter}
+                              type="button"
+                              className={`flex-1 min-w-[28px] sm:min-w-[40px] md:min-w-[48px] max-w-[82px] h-12 sm:h-14 md:h-16 lg:h-18 rounded-xl sm:rounded-2xl font-mono font-black text-sm sm:text-lg md:text-xl lg:text-2xl flex items-center justify-center uppercase transition-all select-none touch-manipulation active:scale-95 ${keyClasses}`}
+                              aria-disabled={isGuessed || gameState === 'roundover'}
+                              onClick={() => handleGuessLetter(letter)}
+                              aria-label={`Letter ${letter}`}
+                            >
+                              {letter}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </section>
@@ -3916,25 +4017,25 @@ export default function HangmanDuelApp() {
               <div className="grid grid-cols-1 md:grid-cols-12 gap-2 sm:gap-4 md:gap-5 lg:gap-6 items-stretch flex-1 min-h-0">
                 
                 {/* Left Column: Canvas (5 cols) */}
-                <div className="md:col-span-5 lg:col-span-5 flex flex-col items-center justify-center gap-1.5 sm:gap-2.5 p-2 sm:p-3 md:p-5 lg:p-6 rounded-2xl md:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl min-h-0">
-                  <div className="font-mono text-[9px] sm:text-[11px] md:text-xs text-slate-400 uppercase tracking-wider font-semibold">
+                <div className="md:col-span-5 lg:col-span-5 flex flex-col items-center justify-center gap-2 sm:gap-3 p-3 sm:p-4 md:p-6 rounded-2xl md:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl min-h-0">
+                  <div className="font-mono text-[10px] sm:text-xs md:text-sm text-slate-300 uppercase tracking-widest font-bold">
                     Opponent&apos;s Gallows
                   </div>
 
-                  <div className={`w-full max-w-[120px] sm:max-w-[170px] md:max-w-[220px] aspect-[11/12] flex items-center justify-center bg-black/30 rounded-lg sm:rounded-xl md:rounded-2xl border border-white/5 shadow-inner p-1 sm:p-2 ${isGallowsSwinging ? 'hangman-swing' : ''}`}>
-                    <canvas id="hangman-canvas-watch" ref={hangmanWatchCanvasRef} width={220} height={240} className="w-full h-full object-contain max-h-[100px] sm:max-h-[150px] md:max-h-[200px]" />
+                  <div className={`w-full max-w-[280px] sm:max-w-[340px] md:max-w-[380px] lg:max-w-[420px] aspect-[11/12] flex items-center justify-center bg-black/40 rounded-xl sm:rounded-2xl md:rounded-3xl border border-white/10 shadow-2xl p-2 sm:p-3.5 ${isGallowsSwinging ? 'hangman-swing' : ''}`}>
+                    <canvas id="hangman-canvas-watch" ref={hangmanWatchCanvasRef} width={330} height={360} className="w-full h-full object-contain max-h-[240px] sm:max-h-[300px] md:max-h-[360px]" />
                   </div>
 
                   {/* Stickman Live Dialogue Speech Pill - Only show after losing first life (mistakes >= 1) */}
                   {wrongGuesses.length >= 1 && currentDialogue && (
-                    <div className={`w-full max-w-[220px] px-2.5 py-1.5 rounded-xl border backdrop-blur-md text-center transition-all duration-300 shadow-md ${
+                    <div className={`w-full max-w-[300px] sm:max-w-[380px] px-3 py-2 rounded-xl sm:rounded-2xl border backdrop-blur-md text-center transition-all duration-300 shadow-md ${
                       stickmanMood === 'happy'
                         ? 'bg-emerald-950/80 border-emerald-500/40 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.25)]'
                         : stickmanMood === 'mean' || stickmanMood === 'panic'
                         ? 'bg-rose-950/90 border-rose-500/50 text-rose-300 shadow-[0_0_12px_rgba(244,63,94,0.3)] animate-shake'
                         : 'bg-purple-950/80 border-purple-500/40 text-purple-200 shadow-[0_0_12px_rgba(168,85,247,0.2)]'
                     }`}>
-                      <div className="text-[10px] sm:text-xs font-mono font-bold leading-snug flex items-center justify-center gap-1">
+                      <div className="text-[11px] sm:text-xs md:text-sm font-mono font-bold leading-snug flex items-center justify-center gap-1.5">
                         <span>{stickmanMood === 'happy' ? '😄' : stickmanMood === 'mean' ? '😈' : stickmanMood === 'panic' ? '😱' : '💬'}</span>
                         <span>&ldquo;{currentDialogue}&rdquo;</span>
                       </div>

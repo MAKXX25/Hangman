@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { getRandomFact } from '../lib/facts.js';
 import { getRandomSuggestions, isValidWord } from '../lib/dictionary.js';
 import { playMechanicalClick } from '../lib/audio.js';
+import { lookupWordDefinition } from '../lib/dictionaryApi.js';
 
 export default function WordSetterPanel({
   timerSecondsLeft = 60,
@@ -13,6 +14,8 @@ export default function WordSetterPanel({
   const [errorText, setErrorText] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [currentFact, setCurrentFact] = useState('');
+  const [liveWordDef, setLiveWordDef] = useState(null);
+  const [isLookingUpDef, setIsLookingUpDef] = useState(false);
 
   useEffect(() => {
     setSuggestions(getRandomSuggestions(3));
@@ -22,6 +25,30 @@ export default function WordSetterPanel({
     }, 7000);
     return () => clearInterval(interval);
   }, []);
+
+  // Real-time live online dictionary definition lookup as setter types
+  useEffect(() => {
+    const clean = (inputVal || '').trim().toUpperCase();
+    if (clean.length < 3 || !/^[A-Z]+$/.test(clean)) {
+      setLiveWordDef(null);
+      setIsLookingUpDef(false);
+      return;
+    }
+
+    setIsLookingUpDef(true);
+    const timer = setTimeout(async () => {
+      try {
+        const data = await lookupWordDefinition(clean);
+        setLiveWordDef(data);
+      } catch {
+        setLiveWordDef(null);
+      } finally {
+        setIsLookingUpDef(false);
+      }
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [inputVal]);
 
   const handleSubmit = (wordToSubmit) => {
     const word = (wordToSubmit || inputVal).trim().toUpperCase();
@@ -117,6 +144,54 @@ export default function WordSetterPanel({
           </button>
         </div>
         {errorText && <div className="word-validation-error">{errorText}</div>}
+
+        {/* Real-Time Online Dictionary Meaning & Definition Card */}
+        {(isLookingUpDef || (inputVal.length >= 3 && liveWordDef)) && (
+          <div className="w-full max-w-xl mx-auto my-3 p-3.5 rounded-xl bg-purple-950/40 border border-purple-500/35 backdrop-blur-xl shadow-lg transition-all animate-fadeIn">
+            {isLookingUpDef ? (
+              <div className="flex items-center justify-center gap-2 py-1.5 text-purple-300 font-mono text-xs">
+                <div className="w-3.5 h-3.5 rounded-full border-2 border-purple-400 border-t-transparent animate-spin"></div>
+                <span>Parsing online dictionary for &ldquo;{inputVal}&rdquo;…</span>
+              </div>
+            ) : liveWordDef?.found ? (
+              <div className="flex flex-col gap-1 text-left">
+                <div className="flex items-center justify-between flex-wrap gap-1">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-mono font-bold text-sm text-yellow-300">
+                      📖 {liveWordDef.word}
+                    </span>
+                    {liveWordDef.partOfSpeech && (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-cyan-500/20 text-cyan-300 italic">
+                        {liveWordDef.partOfSpeech}
+                      </span>
+                    )}
+                    {liveWordDef.phonetic && (
+                      <span className="text-[10px] font-mono text-slate-400">
+                        {liveWordDef.phonetic}
+                      </span>
+                    )}
+                  </div>
+                  <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                    ✓ Verified
+                  </span>
+                </div>
+                <p className="text-xs text-slate-200 leading-relaxed font-sans">
+                  {liveWordDef.definition}
+                </p>
+                {liveWordDef.example && (
+                  <p className="text-[11px] text-purple-200/80 italic pl-1.5 border-l-2 border-purple-400/40">
+                    &ldquo;{liveWordDef.example}&rdquo;
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 text-rose-300 font-mono text-xs">
+                <span>⚠️</span>
+                <span>{liveWordDef?.reason || `No dictionary definition found for "${inputVal}".`}</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Suggested Words */}

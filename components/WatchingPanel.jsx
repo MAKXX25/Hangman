@@ -80,12 +80,12 @@ export default function WatchingPanel({
       <div className="grid grid-cols-1 md:grid-cols-12 gap-2 sm:gap-4 md:gap-5 lg:gap-6 items-stretch flex-1 min-h-0">
         
         {/* Left Column: Visuals & Canvas (5 cols) */}
-        <div className="md:col-span-5 lg:col-span-5 flex flex-col items-center justify-center gap-1.5 sm:gap-2.5 p-2 sm:p-3 md:p-5 lg:p-6 rounded-2xl md:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl min-h-0">
-          <div className="font-mono text-[9px] sm:text-[11px] md:text-xs text-slate-400 uppercase tracking-wider font-semibold">
+        <div className="md:col-span-5 lg:col-span-5 flex flex-col items-center justify-center gap-2 sm:gap-3 p-3 sm:p-4 md:p-6 rounded-2xl md:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl min-h-0">
+          <div className="font-mono text-[10px] sm:text-xs md:text-sm text-slate-300 uppercase tracking-widest font-bold">
             Opponent&apos;s Gallows
           </div>
 
-          <div className="w-full max-w-[120px] sm:max-w-[170px] md:max-w-[220px] aspect-[11/12] flex items-center justify-center bg-black/30 rounded-lg sm:rounded-xl md:rounded-2xl border border-white/5 shadow-inner p-1 sm:p-2">
+          <div className="w-full max-w-[280px] sm:max-w-[340px] md:max-w-[380px] lg:max-w-[420px] aspect-[11/12] flex items-center justify-center bg-black/40 rounded-xl sm:rounded-2xl md:rounded-3xl border border-white/10 shadow-2xl p-2 sm:p-3.5">
             <HangmanCanvas
               livesLeft={livesLeft}
               maxLives={maxLives}

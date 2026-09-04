@@ -109,12 +109,12 @@ export default function GuesserPanel({
       <div className="grid grid-cols-1 md:grid-cols-12 gap-2 sm:gap-4 md:gap-5 lg:gap-6 items-stretch flex-1 min-h-0">
         
         {/* Left Column: Visuals & Canvas (5 cols) */}
-        <div className="md:col-span-5 lg:col-span-5 flex flex-col items-center justify-center gap-1.5 sm:gap-2.5 p-2 sm:p-3 md:p-5 lg:p-6 rounded-2xl md:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl min-h-0">
-          <div className="font-mono text-[9px] sm:text-[11px] md:text-xs text-slate-400 uppercase tracking-wider font-semibold">
+        <div className="md:col-span-5 lg:col-span-5 flex flex-col items-center justify-center gap-2 sm:gap-3 p-3 sm:p-4 md:p-6 rounded-2xl md:rounded-3xl bg-[#12111f]/90 border border-white/10 backdrop-blur-2xl shadow-xl min-h-0">
+          <div className="font-mono text-[10px] sm:text-xs md:text-sm text-slate-300 uppercase tracking-widest font-bold">
             Gallows View
           </div>
 
-          <div className="w-full max-w-[120px] sm:max-w-[170px] md:max-w-[220px] aspect-[11/12] flex items-center justify-center bg-black/30 rounded-lg sm:rounded-xl md:rounded-2xl border border-white/5 shadow-inner p-1 sm:p-2">
+          <div className="w-full max-w-[280px] sm:max-w-[340px] md:max-w-[380px] lg:max-w-[420px] aspect-[11/12] flex items-center justify-center bg-black/40 rounded-xl sm:rounded-2xl md:rounded-3xl border border-white/10 shadow-2xl p-2 sm:p-3.5">
             <HangmanCanvas
               livesLeft={livesLeft}
               maxLives={maxLives}
@@ -235,52 +235,55 @@ export default function GuesserPanel({
         </div>
       </div>
 
-      {/* ─── 3. BOTTOM ROW: Interactive QWERTY Keyboard (Optimized for Mobile) ─────────────────────── */}
-      <div className="w-full p-2.5 sm:p-3.5 md:p-4 rounded-2xl md:rounded-3xl bg-[#12111f]/95 border border-white/10 backdrop-blur-2xl shadow-xl flex flex-col items-center gap-1 sm:gap-2">
-        <div className="font-mono text-[9px] sm:text-[11px] md:text-xs text-slate-400 uppercase tracking-wider text-center">
+      {/* ─── 3. BOTTOM ROW: Interactive QWERTY Keyboard (Optimized for Mobile & Desktop) ─────────────────────── */}
+      <div className="w-full p-3 sm:p-4 md:p-5 rounded-2xl md:rounded-3xl bg-[#12111f]/95 border border-white/10 backdrop-blur-2xl shadow-xl flex flex-col items-center gap-1.5 sm:gap-2.5">
+        <div className="font-mono text-[10px] sm:text-xs md:text-sm text-slate-300 uppercase tracking-widest text-center font-bold">
           Interactive Virtual Keyboard
         </div>
 
-        <div className="flex flex-col gap-1.5 sm:gap-2 w-full max-w-2xl mx-auto touch-manipulation items-center">
-          {KEYBOARD_ROWS.map((row, rowIndex) => (
-            <div key={rowIndex} className="flex justify-center gap-1 sm:gap-1.5 md:gap-2 w-full max-w-full touch-manipulation">
-              {row.map((letter) => {
-                const isGuessed = guessedSet.has(letter);
-                const isCorrect = isGuessed && upperWord.includes(letter);
-                const isWrong = isGuessed && !upperWord.includes(letter);
+        <div className="flex flex-col gap-1.5 sm:gap-2.5 md:gap-3 w-full max-w-5xl mx-auto touch-manipulation items-center px-1 sm:px-2">
+          {KEYBOARD_ROWS.map((row, rowIndex) => {
+            const rowWidthClass = rowIndex === 0 ? 'w-full' : rowIndex === 1 ? 'w-full max-w-[95%]' : 'w-full max-w-[80%]';
+            return (
+              <div key={rowIndex} className={`flex justify-center gap-1.5 sm:gap-2 md:gap-2.5 lg:gap-3 ${rowWidthClass} touch-manipulation`}>
+                {row.map((letter) => {
+                  const isGuessed = guessedSet.has(letter);
+                  const isCorrect = isGuessed && upperWord.includes(letter);
+                  const isWrong = isGuessed && !upperWord.includes(letter);
 
-                let keyClasses = '';
-                if (isCorrect) {
-                  keyClasses =
-                    'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.5)] border border-emerald-400 scale-95 cursor-default font-black';
-                } else if (isWrong) {
-                  keyClasses =
-                    'bg-rose-950/70 text-rose-500/70 line-through border border-rose-900/50 cursor-not-allowed scale-95 opacity-60';
-                } else {
-                  keyClasses =
-                    'bg-[#252338] text-white hover:bg-[#34314c] hover:border-purple-500/40 border border-white/10 active:scale-95 cursor-pointer shadow-md hover:shadow-purple-500/20';
-                }
+                  let keyClasses = '';
+                  if (isCorrect) {
+                    keyClasses =
+                      'bg-emerald-500 text-white shadow-[0_0_18px_rgba(16,185,129,0.6)] border-2 border-emerald-400 scale-95 cursor-default font-black';
+                  } else if (isWrong) {
+                    keyClasses =
+                      'bg-rose-950/70 text-rose-500/70 line-through border border-rose-900/50 cursor-not-allowed scale-95 opacity-60';
+                  } else {
+                    keyClasses =
+                      'bg-[#252338] text-white hover:bg-[#34314c] hover:border-purple-500/50 border border-white/15 active:scale-95 cursor-pointer shadow-lg hover:shadow-purple-500/30';
+                  }
 
-                return (
-                  <button
-                    key={letter}
-                    type="button"
-                    aria-disabled={isGuessed || isRoundOver}
-                    onClick={() => {
-                      playMechanicalClick();
-                      if (!isGuessed && !isRoundOver) {
-                        onGuessLetter(letter);
-                      }
-                    }}
-                    className={`flex-1 max-w-[34px] sm:max-w-none sm:flex-initial sm:w-10 md:w-11 lg:w-12 h-10 sm:h-11 md:h-12 lg:h-13 rounded-lg sm:rounded-xl font-mono font-bold text-xs sm:text-base md:text-lg flex items-center justify-center uppercase transition-all select-none touch-manipulation active:scale-95 ${keyClasses}`}
-                    aria-label={`Letter ${letter}`}
-                  >
-                    {letter}
-                  </button>
-                );
-              })}
-            </div>
-          ))}
+                  return (
+                    <button
+                      key={letter}
+                      type="button"
+                      aria-disabled={isGuessed || isRoundOver}
+                      onClick={() => {
+                        playMechanicalClick();
+                        if (!isGuessed && !isRoundOver) {
+                          onGuessLetter(letter);
+                        }
+                      }}
+                      className={`flex-1 min-w-[28px] sm:min-w-[40px] md:min-w-[48px] max-w-[82px] h-12 sm:h-14 md:h-16 lg:h-18 rounded-xl sm:rounded-2xl font-mono font-black text-sm sm:text-lg md:text-xl lg:text-2xl flex items-center justify-center uppercase transition-all select-none touch-manipulation active:scale-95 ${keyClasses}`}
+                      aria-label={`Letter ${letter}`}
+                    >
+                      {letter}
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

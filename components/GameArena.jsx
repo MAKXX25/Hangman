@@ -156,50 +156,53 @@ export default function GameArena({
         </div>
 
         {/* Keyboard Key Rows */}
-        <div className="flex flex-col gap-1.5 sm:gap-2 w-full max-w-3xl mx-auto touch-manipulation">
-          {KEYBOARD_ROWS.map((row, rowIndex) => (
-            <div key={rowIndex} className="flex justify-center gap-1 sm:gap-1.5 md:gap-2 w-full touch-manipulation">
-              {row.map((letter) => {
-                const isGuessed = guessedSet.has(letter);
-                const isCorrect = isGuessed && upperSecretWord.includes(letter);
-                const isWrong = isGuessed && !upperSecretWord.includes(letter);
+        <div className="flex flex-col gap-1.5 sm:gap-2.5 md:gap-3 w-full max-w-5xl mx-auto touch-manipulation px-1 sm:px-2">
+          {KEYBOARD_ROWS.map((row, rowIndex) => {
+            const rowWidthClass = rowIndex === 0 ? 'w-full' : rowIndex === 1 ? 'w-full max-w-[95%]' : 'w-full max-w-[80%]';
+            return (
+              <div key={rowIndex} className={`flex justify-center gap-1.5 sm:gap-2 md:gap-2.5 lg:gap-3 ${rowWidthClass} touch-manipulation`}>
+                {row.map((letter) => {
+                  const isGuessed = guessedSet.has(letter);
+                  const isCorrect = isGuessed && upperSecretWord.includes(letter);
+                  const isWrong = isGuessed && !upperSecretWord.includes(letter);
 
-                let keyClasses = '';
-                if (isCorrect) {
-                  // Correct Guess
-                  keyClasses =
-                    'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.5)] border border-emerald-400 scale-95 cursor-default';
-                } else if (isWrong) {
-                  // Wrong Guess
-                  keyClasses =
-                    'bg-rose-950/60 text-rose-500/70 line-through border border-rose-900/50 cursor-not-allowed scale-95';
-                } else {
-                  // Default / Unguessed
-                  keyClasses = isChooser
-                    ? 'bg-[#2a2a35] text-white/70 border border-white/5 cursor-default'
-                    : 'bg-[#2a2a35] text-white/80 hover:bg-[#3a3a45] hover:text-white border border-white/5 active:scale-90 cursor-pointer';
-                }
+                  let keyClasses = '';
+                  if (isCorrect) {
+                    // Correct Guess
+                    keyClasses =
+                      'bg-emerald-500 text-white shadow-[0_0_18px_rgba(16,185,129,0.6)] border-2 border-emerald-400 scale-95 cursor-default font-black';
+                  } else if (isWrong) {
+                    // Wrong Guess
+                    keyClasses =
+                      'bg-rose-950/70 text-rose-500/70 line-through border border-rose-900/50 cursor-not-allowed scale-95 opacity-60';
+                  } else {
+                    // Default / Unguessed
+                    keyClasses = isChooser
+                      ? 'bg-[#2a2a35] text-white/70 border border-white/5 cursor-default'
+                      : 'bg-[#252338] text-white hover:bg-[#34314c] hover:border-purple-500/50 border border-white/15 active:scale-95 cursor-pointer shadow-lg hover:shadow-purple-500/30';
+                  }
 
-                return (
-                  <button
-                    key={letter}
-                    type="button"
-                    aria-disabled={isGuessed || disabled || isChooser}
-                    onClick={() => {
-                      playMechanicalClick();
-                      if (!isGuessed && !disabled && !isChooser) {
-                        onGuessLetter(letter);
-                      }
-                    }}
-                    className={`flex-1 max-w-[34px] sm:max-w-[44px] md:max-w-[50px] h-9 sm:h-11 md:h-12 rounded-md sm:rounded-lg font-mono font-bold text-xs sm:text-sm md:text-base flex items-center justify-center uppercase transition-all select-none touch-manipulation active:scale-90 ${keyClasses}`}
-                    aria-label={`Letter ${letter}`}
-                  >
-                    {letter}
-                  </button>
-                );
-              })}
-            </div>
-          ))}
+                  return (
+                    <button
+                      key={letter}
+                      type="button"
+                      aria-disabled={isGuessed || disabled || isChooser}
+                      onClick={() => {
+                        playMechanicalClick();
+                        if (!isGuessed && !disabled && !isChooser) {
+                          onGuessLetter(letter);
+                        }
+                      }}
+                      className={`flex-1 min-w-[28px] sm:min-w-[40px] md:min-w-[48px] max-w-[82px] h-11 sm:h-13 md:h-15 lg:h-17 rounded-xl sm:rounded-2xl font-mono font-black text-sm sm:text-lg md:text-xl flex items-center justify-center uppercase transition-all select-none touch-manipulation active:scale-95 shadow-md ${keyClasses}`}
+                      aria-label={`Letter ${letter}`}
+                    >
+                      {letter}
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })}
         </div>
       </section>
 

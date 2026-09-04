@@ -1,401 +1,2672 @@
 [
-  { "word": "APPLE", "meaning": "A round fruit with red, green, or yellow skin and crisp white flesh.", "difficulty": "easy" },
-  { "word": "BANANA", "meaning": "A long curved tropical fruit with yellow skin and soft sweet flesh.", "difficulty": "easy" },
-  { "word": "BEACH", "meaning": "A pebbly or sandy shore by the ocean or a lake.", "difficulty": "easy" },
-  { "word": "BIRD", "meaning": "A warm-blooded egg-laying feathered vertebrate with wings.", "difficulty": "easy" },
-  { "word": "BOOK", "meaning": "A set of written or printed pages bound together.", "difficulty": "easy" },
-  { "word": "BREAD", "meaning": "Food made of flour, water, and yeast baked in an oven.", "difficulty": "easy" },
-  { "word": "BUTTER", "meaning": "A pale yellow fatty substance made by churning cream.", "difficulty": "easy" },
-  { "word": "CANDLE", "meaning": "A cylinder of wax with a central wick that is lit to give light.", "difficulty": "easy" },
-  { "word": "CASTLE", "meaning": "A large fortified building or residence of medieval nobility.", "difficulty": "easy" },
-  { "word": "CHAIR", "meaning": "A separate seat for one person, typically with four legs and a back.", "difficulty": "easy" },
-  { "word": "CHERRY", "meaning": "A small, round stone fruit that is typically bright or dark red.", "difficulty": "easy" },
-  { "word": "CIRCLE", "meaning": "A round plane figure whose boundary consists of points equidistant from the center.", "difficulty": "easy" },
-  { "word": "CLOCK", "meaning": "A mechanical or electronic device for measuring and displaying time.", "difficulty": "easy" },
-  { "word": "CLOUD", "meaning": "A visible mass of condensed water vapor floating in the atmosphere.", "difficulty": "easy" },
-  { "word": "DANCE", "meaning": "To move rhythmically to music, typically following a sequence of steps.", "difficulty": "easy" },
-  { "word": "DOLPHIN", "meaning": "A highly intelligent aquatic mammal with a sleek body and beak-like snout.", "difficulty": "easy" },
-  { "word": "DOOR", "meaning": "A hinged or sliding barrier used for closing an entrance to a room or building.", "difficulty": "easy" },
-  { "word": "DRAGON", "meaning": "A mythical monster like a giant reptile, typically breathing fire.", "difficulty": "easy" },
-  { "word": "DUCK", "meaning": "A waterbird with a broad blunt bill, short legs, and webbed feet.", "difficulty": "easy" },
-  { "word": "EAGLE", "meaning": "A large bird of prey with a massive hooked bill and broad wings.", "difficulty": "easy" },
-  { "word": "EARTH", "meaning": "The planet on which we live; the third planet from the sun.", "difficulty": "easy" },
-  { "word": "ELEPHANT", "meaning": "A very large herbivorous mammal with a long trunk and ivory tusks.", "difficulty": "easy" },
-  { "word": "FISH", "meaning": "A limbless cold-blooded vertebrate animal with gills and fins living in water.", "difficulty": "easy" },
-  { "word": "FLOWER", "meaning": "The seed-bearing part of a plant consisting of reproductive organs and petals.", "difficulty": "easy" },
-  { "word": "FOREST", "meaning": "A large area covered chiefly with trees and undergrowth.", "difficulty": "easy" },
-  { "word": "FRIEND", "meaning": "A person with whom one has a bond of mutual affection.", "difficulty": "easy" },
-  { "word": "FROG", "meaning": "A tailless amphibian with a short squat body and very long hind legs for leaping.", "difficulty": "easy" },
-  { "word": "GARDEN", "meaning": "A piece of ground adjoining a house used for growing flowers, fruit, or vegetables.", "difficulty": "easy" },
-  { "word": "GIRAFFE", "meaning": "A large African mammal with a very long neck and patterned coat.", "difficulty": "easy" },
-  { "word": "GLASS", "meaning": "A hard, brittle transparent substance made by fusing sand with soda and lime.", "difficulty": "easy" },
-  { "word": "GOLD", "meaning": "A yellow precious metal, valued especially for use in jewelry and currency.", "difficulty": "easy" },
-  { "word": "GRAPES", "meaning": "A green or purple berry growing in clusters on a grapevine.", "difficulty": "easy" },
-  { "word": "GUITAR", "meaning": "A stringed musical instrument with a fretted fingerboard and six or twelve strings.", "difficulty": "easy" },
-  { "word": "HAMMER", "meaning": "A tool with a heavy metal head used for pounding nails or forging metal.", "difficulty": "easy" },
-  { "word": "HEART", "meaning": "The hollow muscular organ that pumps the blood through the circulatory system.", "difficulty": "easy" },
-  { "word": "HERO", "meaning": "A person admired for courage, outstanding achievements, or noble qualities.", "difficulty": "easy" },
-  { "word": "HORSE", "meaning": "A large domesticated plant-eating mammal with solid hooves and a flowing mane.", "difficulty": "easy" },
-  { "word": "HOUSE", "meaning": "A building for human habitation, especially one that is lived in by a family.", "difficulty": "easy" },
-  { "word": "ISLAND", "meaning": "A piece of land surrounded by water on all sides.", "difficulty": "easy" },
-  { "word": "JUNGLE", "meaning": "An area of land overgrown with dense forest and tangled vegetation.", "difficulty": "easy" },
-  { "word": "KING", "meaning": "The male sovereign ruler of an independent state.", "difficulty": "easy" },
-  { "word": "KITTEN", "meaning": "A young domesticated cat.", "difficulty": "easy" },
-  { "word": "LEAF", "meaning": "A flattened structure of a higher plant, typically green and bladelike.", "difficulty": "easy" },
-  { "word": "LEMON", "meaning": "A yellow oval citrus fruit with thick skin and acidic juice.", "difficulty": "easy" },
-  { "word": "LIGHT", "meaning": "The natural agent that stimulates sight and makes things visible.", "difficulty": "easy" },
-  { "word": "LION", "meaning": "A large predatory feline mammal native to Africa and India.", "difficulty": "easy" },
-  { "word": "LIZARD", "meaning": "A reptile that typically has a long body, four legs, movable eyelids, and a tail.", "difficulty": "easy" },
-  { "word": "MAGIC", "meaning": "The power of apparently influencing events by using mysterious or supernatural forces.", "difficulty": "easy" },
-  { "word": "MONKEY", "meaning": "A small to medium-sized primate that typically has a long tail.", "difficulty": "easy" },
-  { "word": "MOON", "meaning": "The natural satellite that orbits the planet Earth.", "difficulty": "easy" },
-  { "word": "MORNING", "meaning": "The period of time between sunrise and midday.", "difficulty": "easy" },
-  { "word": "MOUNTAIN", "meaning": "A large natural elevation of the earth's surface rising abruptly from the surrounding level.", "difficulty": "easy" },
-  { "word": "MUSIC", "meaning": "Vocal or instrumental sounds combined in such a way as to produce beauty of form and harmony.", "difficulty": "easy" },
-  { "word": "OCEAN", "meaning": "A very large expanse of sea, in particular each of the main areas into which the sea is divided.", "difficulty": "easy" },
-  { "word": "ORANGE", "meaning": "A round citrus fruit with a tough bright reddish-yellow rind and sweet juicy pulp.", "difficulty": "easy" },
-  { "word": "PAPER", "meaning": "Material manufactured in thin sheets from the pulp of wood or other plants.", "difficulty": "easy" },
-  { "word": "PENCIL", "meaning": "An instrument for writing or drawing, consisting of a thin stick of graphite.", "difficulty": "easy" },
-  { "word": "PENGUIN", "meaning": "A flightless seabird of southern waters with flipper-like wings and upright posture.", "difficulty": "easy" },
-  { "word": "PIANO", "meaning": "A large keyboard musical instrument with a wooden soundboard and wire strings.", "difficulty": "easy" },
-  { "word": "PLANET", "meaning": "A celestial body moving in an elliptical orbit around a star.", "difficulty": "easy" },
-  { "word": "PLANT", "meaning": "A living organism of the kind exemplified by trees, shrubs, herbs, and grasses.", "difficulty": "easy" },
-  { "word": "POCKET", "meaning": "A small bag sewn into or on clothing so as to form part of it, used for carrying small items.", "difficulty": "easy" },
-  { "word": "QUEEN", "meaning": "The female ruler of an independent state, especially one who inherits the position.", "difficulty": "easy" },
-  { "word": "RABBIT", "meaning": "A burrowing, gregarious plant-eating mammal with long ears, long hind legs, and a short tail.", "difficulty": "easy" },
-  { "word": "RAINBOW", "meaning": "An arch of colors formed in the sky in certain circumstances, caused by refraction of sunlight.", "difficulty": "easy" },
-  { "word": "RIVER", "meaning": "A large natural stream of water flowing in a channel to the sea, a lake, or another stream.", "difficulty": "easy" },
-  { "word": "ROBOT", "meaning": "A machine capable of carrying out a complex series of actions automatically.", "difficulty": "easy" },
-  { "word": "ROCKET", "meaning": "A cylindrical projectile that can be propelled to a great height or into space by gas exhaust.", "difficulty": "easy" },
-  { "word": "ROSE", "meaning": "A prickly bush or shrub that typically bears fragrant flowers.", "difficulty": "easy" },
-  { "word": "SCHOOL", "meaning": "An institution for educating children or adults.", "difficulty": "easy" },
-  { "word": "SHADOW", "meaning": "A dark area or shape produced by a body coming between rays of light and a surface.", "difficulty": "easy" },
-  { "word": "SHEEP", "meaning": "A domesticated ruminant animal with a thick woolly coat and typically curved horns in the male.", "difficulty": "easy" },
-  { "word": "SHIP", "meaning": "A large seafaring vessel capable of carrying passengers or cargo across oceans.", "difficulty": "easy" },
-  { "word": "SILVER", "meaning": "A precious shiny grayish-white metal element.", "difficulty": "easy" },
-  { "word": "SMILE", "meaning": "A pleased, kind, or amused facial expression, typically with the corners of the mouth turned up.", "difficulty": "easy" },
-  { "word": "SNAKE", "meaning": "A long limbless reptile that has no eyelids, a short tail, and jaws that can unhinge.", "difficulty": "easy" },
-  { "word": "SPIDER", "meaning": "An eight-legged predatory arachnid with an unsegmented body and venomous fangs.", "difficulty": "easy" },
-  { "word": "SPRING", "meaning": "The season after winter and before summer, in which vegetation begins to appear.", "difficulty": "easy" },
-  { "word": "SQUARE", "meaning": "A plane figure with four equal straight sides and four right angles.", "difficulty": "easy" },
-  { "word": "STAR", "meaning": "A luminous celestial sphere of plasma held together by its own gravity.", "difficulty": "easy" },
-  { "word": "STREET", "meaning": "A public road in a city, town, or village, typically with houses and buildings on one or both sides.", "difficulty": "easy" },
-  { "word": "SUMMER", "meaning": "The warmest season of the year, between spring and autumn.", "difficulty": "easy" },
-  { "word": "SUNSET", "meaning": "The time in the evening when the sun disappears or daylight fades.", "difficulty": "easy" },
-  { "word": "SWEET", "meaning": "Having the pleasant taste characteristic of sugar or honey.", "difficulty": "easy" },
-  { "word": "TABLE", "meaning": "A piece of furniture with a flat top and one or more legs, providing a level surface.", "difficulty": "easy" },
-  { "word": "TIGER", "meaning": "A very large solitary cat with a yellow-brown coat striped with black.", "difficulty": "easy" },
-  { "word": "TRAIN", "meaning": "A series of connected railway carriages or wagons moved by a locomotive.", "difficulty": "easy" },
-  { "word": "TREE", "meaning": "A woody perennial plant typically having a single stem or trunk growing to considerable height.", "difficulty": "easy" },
-  { "word": "TURTLE", "meaning": "A slow-moving reptile with a hard bony or leathery shell into which it can withdraw its head and legs.", "difficulty": "easy" },
-  { "word": "UMBRELLA", "meaning": "A device consisting of a circular canopy of cloth on a folding metal frame supported by a central rod.", "difficulty": "easy" },
-  { "word": "VALLEY", "meaning": "A low area of land between hills or mountains, typically with a river or stream flowing through it.", "difficulty": "easy" },
-  { "word": "VILLAGE", "meaning": "A group of houses and associated buildings, larger than a hamlet and smaller than a town.", "difficulty": "easy" },
-  { "word": "WATER", "meaning": "A colorless, transparent, odorless liquid that forms the seas, lakes, rivers, and rain.", "difficulty": "easy" },
-  { "word": "WINDOW", "meaning": "An opening in the wall or roof of a building fitted with glass in a frame for admitting light.", "difficulty": "easy" },
-  { "word": "WINTER", "meaning": "The coldest season of the year, between autumn and spring.", "difficulty": "easy" },
-  { "word": "WOLF", "meaning": "A wild carnivorous mammal of the dog family living and hunting in packs.", "difficulty": "easy" },
-  { "word": "YELLOW", "meaning": "The color between green and orange in the spectrum, a primary subtractive color.", "difficulty": "easy" },
-  { "word": "ZEBRA", "meaning": "An African wild horse with black-and-white stripes and an erect mane.", "difficulty": "easy" },
-
-  { "word": "ANCHOR", "meaning": "A heavy metal device dropped to the sea bottom to hold a ship in place.", "difficulty": "medium" },
-  { "word": "AURORA", "meaning": "A natural luminous atmospheric display of glowing polar lights.", "difficulty": "medium" },
-  { "word": "BLIZZARD", "meaning": "A severe snowstorm with high winds and low visibility.", "difficulty": "medium" },
-  { "word": "BRIDGE", "meaning": "A structure carrying a road, path, railroad, or canal across an obstacle.", "difficulty": "medium" },
-  { "word": "CANYON", "meaning": "A deep gorge, typically one with a river flowing through it.", "difficulty": "medium" },
-  { "word": "CARAVAN", "meaning": "A group of people, especially traders or pilgrims, traveling together across a desert.", "difficulty": "medium" },
-  { "word": "CASCADE", "meaning": "A small waterfall, typically one of several that fall in stages down a steep rocky slope.", "difficulty": "medium" },
-  { "word": "CENTURY", "meaning": "A period of one hundred years.", "difficulty": "medium" },
-  { "word": "CHAMPION", "meaning": "A person who has defeated or surpassed all rivals in a competition.", "difficulty": "medium" },
-  { "word": "COMPASS", "meaning": "An instrument containing a magnetized pointer that shows the direction of magnetic north.", "difficulty": "medium" },
-  { "word": "COSMOS", "meaning": "The universe seen as a well-ordered, harmonious whole.", "difficulty": "medium" },
-  { "word": "CRYSTAL", "meaning": "A piece of homogeneous solid substance having a natural geometrically regular form.", "difficulty": "medium" },
-  { "word": "CYCLONE", "meaning": "A system of winds rotating inward to an area of low atmospheric pressure.", "difficulty": "medium" },
-  { "word": "DIAMOND", "meaning": "A precious gemstone of pure crystallized carbon, the hardest known natural mineral.", "difficulty": "medium" },
-  { "word": "DIPLOMA", "meaning": "A certificate awarded by an educational establishment to show successful completion of a course.", "difficulty": "medium" },
-  { "word": "DYNAMITE", "meaning": "A high explosive consisting of nitroglycerine mixed with an absorbent material.", "difficulty": "medium" },
-  { "word": "ECLIPSE", "meaning": "An obscuring of the light from one celestial body by the passage of another between it and the observer.", "difficulty": "medium" },
-  { "word": "EMERALD", "meaning": "A bright green precious gemstone variety of beryl.", "difficulty": "medium" },
-  { "word": "EMPEROR", "meaning": "A sovereign ruler of great power and rank, especially one ruling an empire.", "difficulty": "medium" },
-  { "word": "EXPLORER", "meaning": "A person who explores an unfamiliar area in search of geographical or scientific information.", "difficulty": "medium" },
-  { "word": "FALCON", "meaning": "A bird of prey with long, pointed wings and a notched beak, capable of high-speed flight.", "difficulty": "medium" },
-  { "word": "FEATHER", "meaning": "Any of the flat appendages growing from a bird's skin forming its plumage.", "difficulty": "medium" },
-  { "word": "FORTRESS", "meaning": "A military stronghold, especially a strongly fortified town fit for a large garrison.", "difficulty": "medium" },
-  { "word": "FOSSIL", "meaning": "The remains or impression of a prehistoric organism preserved in petrified form.", "difficulty": "medium" },
-  { "word": "FOUNTAIN", "meaning": "An ornamental structure in a pool or lake from which one or more jets of water are pumped.", "difficulty": "medium" },
-  { "word": "GALAXY", "meaning": "A gravitationally bound system of billions of stars, stellar remnants, gas, and dust.", "difficulty": "medium" },
-  { "word": "GLACIER", "meaning": "A slowly moving mass of dense river ice formed by the accumulation of snow.", "difficulty": "medium" },
-  { "word": "HARBOR", "meaning": "A sheltered body of water where ships, boats, and barges can dock safely.", "difficulty": "medium" },
-  { "word": "HARMONY", "meaning": "The combination of simultaneously sounded musical notes to produce pleasing chords.", "difficulty": "medium" },
-  { "word": "HORIZON", "meaning": "The line at which the earth's surface and the sky appear to meet.", "difficulty": "medium" },
-  { "word": "HURRICANE", "meaning": "A storm with a violent wind, in particular a tropical cyclone in the Caribbean.", "difficulty": "medium" },
-  { "word": "ICEBERG", "meaning": "A large floating mass of ice detached from a glacier or ice sheet and carried out to sea.", "difficulty": "medium" },
-  { "word": "ILLUSION", "meaning": "A thing that is or is likely to be wrongly perceived or interpreted by the senses.", "difficulty": "medium" },
-  { "word": "JEWELRY", "meaning": "Personal ornaments, such as necklaces, rings, or bracelets, that are typically made from precious metals.", "difficulty": "medium" },
-  { "word": "JOURNEY", "meaning": "An act of traveling from one place to another, especially over a long distance.", "difficulty": "medium" },
-  { "word": "JUPITER", "meaning": "The largest planet in the solar system, a gas giant known for its Great Red Spot.", "difficulty": "medium" },
-  { "word": "KINGDOM", "meaning": "A country, state, or territory ruled by a king or queen.", "difficulty": "medium" },
-  { "word": "LANTERN", "meaning": "A lamp with a transparent case protecting the flame or electric bulb, typically with a handle.", "difficulty": "medium" },
-  { "word": "LEOPARD", "meaning": "A large predatory cat with a spotted yellowish-brown coat, native to Africa and southern Asia.", "difficulty": "medium" },
-  { "word": "LIGHTNING", "meaning": "The occurrence of a natural electrical discharge of very short duration between a cloud and the ground.", "difficulty": "medium" },
-  { "word": "MAGNET", "meaning": "A piece of iron or other material that has its component atoms so ordered that it exhibits magnetism.", "difficulty": "medium" },
-  { "word": "MANSION", "meaning": "A large, impressive, and stately house.", "difficulty": "medium" },
-  { "word": "MARATHON", "meaning": "A long-distance running race with an official distance of 42.195 kilometers (26 miles 385 yards).", "difficulty": "medium" },
-  { "word": "MEADOW", "meaning": "A piece of grassland, especially one used for hay or grazing livestock.", "difficulty": "medium" },
-  { "word": "METEOR", "meaning": "A small body of matter from outer space that enters the earth's atmosphere, appearing as a streak of light.", "difficulty": "medium" },
-  { "word": "MIRACLE", "meaning": "A surprising and welcome event that is not explicable by natural or scientific laws.", "difficulty": "medium" },
-  { "word": "MIRAGE", "meaning": "An optical illusion caused by atmospheric conditions, especially the appearance of water in a desert.", "difficulty": "medium" },
-  { "word": "MONARCH", "meaning": "A sovereign head of state, especially a king, queen, or emperor.", "difficulty": "medium" },
-  { "word": "MONSTER", "meaning": "An imaginary creature that is typically large, ugly, and frightening.", "difficulty": "medium" },
-  { "word": "MYSTERY", "meaning": "Something that is difficult or impossible to understand or explain.", "difficulty": "medium" },
-  { "word": "NAVIGATOR", "meaning": "A person who directs the route or course of a ship, aircraft, or other form of transport.", "difficulty": "medium" },
-  { "word": "NEBULA", "meaning": "A giant interstellar cloud of dust and gas in outer space.", "difficulty": "medium" },
-  { "word": "OASIS", "meaning": "A fertile spot in a desert, where water is found.", "difficulty": "medium" },
-  { "word": "OCTOPUS", "meaning": "An eight-armed aquatic mollusk with a soft body, suckered tentacles, and strong beak-like jaws.", "difficulty": "medium" },
-  { "word": "ODYSSEY", "meaning": "A long and eventful or adventurous journey.", "difficulty": "medium" },
-  { "word": "ORACLE", "meaning": "A priest or priestess acting as a medium through whom advice or prophecy was sought.", "difficulty": "medium" },
-  { "word": "ORCHESTRA", "meaning": "A large group of musicians playing together on various instruments, typically conducted by a director.", "difficulty": "medium" },
-  { "word": "PANTHER", "meaning": "A leopard, especially a black one, or a puma or cougar.", "difficulty": "medium" },
-  { "word": "PARADISE", "meaning": "An ideal or idyllic place or state; ultimate happiness and bliss.", "difficulty": "medium" },
-  { "word": "PEACOCK", "meaning": "A male peafowl with brilliant iridescent blue-green plumage and a fan-like tail.", "difficulty": "medium" },
-  { "word": "PIRATE", "meaning": "A person who attacks and robs ships at sea.", "difficulty": "medium" },
-  { "word": "PLATINUM", "meaning": "A precious silvery-white chemical element of high density and resistant to corrosion.", "difficulty": "medium" },
-  { "word": "PYRAMID", "meaning": "A monumental structure with a square or triangular base and sloping sides that meet in a point at the top.", "difficulty": "medium" },
-  { "word": "REEF", "meaning": "A ridge of jagged rock, coral, or sand just below or above the surface of the sea.", "difficulty": "medium" },
-  { "word": "SAFARI", "meaning": "An expedition to observe or hunt animals in their natural habitat, especially in East Africa.", "difficulty": "medium" },
-  { "word": "SAPPHIRE", "meaning": "A precious transparent blue gemstone variety of corundum.", "difficulty": "medium" },
-  { "word": "SATELLITE", "meaning": "An artificial body placed in orbit around the earth or moon or another planet in order to collect information.", "difficulty": "medium" },
-  { "word": "SCORPION", "meaning": "A terrestrial arachnid with lobster-like pincers and a poisonous sting at the end of its tail.", "difficulty": "medium" },
-  { "word": "SCULPTURE", "meaning": "The art of making two- or three-dimensional representative or abstract forms by carving stone or wood.", "difficulty": "medium" },
-  { "word": "SHIELD", "meaning": "A broad piece of armor held in the hand or strapped to the forearm for protection.", "difficulty": "medium" },
-  { "word": "SKELETON", "meaning": "An internal or external framework of bone, cartilage, or other rigid material supporting a body.", "difficulty": "medium" },
-  { "word": "SOLDIER", "meaning": "A person who serves in an army.", "difficulty": "medium" },
-  { "word": "SPARROW", "meaning": "A small brownish-gray bird with a short cone-shaped beak.", "difficulty": "medium" },
-  { "word": "SPECTRUM", "meaning": "A band of colors, as seen in a rainbow, produced by separation of the components of light by their different degrees of refraction.", "difficulty": "medium" },
-  { "word": "SUBMARINE", "meaning": "A warship with a streamlined hull designed to operate completely submerged in the sea for long periods.", "difficulty": "medium" },
-  { "word": "TEMPLE", "meaning": "A building devoted to the worship of a god or gods.", "difficulty": "medium" },
-  { "word": "TEMPEST", "meaning": "A violent, windy storm accompanied by rain, hail, or snow.", "difficulty": "medium" },
-  { "word": "THUNDER", "meaning": "A loud rumbling or crashing noise heard after a lightning flash due to the expansion of rapidly heated air.", "difficulty": "medium" },
-  { "word": "TORNADO", "meaning": "A mobile, destructive vortex of violently rotating winds having the appearance of a funnel-shaped cloud.", "difficulty": "medium" },
-  { "word": "TREASURE", "meaning": "A quantity of precious metals, gems, or other valuable objects.", "difficulty": "medium" },
-  { "word": "TSUNAMI", "meaning": "A long high sea wave caused by an earthquake, submarine landslide, or other disturbance.", "difficulty": "medium" },
-  { "word": "TWILIGHT", "meaning": "The soft glowing light from the sky when the sun is below the horizon.", "difficulty": "medium" },
-  { "word": "UNICORN", "meaning": "A mythical animal typically represented as a white horse with a single straight spiral horn projecting from its forehead.", "difficulty": "medium" },
-  { "word": "UNIVERSE", "meaning": "All existing matter and space considered as a whole; the cosmos.", "difficulty": "medium" },
-  { "word": "VOLCANO", "meaning": "A mountain or hill having a crater through which lava, rock fragments, and vapor are erupted.", "difficulty": "medium" },
-  { "word": "VOYAGE", "meaning": "A long journey involving travel by sea or in space.", "difficulty": "medium" },
-  { "word": "WARRIOR", "meaning": "A brave or experienced soldier or fighter.", "difficulty": "medium" },
-  { "word": "WHISPER", "meaning": "To speak very softly using one's breath without vibrating the vocal cords.", "difficulty": "medium" },
-  { "word": "WIZARD", "meaning": "A man who has magical powers, especially in legends and fairy tales.", "difficulty": "medium" },
-  { "word": "ZEPHYR", "meaning": "A soft, gentle, and refreshing breeze.", "difficulty": "medium" },
-
-  { "word": "ABYSS", "meaning": "A deep or seemingly bottomless chasm or void.", "difficulty": "hard" },
-  { "word": "AFFIX", "meaning": "To attach or fasten to something else.", "difficulty": "hard" },
-  { "word": "AGILITY", "meaning": "The ability to move quickly and easily with grace.", "difficulty": "hard" },
-  { "word": "ALCHEMY", "meaning": "The medieval chemical science aiming to transform base metals into gold.", "difficulty": "hard" },
-  { "word": "ALGORITHM", "meaning": "A process or set of rules to be followed in calculations or problem-solving operations.", "difficulty": "hard" },
-  { "word": "ANOMALY", "meaning": "Something that deviates from what is standard, normal, or expected.", "difficulty": "hard" },
-  { "word": "APEX", "meaning": "The top or highest part of something, especially one forming a point.", "difficulty": "hard" },
-  { "word": "APOCALYPSE", "meaning": "The complete final destruction of the world.", "difficulty": "hard" },
-  { "word": "AQUARIUM", "meaning": "A transparent tank of water in which fish and other water creatures and plants are kept.", "difficulty": "hard" },
-  { "word": "ARTIFACT", "meaning": "An object made by a human being, typically an item of cultural or historical interest.", "difficulty": "hard" },
-  { "word": "ASTEROID", "meaning": "A small rocky body orbiting the sun, especially in the asteroid belt.", "difficulty": "hard" },
-  { "word": "ASYMMETRY", "meaning": "Lack of equality or equivalence between parts or aspects of something.", "difficulty": "hard" },
-  { "word": "AWKWARD", "meaning": "Causing or feeling embarrassment or inconvenience; clumsy in movement.", "difficulty": "hard" },
-  { "word": "AZIMUTH", "meaning": "The direction of a celestial object from the observer, expressed as the angular distance from north.", "difficulty": "hard" },
-  { "word": "BAGPIPES", "meaning": "A musical instrument with reed pipes that are sounded by the pressure of wind in a bag squeezed by the player's arm.", "difficulty": "hard" },
-  { "word": "BANJO", "meaning": "A stringed musical instrument with a long neck and a round open-backed body consisting of parchment stretched over a metal hoop.", "difficulty": "hard" },
-  { "word": "BAZOOKA", "meaning": "A short-range tubular rocket launcher used against tanks.", "difficulty": "hard" },
-  { "word": "BEEKEEPER", "meaning": "A person who owns and breeds bees, especially for their honey.", "difficulty": "hard" },
-  { "word": "BLITZ", "meaning": "An intensive or sudden military attack, or a fast-paced sudden effort.", "difficulty": "hard" },
-  { "word": "BOGUS", "meaning": "Not genuine or true; fake or fraudulent.", "difficulty": "hard" },
-  { "word": "BYZANTINE", "meaning": "Excessively complicated, and typically involving a great deal of administrative detail.", "difficulty": "hard" },
-  { "word": "CACOPHONY", "meaning": "A harsh, discordant mixture of sounds.", "difficulty": "hard" },
-  { "word": "CALAMITY", "meaning": "An event causing great and often sudden damage or distress; a disaster.", "difficulty": "hard" },
-  { "word": "CHASM", "meaning": "A deep fissure in the earth, rock, or another surface.", "difficulty": "hard" },
-  { "word": "CHIMERA", "meaning": "A thing that is hoped or wished for but in fact is illusory or impossible to achieve.", "difficulty": "hard" },
-  { "word": "CIPHER", "meaning": "A secret or disguised way of writing; a code.", "difficulty": "hard" },
-  { "word": "COCKTAIL", "meaning": "An alcoholic drink consisting of a spirit or several spirits mixed with other ingredients.", "difficulty": "hard" },
-  { "word": "COGNITIVE", "meaning": "Relating to the mental action or process of acquiring knowledge and understanding through thought, experience, and the senses.", "difficulty": "hard" },
-  { "word": "CONUNDRUM", "meaning": "A confusing and difficult problem or question.", "difficulty": "hard" },
-  { "word": "CRUCIAL", "meaning": "Decisive or critical, especially in the success or failure of something.", "difficulty": "hard" },
-  { "word": "CRYPT", "meaning": "An underground room or vault beneath a church, used as a chapel or burial place.", "difficulty": "hard" },
-  { "word": "CRYPTIC", "meaning": "Having a meaning that is mysterious or obscure.", "difficulty": "hard" },
-  { "word": "CURFEW", "meaning": "A regulation requiring people to remain indoors between specified hours, typically at night.", "difficulty": "hard" },
-  { "word": "CYBORG", "meaning": "A fictional or hypothetical person whose physical abilities are extended beyond normal human limitations by mechanical elements built into the body.", "difficulty": "hard" },
-  { "word": "CYLINDER", "meaning": "A solid geometric figure with straight parallel sides and a circular or oval cross section.", "difficulty": "hard" },
-  { "word": "DICHOTOMY", "meaning": "A division or contrast between two things that are or are represented as being opposed or entirely different.", "difficulty": "hard" },
-  { "word": "DILEMMA", "meaning": "A situation in which a difficult choice has to be made between two or more alternatives, especially equally undesirable ones.", "difficulty": "hard" },
-  { "word": "DISMAL", "meaning": "Depressing; dreary, gloomy, or causing dejection.", "difficulty": "hard" },
-  { "word": "DYSLEXIA", "meaning": "A learning disorder that involves difficulty reading due to problems identifying speech sounds.", "difficulty": "hard" },
-  { "word": "EMBEZZLE", "meaning": "Steal or misappropriate money placed in one's trust or belonging to the organization for which one works.", "difficulty": "hard" },
-  { "word": "ENIGMA", "meaning": "A person or thing that is mysterious, puzzling, or difficult to understand.", "difficulty": "hard" },
-  { "word": "EQUINOX", "meaning": "The time or date (twice each year) at which the sun crosses the celestial equator, when day and night are of equal length.", "difficulty": "hard" },
-  { "word": "ESPIONAGE", "meaning": "The practice of spying or of using spies, typically by governments to obtain political and military information.", "difficulty": "hard" },
-  { "word": "EXODUS", "meaning": "A mass departure of people, especially emigrants.", "difficulty": "hard" },
-  { "word": "FAUX", "meaning": "Made in imitation; artificial; not genuine.", "difficulty": "hard" },
-  { "word": "FJORD", "meaning": "A long, narrow, deep inlet of the sea between high cliffs, typically formed by submergence of a glaciated valley.", "difficulty": "hard" },
-  { "word": "FLUMMOX", "meaning": "Perplex or bewilder someone greatly.", "difficulty": "hard" },
-  { "word": "FLYBY", "meaning": "A flight of an aircraft or spacecraft past a particular point, especially a close approach to a planet or moon for observation.", "difficulty": "hard" },
-  { "word": "FOXY", "meaning": "Cunning or sly; shrewd in a deceitful or attractive way.", "difficulty": "hard" },
-  { "word": "FREQUENCY", "meaning": "The rate at which something occurs or is repeated over a particular period of time or in a given sample.", "difficulty": "hard" },
-  { "word": "FRISBEE", "meaning": "A concave plastic disk designed for skimming through the air as an outdoor game.", "difficulty": "hard" },
-  { "word": "FUSION", "meaning": "The process or result of joining two or more things together to form a single entity.", "difficulty": "hard" },
-  { "word": "FUZZY", "meaning": "Having a frizzy, fluffy, or frayed texture or appearance.", "difficulty": "hard" },
-  { "word": "GABARDINE", "meaning": "A smooth, durable, twill-woven worsted or cotton cloth.", "difficulty": "hard" },
-  { "word": "GHASTLY", "meaning": "Causing great horror or fear; frightful or macabre.", "difficulty": "hard" },
-  { "word": "GIZMO", "meaning": "A gadget, especially one whose name the speaker does not know or cannot recall.", "difficulty": "hard" },
-  { "word": "GLYPH", "meaning": "A hieroglyphic character or symbol; a carved relief or symbolic figure.", "difficulty": "hard" },
-  { "word": "GOSSIP", "meaning": "Casual or unconstrained conversation or reports about other people, typically involving details that are not confirmed as being true.", "difficulty": "hard" },
-  { "word": "GRAFFITI", "meaning": "Writing or drawings scribbled, scratched, or sprayed illicitly on a wall or other surface in a public place.", "difficulty": "hard" },
-  { "word": "HAIKU", "meaning": "A Japanese poem of seventeen syllables, in three lines of five, seven, and five, traditionally evoking images of the natural world.", "difficulty": "hard" },
-  { "word": "HAPHAZARD", "meaning": "Lacking any obvious principle of organization; random and chaotic.", "difficulty": "hard" },
-  { "word": "HAVOC", "meaning": "Widespread destruction, devastation, or great confusion and disorder.", "difficulty": "hard" },
-  { "word": "HAZARD", "meaning": "A danger or risk; a potential source of harm or adverse health effect on a person.", "difficulty": "hard" },
-  { "word": "HIEROGLYPH", "meaning": "A picture of an object representing a word, syllable, or sound, as used in ancient Egyptian writing.", "difficulty": "hard" },
-  { "word": "HYBRIDS", "meaning": "Offspring of two plants or animals of different species or varieties.", "difficulty": "hard" },
-  { "word": "HYDRANT", "meaning": "An upright water pipe, especially one in a street, with a nozzle to which a fire hose can be attached.", "difficulty": "hard" },
-  { "word": "HYGIENE", "meaning": "Conditions or practices conducive to maintaining health and preventing disease, especially through cleanliness.", "difficulty": "hard" },
-  { "word": "HYPHEN", "meaning": "The sign - used to join words to indicate that they have a combined meaning or to indicate the division of a word at the end of a line.", "difficulty": "hard" },
-  { "word": "HYPOXIA", "meaning": "A condition in which the body or a region of the body is deprived of adequate oxygen supply at the tissue level.", "difficulty": "hard" },
-  { "word": "HYSTERIA", "meaning": "Exaggerated or uncontrollable emotion or excitement, especially among a group of people.", "difficulty": "hard" },
-  { "word": "ICEBOX", "meaning": "A non-mechanical refrigerator chilled with blocks of ice.", "difficulty": "hard" },
-  { "word": "INCOGNITO", "meaning": "Having one's true identity concealed, as under an assumed name or disguise.", "difficulty": "hard" },
-  { "word": "INVENTORY", "meaning": "A complete list of items such as property, goods in stock, or the contents of a building.", "difficulty": "hard" },
-  { "word": "IVORY", "meaning": "A hard creamy-white substance composing the main part of the tusks of an elephant or walrus.", "difficulty": "hard" },
-  { "word": "IVY", "meaning": "An evergreen climbing plant, typically with five-pointed leaves.", "difficulty": "hard" },
-  { "word": "JACKPOT", "meaning": "A large cash prize in a game or lottery, especially one that accumulates until it is won.", "difficulty": "hard" },
-  { "word": "JAILHOUSE", "meaning": "A prison or facility in which prisoners are confined.", "difficulty": "hard" },
-  { "word": "JALAPENO", "meaning": "A medium-sized chili pepper pod with a burning pungent flavor.", "difficulty": "hard" },
-  { "word": "JAZZ", "meaning": "A type of music of black American origin characterized by improvisation, syncopation, and forceful rhythms.", "difficulty": "hard" },
-  { "word": "JINX", "meaning": "A person or thing that brings bad luck, or to bring bad luck upon someone.", "difficulty": "hard" },
-  { "word": "JOCKEY", "meaning": "A person who rides in horse races, especially as a profession.", "difficulty": "hard" },
-  { "word": "JOGGING", "meaning": "The activity of running at a steady, gentle pace as a form of physical exercise.", "difficulty": "hard" },
-  { "word": "JOKER", "meaning": "A person who is fond of making jokes, or a playing card added to a pack.", "difficulty": "hard" },
-  { "word": "JUKEBOX", "meaning": "A coin-operated phonograph or digital player with a lighted front that plays selected records.", "difficulty": "hard" },
-  { "word": "JUMBO", "meaning": "Very large of its kind; huge or oversized.", "difficulty": "hard" },
-  { "word": "JUNKET", "meaning": "An extravagant trip or celebration, especially one enjoyed by a public official at public expense.", "difficulty": "hard" },
-  { "word": "JUXTAPOSE", "meaning": "Place or deal with close together for contrasting effect.", "difficulty": "hard" },
-  { "word": "KAYAK", "meaning": "A canoe of a type used originally by the Inuit, made of a light frame covered in watertight skin or fiberglass.", "difficulty": "hard" },
-  { "word": "KAZOO", "meaning": "A small musical instrument with a membrane that produces a buzzing sound when the player hums into it.", "difficulty": "hard" },
-  { "word": "KHAKI", "meaning": "A textile fabric of a dull brownish-yellow color, used especially for military uniforms.", "difficulty": "hard" },
-  { "word": "KILOBYTE", "meaning": "A unit of memory or data equal to 1,024 bytes.", "difficulty": "hard" },
-  { "word": "KINETIC", "meaning": "Relating to or resulting from motion.", "difficulty": "hard" },
-  { "word": "KIOSK", "meaning": "A small open-fronted hut or cubicle from which newspapers, refreshments, or tickets are sold.", "difficulty": "hard" },
-  { "word": "KITSCH", "meaning": "Art, objects, or design considered to be in poor taste because of excessive garishness or sentimentality.", "difficulty": "hard" },
-  { "word": "KIWI", "meaning": "A flightless New Zealand bird with hairlike feathers and a long slender bill, or the edible green fruit.", "difficulty": "hard" },
-  { "word": "KNAPSACK", "meaning": "A bag with shoulder straps, carried on the back, and typically made of canvas or nylon.", "difficulty": "hard" },
-  { "word": "LABYRINTH", "meaning": "A complicated irregular network of passages or paths in which it is difficult to find one's way; a maze.", "difficulty": "hard" },
-  { "word": "LARYNX", "meaning": "The hollow muscular organ forming an air passage to the lungs and holding the vocal cords; the voice box.", "difficulty": "hard" },
-  { "word": "LIQUOR", "meaning": "An alcoholic drink, especially distilled spirits rather than wine or beer.", "difficulty": "hard" },
-  { "word": "LUXURY", "meaning": "The state of great comfort and extravagant living.", "difficulty": "hard" },
-  { "word": "LYMPH", "meaning": "A colorless fluid containing white blood cells that bathes the tissues and drains through the lymphatic system.", "difficulty": "hard" },
-  { "word": "LYNX", "meaning": "A wild cat with yellowish-brown fur (sometimes spotted), a short tail, and tufted ears.", "difficulty": "hard" },
-  { "word": "MATRIX", "meaning": "An environment or material in which something develops, a mold, or a rectangular array of numbers.", "difficulty": "hard" },
-  { "word": "MAYHEM", "meaning": "Violent or extreme disorder; chaos.", "difficulty": "hard" },
-  { "word": "MICROWAVE", "meaning": "An electromagnetic wave with a wavelength in the range 0.001–0.3 m, used in radar and cooking.", "difficulty": "hard" },
-  { "word": "MIMIC", "meaning": "Imitate someone or their actions or words, typically in order to entertain or ridicule.", "difficulty": "hard" },
-  { "word": "MNEMONIC", "meaning": "A device such as a pattern of letters, ideas, or associations that assists in remembering something.", "difficulty": "hard" },
-  { "word": "MOSQUITO", "meaning": "A slender long-legged fly with aquatic larvae, the female of which bites humans and animals to feed on blood.", "difficulty": "hard" },
-  { "word": "MYSTIQUE", "meaning": "A fascinating aura of mystery, awe, and power surrounding someone or something.", "difficulty": "hard" },
-  { "word": "MYTHOLOGY", "meaning": "A collection of myths, especially one belonging to a particular religious or cultural tradition.", "difficulty": "hard" },
-  { "word": "NIGHTCLUB", "meaning": "An entertainment venue that is open from the late evening until the early morning, having facilities such as a bar and disco.", "difficulty": "hard" },
-  { "word": "NOWADAYS", "meaning": "At the present time, in contrast with the past.", "difficulty": "hard" },
-  { "word": "NUMB", "meaning": "Deprived of the power of sensation, thinking, or movement.", "difficulty": "hard" },
-  { "word": "NUMSKULL", "meaning": "A stupid or foolish person.", "difficulty": "hard" },
-  { "word": "OBLIVION", "meaning": "The state of being unaware or unconscious of what is happening, or the state of being forgotten.", "difficulty": "hard" },
-  { "word": "OBSCURE", "meaning": "Not discovered or known about; uncertain; not clearly expressed.", "difficulty": "hard" },
-  { "word": "ONYX", "meaning": "A semi-precious variety of agate with different colors in parallel layers, often black.", "difficulty": "hard" },
-  { "word": "OSTRACIZE", "meaning": "Exclude someone from a society or group.", "difficulty": "hard" },
-  { "word": "OXYGEN", "meaning": "A colorless, odorless reactive gas, the chemical element of atomic number 8 and the life-supporting component of the air.", "difficulty": "hard" },
-  { "word": "OZONE", "meaning": "A colorless unstable toxic gas with a pungent odor and powerful oxidizing properties, formed from oxygen.", "difficulty": "hard" },
-  { "word": "PAJAMA", "meaning": "A suit of loose-fitting trousers and jacket for sleeping in.", "difficulty": "hard" },
-  { "word": "PARADOX", "meaning": "A seemingly absurd or self-contradictory statement or proposition that when investigated may prove to be well founded or true.", "difficulty": "hard" },
-  { "word": "PHANTOM", "meaning": "A ghost, apparition, or figment of the imagination.", "difficulty": "hard" },
-  { "word": "PHARAOH", "meaning": "A ruler in ancient Egypt.", "difficulty": "hard" },
-  { "word": "PHENOMENON", "meaning": "A fact or situation that is observed to exist or happen, especially one whose cause is in question.", "difficulty": "hard" },
-  { "word": "PHOBIA", "meaning": "An extreme or irrational fear of or aversion to something.", "difficulty": "hard" },
-  { "word": "PHOENIX", "meaning": "A mythical bird that burns itself on a funeral pyre and rises renewed from ashes.", "difficulty": "hard" },
-  { "word": "PIXEL", "meaning": "A minute area of illumination on a display screen, one of many from which an image is composed.", "difficulty": "hard" },
-  { "word": "PNEUMONIA", "meaning": "Lung inflammation caused by bacterial or viral infection, in which the air sacs fill with pus and may become solid.", "difficulty": "hard" },
-  { "word": "POLYGON", "meaning": "A plane figure with at least three straight sides and angles, and typically five or more.", "difficulty": "hard" },
-  { "word": "PSYCHE", "meaning": "The human soul, mind, or spirit.", "difficulty": "hard" },
-  { "word": "PUZZLE", "meaning": "A game, toy, or problem designed to test ingenuity or knowledge.", "difficulty": "hard" },
-  { "word": "PYGMY", "meaning": "A member of certain peoples of very short stature in equatorial Africa and Southeast Asia.", "difficulty": "hard" },
-  { "word": "PYRITE", "meaning": "A shiny yellow mineral consisting of iron disulfide; fool's gold.", "difficulty": "hard" },
-  { "word": "QUANTUM", "meaning": "A discrete quantity of energy proportional in magnitude to the frequency of the radiation it represents.", "difficulty": "hard" },
-  { "word": "QUARANTINE", "meaning": "A state, period, or place of isolation in which people or animals that have been exposed to infectious disease are placed.", "difficulty": "hard" },
-  { "word": "QUARRY", "meaning": "A place, typically a large, deep pit, from which stone or other materials are or have been extracted.", "difficulty": "hard" },
-  { "word": "QUARTZ", "meaning": "A hard white or colorless mineral consisting of silicon dioxide, found widely in igneous and metamorphic rocks.", "difficulty": "hard" },
-  { "word": "QUASAR", "meaning": "A massive and extremely remote celestial object, emitting exceptionally large amounts of energy.", "difficulty": "hard" },
-  { "word": "QUEUE", "meaning": "A line or sequence of people or vehicles awaiting their turn to be attended to or to proceed.", "difficulty": "hard" },
-  { "word": "QUIBBLE", "meaning": "A slight objection or criticism about a trivial matter.", "difficulty": "hard" },
-  { "word": "QUIVER", "meaning": "Tremble or shake with a slight rapid motion, or an archer's case for holding arrows.", "difficulty": "hard" },
-  { "word": "QUIXOTIC", "meaning": "Exceedingly idealistic; unrealistic and impractical.", "difficulty": "hard" },
-  { "word": "QUIZ", "meaning": "A test of knowledge, especially as a competition between individuals or teams.", "difficulty": "hard" },
-  { "word": "RAZZMATAZZ", "meaning": "Noisy, showy, and exciting activity and display designed to attract attention.", "difficulty": "hard" },
-  { "word": "RHUBARB", "meaning": "A plant of the dock family, with large leaves and thick reddish edible stalks used in pies.", "difficulty": "hard" },
-  { "word": "RHYTHM", "meaning": "A strong, regular, repeated pattern of movement or sound.", "difficulty": "hard" },
-  { "word": "RICKSHAW", "meaning": "A light two-wheeled passenger vehicle pulled by one person, formerly used in Asian countries.", "difficulty": "hard" },
-  { "word": "ROOKIE", "meaning": "A new recruit, especially in an army or police force, or a first-year player in a professional sport.", "difficulty": "hard" },
-  { "word": "SCHIZOID", "meaning": "Characterized by emotional aloofness, solitary habits, and indifference to social relationships.", "difficulty": "hard" },
-  { "word": "SCHNAPPS", "meaning": "A strong, dry alcoholic drink resembling gin, distilled from fermented potatoes or grain.", "difficulty": "hard" },
-  { "word": "SCRATCH", "meaning": "Mark a surface with a sharp or pointed object, or rub skin with fingernails to relieve itching.", "difficulty": "hard" },
-  { "word": "SHUFFLE", "meaning": "Walk by dragging one's feet along or mix a deck of playing cards.", "difficulty": "hard" },
-  { "word": "SKEPTIC", "meaning": "A person inclined to question or doubt accepted opinions.", "difficulty": "hard" },
-  { "word": "SNOOP", "meaning": "Investigate or look around secretly with illicit curiosity.", "difficulty": "hard" },
-  { "word": "SPHINX", "meaning": "A mythical creature with the head of a human and the body of a lion, known for posing riddles.", "difficulty": "hard" },
-  { "word": "SPRITZ", "meaning": "Squirt or spray a liquid at or on something in quick, short bursts.", "difficulty": "hard" },
-  { "word": "SQUAWK", "meaning": "A loud, harsh, or discordant noise made by a bird or person.", "difficulty": "hard" },
-  { "word": "STAFF", "meaning": "All the people employed by a particular organization, or a long wooden pole.", "difficulty": "hard" },
-  { "word": "SWIZZLE", "meaning": "An alcoholic drink of liquor, fruit juice, and crushed ice, or a small rod for stirring cocktails.", "difficulty": "hard" },
-  { "word": "SYNDROME", "meaning": "A group of symptoms that consistently occur together or a condition characterized by a set of associated symptoms.", "difficulty": "hard" },
-  { "word": "SYZYGY", "meaning": "A conjunction or opposition, especially of the moon with the sun in an astronomical alignment.", "difficulty": "hard" },
-  { "word": "THRIFTLESS", "meaning": "Spending money in an extravagant and wasteful way; careless with resources.", "difficulty": "hard" },
-  { "word": "TOPAZ", "meaning": "A precious stone, typically colorless, yellow, or pale blue, consisting of an aluminum silicate.", "difficulty": "hard" },
-  { "word": "TRANSCRIPT", "meaning": "A written or printed version of material originally presented in another medium.", "difficulty": "hard" },
-  { "word": "TWELFTH", "meaning": "Constituting number twelve in a sequence; 12th.", "difficulty": "hard" },
-  { "word": "TYPHOON", "meaning": "A tropical storm in the region of the Indian or western Pacific oceans.", "difficulty": "hard" },
-  { "word": "UNCANNY", "meaning": "Strange or mysterious, especially in an unsettling way.", "difficulty": "hard" },
-  { "word": "UNZIP", "meaning": "Open the zipper of a garment or container, or decompress a compressed file archive.", "difficulty": "hard" },
-  { "word": "VAMPIRE", "meaning": "A corpse supposed, in European folklore, to leave its grave at night to drink the blood of the living.", "difficulty": "hard" },
-  { "word": "VAPORIZE", "meaning": "Convert or be converted into vapor; destroy or eliminate completely.", "difficulty": "hard" },
-  { "word": "VECTOR", "meaning": "A quantity having direction as well as magnitude, especially as determining the position of one point in space relative to another.", "difficulty": "hard" },
-  { "word": "VELVET", "meaning": "A closely woven fabric of silk, cotton, or nylon, that has a thick short pile on one side.", "difficulty": "hard" },
-  { "word": "VICIOUS", "meaning": "Deliberately cruel or violent; wild and dangerous.", "difficulty": "hard" },
-  { "word": "VOODOO", "meaning": "A black religious cult practiced in the Caribbean and the southern US, combining elements of Roman Catholic ritual with traditional African magical and religious rites.", "difficulty": "hard" },
-  { "word": "VORTEX", "meaning": "A whirling mass of fluid or air, especially a whirlpool or whirlwind.", "difficulty": "hard" },
-  { "word": "VOYEUR", "meaning": "A person who gains enjoyment from secretly watching other people.", "difficulty": "hard" },
-  { "word": "WAFFLE", "meaning": "A crisp batter cake baked in a patterned iron griddle.", "difficulty": "hard" },
-  { "word": "WALKWAY", "meaning": "A passage or path for walking along, especially a raised or covered one.", "difficulty": "hard" },
-  { "word": "WALTZ", "meaning": "A dance in triple time performed by a couple, who turn rhythmically around and around as they progress around the dance floor.", "difficulty": "hard" },
-  { "word": "WAVELET", "meaning": "A small wave or ripple on water.", "difficulty": "hard" },
-  { "word": "WAVY", "meaning": "Having or moving in a series of curving shapes along a line.", "difficulty": "hard" },
-  { "word": "WAXEN", "meaning": "Having a smooth, pale, translucent surface or appearance resembling wax.", "difficulty": "hard" },
-  { "word": "WICKED", "meaning": "Evil or morally wrong; mischievous or playfullly naughty.", "difficulty": "hard" },
-  { "word": "WITCHCRAFT", "meaning": "The practice of magic, especially black magic; the use of spells and the invocation of spirits.", "difficulty": "hard" },
-  { "word": "WRISTWATCH", "meaning": "A watch worn on a strap or band around the wrist.", "difficulty": "hard" },
-  { "word": "WYVERN", "meaning": "A winged two-legged dragon with a barbed tail.", "difficulty": "hard" },
-  { "word": "XENON", "meaning": "The chemical element of atomic number 54, a noble gas used in photographic flashes and high-intensity lamps.", "difficulty": "hard" },
-  { "word": "XEROX", "meaning": "A photographic copy of written or printed material made by a xerographic process.", "difficulty": "hard" },
-  { "word": "XYLOID", "meaning": "Resembling or having the nature of wood; woody.", "difficulty": "hard" },
-  { "word": "XYLOPHONE", "meaning": "A musical instrument played by striking a row of wooden bars of graduated length with small mallets.", "difficulty": "hard" },
-  { "word": "XYST", "meaning": "An ancient Greek covered portico or open promenade used for athletic training.", "difficulty": "hard" },
-  { "word": "YACHT", "meaning": "A medium-sized sailboat equipped for cruising or racing.", "difficulty": "hard" },
-  { "word": "YARN", "meaning": "Spun thread used for knitting, weaving, or sewing, or a long or rambling story.", "difficulty": "hard" },
-  { "word": "YEARBOOK", "meaning": "An annual publication giving information about the events of the preceding year.", "difficulty": "hard" },
-  { "word": "YELP", "meaning": "A short, sharp cry, especially of pain or alarm.", "difficulty": "hard" },
-  { "word": "YIELD", "meaning": "Produce or provide a natural, agricultural, or industrial product, or give way to arguments or demands.", "difficulty": "hard" },
-  { "word": "YOKE", "meaning": "A wooden crosspiece that is fastened over the necks of two animals and attached to the plow or cart that they are to pull.", "difficulty": "hard" },
-  { "word": "YOUTH", "meaning": "The period between childhood and adult age.", "difficulty": "hard" },
-  { "word": "ZEALOT", "meaning": "A person who is fanatical and uncompromising in pursuit of their religious, political, or other ideals.", "difficulty": "hard" },
-  { "word": "ZEITGEIST", "meaning": "The defining spirit or mood of a particular period of history as shown by the ideas and beliefs of the time.", "difficulty": "hard" },
-  { "word": "ZERO", "meaning": "No quantity or number; the figure 0 representing nil.", "difficulty": "hard" },
-  { "word": "ZESTY", "meaning": "Appealingly piquant, pungent, or full of flavor and energy.", "difficulty": "hard" },
-  { "word": "ZIGZAG", "meaning": "A line or course having abrupt alternate right and left turns.", "difficulty": "hard" },
-  { "word": "ZILCH", "meaning": "Nothing; zero.", "difficulty": "hard" },
-  { "word": "ZIPPER", "meaning": "A device consisting of two flexible strips of metal or plastic with interlocking projections, used for fastening clothes.", "difficulty": "hard" },
-  { "word": "ZODIAC", "meaning": "A belt of the heavens within about 8° either side of the ecliptic, including all apparent positions of the sun, moon, and most planets.", "difficulty": "hard" },
-  { "word": "ZOMBIE", "meaning": "A reanimated corpse in folklore, brought back to life by a mystical or supernatural process.", "difficulty": "hard" },
-  { "word": "ZUCCHINI", "meaning": "A small green variety of summer squash having a dark green skin and creamy flesh.", "difficulty": "hard" }
+  {
+    "word": "ABYSS",
+    "meaning": "A deep or seemingly bottomless chasm or void.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ACUMEN",
+    "meaning": "The ability to make good judgments and take quick decisions.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "AFFIX",
+    "meaning": "To attach or fasten to something else.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "AGILITY",
+    "meaning": "The ability to move quickly and easily with grace.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ALCHEMY",
+    "meaning": "The medieval chemical science aiming to transform base metals into gold.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ALGORITHM",
+    "meaning": "A process or set of rules to be followed in calculations or problem-solving operations.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "AMBIVALENT",
+    "meaning": "Having mixed feelings or contradictory ideas about something or someone.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ANACHRONISM",
+    "meaning": "Something belonging or appropriate to a period other than that in which it exists.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ANCHOR",
+    "meaning": "A heavy metal device dropped to the sea bottom to hold a ship in place.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "ANOMALY",
+    "meaning": "Something that deviates from what is standard, normal, or expected.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ANTITHESIS",
+    "meaning": "A person or thing that is the direct opposite of someone or something else.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "APEX",
+    "meaning": "The top or highest part of something, especially one forming a point.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "APOCALYPSE",
+    "meaning": "The complete final destruction of the world.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "APOGEE",
+    "meaning": "The highest point in the development of something; the climax or culmination.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "APPLE",
+    "meaning": "A round fruit with red, green, or yellow skin and crisp white flesh.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "AQUARIUM",
+    "meaning": "A transparent tank of water in which fish and other water creatures and plants are kept.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ARCHETYPE",
+    "meaning": "A very typical example of a certain person or thing; an original pattern.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ARTIFACT",
+    "meaning": "An object made by a human being, typically an item of cultural or historical interest.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ASTEROID",
+    "meaning": "A small rocky body orbiting the sun, especially in the asteroid belt.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ASYMMETRY",
+    "meaning": "Lack of equality or equivalence between parts or aspects of something.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "AURORA",
+    "meaning": "A natural luminous atmospheric display of glowing polar lights.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "AUSTERE",
+    "meaning": "Severe or strict in manner, attitude, or appearance; lacking comfort or luxury.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "AVARICE",
+    "meaning": "Extreme greed for wealth or material gain.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "AWKWARD",
+    "meaning": "Causing or feeling embarrassment or inconvenience; clumsy in movement.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "AXIOM",
+    "meaning": "A statement or proposition that is regarded as self-evidently true.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "AZIMUTH",
+    "meaning": "The direction of a celestial object from the observer, expressed as the angular distance from north.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "BAGPIPES",
+    "meaning": "A musical instrument with reed pipes that are sounded by the pressure of wind in a bag squeezed by the player's arm.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "BANANA",
+    "meaning": "A long curved tropical fruit with yellow skin and soft sweet flesh.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "BANJO",
+    "meaning": "A stringed musical instrument with a long neck and a round open-backed body consisting of parchment stretched over a metal hoop.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "BAZOOKA",
+    "meaning": "A short-range tubular rocket launcher used against tanks.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "BEACH",
+    "meaning": "A pebbly or sandy shore by the ocean or a lake.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "BEEKEEPER",
+    "meaning": "A person who owns and breeds bees, especially for their honey.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "BIRD",
+    "meaning": "A warm-blooded egg-laying feathered vertebrate with wings.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "BIVOUAC",
+    "meaning": "A temporary camp without tents or cover, used especially by soldiers or mountaineers.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "BLITZ",
+    "meaning": "An intensive or sudden military attack, or a fast-paced sudden effort.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "BLIZZARD",
+    "meaning": "A severe snowstorm with high winds and low visibility.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "BOGUS",
+    "meaning": "Not genuine or true; fake or fraudulent.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "BOHEMIAN",
+    "meaning": "A socially unconventional person, especially an artist or writer.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "BOOK",
+    "meaning": "A set of written or printed pages bound together.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "BREAD",
+    "meaning": "Food made of flour, water, and yeast baked in an oven.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "BRIDGE",
+    "meaning": "A structure carrying a road, path, railroad, or canal across an obstacle.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "BURGEON",
+    "meaning": "To begin to grow or increase rapidly; flourish.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "BUTTER",
+    "meaning": "A pale yellow fatty substance made by churning cream.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "BYZANTINE",
+    "meaning": "Excessively complicated, and typically involving a great deal of administrative detail.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "CACOPHONY",
+    "meaning": "A harsh, discordant mixture of sounds.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "CALAMITY",
+    "meaning": "An event causing great and often sudden damage or distress; a disaster.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "CALUMNY",
+    "meaning": "The making of false and defamatory statements about someone to damage their reputation.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "CANDLE",
+    "meaning": "A cylinder of wax with a central wick that is lit to give light.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "CANYON",
+    "meaning": "A deep gorge, typically one with a river flowing through it.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "CARAVAN",
+    "meaning": "A group of people, especially traders or pilgrims, traveling together across a desert.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "CASCADE",
+    "meaning": "A small waterfall, typically one of several that fall in stages down a steep rocky slope.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "CASTLE",
+    "meaning": "A large fortified building or residence of medieval nobility.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "CATALYST",
+    "meaning": "A substance or event that accelerates a reaction or brings about change without itself being consumed.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "CENTURY",
+    "meaning": "A period of one hundred years.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "CHAGRIN",
+    "meaning": "Distress or embarrassment at having failed or been humiliated.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "CHAIR",
+    "meaning": "A separate seat for one person, typically with four legs and a back.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "CHAMPION",
+    "meaning": "A person who has defeated or surpassed all rivals in a competition.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "CHASM",
+    "meaning": "A deep fissure in the earth, rock, or another surface.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "CHERRY",
+    "meaning": "A small, round stone fruit that is typically bright or dark red.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "CHIMERA",
+    "meaning": "A thing that is hoped or wished for but in fact is illusory or impossible to achieve.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "CIPHER",
+    "meaning": "A secret or disguised way of writing; a code.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "CIRCLE",
+    "meaning": "A round plane figure whose boundary consists of points equidistant from the center.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "CLOCK",
+    "meaning": "A mechanical or electronic device for measuring and displaying time.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "CLOUD",
+    "meaning": "A visible mass of condensed water vapor floating in the atmosphere.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "COCKTAIL",
+    "meaning": "An alcoholic drink consisting of a spirit or several spirits mixed with other ingredients.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "COGNITIVE",
+    "meaning": "Relating to the mental action or process of acquiring knowledge and understanding through thought, experience, and the senses.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "COGNIZANT",
+    "meaning": "Having knowledge or being aware of something.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "COMPASS",
+    "meaning": "An instrument containing a magnetized pointer that shows the direction of magnetic north.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "CONUNDRUM",
+    "meaning": "A confusing and difficult problem or question.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "COSMOS",
+    "meaning": "The universe seen as a well-ordered, harmonious whole.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "COVERT",
+    "meaning": "Not openly acknowledged or displayed; secret or disguised.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "CRUCIAL",
+    "meaning": "Decisive or critical, especially in the success or failure of something.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "CRYPT",
+    "meaning": "An underground room or vault beneath a church, used as a chapel or burial place.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "CRYPTIC",
+    "meaning": "Having a meaning that is mysterious or obscure.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "CRYSTAL",
+    "meaning": "A piece of homogeneous solid substance having a natural geometrically regular form.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "CURFEW",
+    "meaning": "A regulation requiring people to remain indoors between specified hours, typically at night.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "CYBORG",
+    "meaning": "A fictional or hypothetical person whose physical abilities are extended beyond normal human limitations by mechanical elements built into the body.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "CYCLONE",
+    "meaning": "A system of winds rotating inward to an area of low atmospheric pressure.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "CYLINDER",
+    "meaning": "A solid geometric figure with straight parallel sides and a circular or oval cross section.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "CYNOSURE",
+    "meaning": "A person or thing that is the center of attention or admiration.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "DANCE",
+    "meaning": "To move rhythmically to music, typically following a sequence of steps.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "DEBACLE",
+    "meaning": "A sudden and ignominious failure; a fiasco or collapse.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "DIAMOND",
+    "meaning": "A precious gemstone of pure crystallized carbon, the hardest known natural mineral.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "DICHOTOMY",
+    "meaning": "A division or contrast between two things that are or are represented as being opposed or entirely different.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "DILEMMA",
+    "meaning": "A situation in which a difficult choice has to be made between two or more alternatives, especially equally undesirable ones.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "DIPLOMA",
+    "meaning": "A certificate awarded by an educational establishment to show successful completion of a course.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "DISMAL",
+    "meaning": "Depressing; dreary, gloomy, or causing dejection.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "DISSONANCE",
+    "meaning": "Lack of harmony among musical notes or tension between conflicting ideas.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "DOLPHIN",
+    "meaning": "A highly intelligent aquatic mammal with a sleek body and beak-like snout.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "DOOR",
+    "meaning": "A hinged or sliding barrier used for closing an entrance to a room or building.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "DRAGON",
+    "meaning": "A mythical monster like a giant reptile, typically breathing fire.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "DUCK",
+    "meaning": "A waterbird with a broad blunt bill, short legs, and webbed feet.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "DYNAMITE",
+    "meaning": "A high explosive consisting of nitroglycerine mixed with an absorbent material.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "DYSLEXIA",
+    "meaning": "A learning disorder that involves difficulty reading due to problems identifying speech sounds.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "EAGLE",
+    "meaning": "A large bird of prey with a massive hooked bill and broad wings.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "EARTH",
+    "meaning": "The planet on which we live; the third planet from the sun.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "EBULLIENT",
+    "meaning": "Cheerful and full of energy; exuberant.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ECLECTIC",
+    "meaning": "Deriving ideas, style, or taste from a broad and diverse range of sources.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ECLIPSE",
+    "meaning": "An obscuring of the light from one celestial body by the passage of another between it and the observer.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "EFFIGY",
+    "meaning": "A sculpture or model of a person, especially one destroyed as a protest.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "EGREGIOUS",
+    "meaning": "Outstandingly bad; shocking and flagrant.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ELEPHANT",
+    "meaning": "A very large herbivorous mammal with a long trunk and ivory tusks.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "ELIXIR",
+    "meaning": "A magical or medicinal potion believed to prolong life indefinitely.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "EMBARGO",
+    "meaning": "An official ban on trade or other commercial activity with a particular country.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "EMBEZZLE",
+    "meaning": "Steal or misappropriate money placed in one's trust or belonging to the organization for which one works.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "EMERALD",
+    "meaning": "A bright green precious gemstone variety of beryl.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "EMPEROR",
+    "meaning": "A sovereign ruler of great power and rank, especially one ruling an empire.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "ENIGMA",
+    "meaning": "A person or thing that is mysterious, puzzling, or difficult to understand.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "EPHEMERAL",
+    "meaning": "Lasting for a very short time; fleeting or transient.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "EPITOME",
+    "meaning": "A person or thing that is a perfect example of a particular quality or type.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "EQUINOX",
+    "meaning": "The time or date (twice each year) at which the sun crosses the celestial equator, when day and night are of equal length.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "EQUIVOQUE",
+    "meaning": "An ambiguous expression intended to deceive or double entendre.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ERUDITE",
+    "meaning": "Having or showing great knowledge or learning; scholarly.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ESOTERIC",
+    "meaning": "Intended for or likely to be understood by only a small number of people with specialized knowledge.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ESPIONAGE",
+    "meaning": "The practice of spying or of using spies, typically by governments to obtain political and military information.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "EUPHORIA",
+    "meaning": "A feeling or state of intense excitement, elation, and happiness.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "EXACERBATE",
+    "meaning": "To make a problem, bad situation, or negative feeling worse.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "EXODUS",
+    "meaning": "A mass departure of people, especially emigrants.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "EXPEDIENT",
+    "meaning": "Convenient and practical, although possibly improper or immoral.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "EXPLORER",
+    "meaning": "A person who explores an unfamiliar area in search of geographical or scientific information.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "FACETIOUS",
+    "meaning": "Treating serious issues with deliberately inappropriate humor; flippant.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "FALCON",
+    "meaning": "A bird of prey with long, pointed wings and a notched beak, capable of high-speed flight.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "FASTIDIOUS",
+    "meaning": "Very attentive to and concerned about accuracy, detail, and cleanliness.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "FAUX",
+    "meaning": "Made in imitation; artificial; not genuine.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "FEATHER",
+    "meaning": "Any of the flat appendages growing from a bird's skin forming its plumage.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "FISH",
+    "meaning": "A limbless cold-blooded vertebrate animal with gills and fins living in water.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "FJORD",
+    "meaning": "A long, narrow, deep inlet of the sea between high cliffs, typically formed by submergence of a glaciated valley.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "FJORDS",
+    "meaning": "Long, narrow, deep inlets of the sea between high cliffs, typically formed by glaciers.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "FLOWER",
+    "meaning": "The seed-bearing part of a plant consisting of reproductive organs and petals.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "FLUMMOX",
+    "meaning": "Perplex or bewilder someone greatly.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "FLYBY",
+    "meaning": "A flight of an aircraft or spacecraft past a particular point, especially a close approach to a planet or moon for observation.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "FOREST",
+    "meaning": "A large area covered chiefly with trees and undergrowth.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "FORTRESS",
+    "meaning": "A military stronghold, especially a strongly fortified town fit for a large garrison.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "FORTUITOUS",
+    "meaning": "Happening by accident or chance rather than design; fortunate.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "FOSSIL",
+    "meaning": "The remains or impression of a prehistoric organism preserved in petrified form.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "FOUNTAIN",
+    "meaning": "An ornamental structure in a pool or lake from which one or more jets of water are pumped.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "FOXY",
+    "meaning": "Cunning or sly; shrewd in a deceitful or attractive way.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "FRENZY",
+    "meaning": "A state or period of uncontrolled excitement or wild behavior.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "FREQUENCY",
+    "meaning": "The rate at which something occurs or is repeated over a particular period of time or in a given sample.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "FRIEND",
+    "meaning": "A person with whom one has a bond of mutual affection.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "FRISBEE",
+    "meaning": "A concave plastic disk designed for skimming through the air as an outdoor game.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "FROG",
+    "meaning": "A tailless amphibian with a short squat body and very long hind legs for leaping.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "FUSION",
+    "meaning": "The process or result of joining two or more things together to form a single entity.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "FUTILE",
+    "meaning": "Incapable of producing any useful result; pointless or in vain.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "FUZZY",
+    "meaning": "Having a frizzy, fluffy, or frayed texture or appearance.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "GABARDINE",
+    "meaning": "A smooth, durable, twill-woven worsted or cotton cloth.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "GALAXY",
+    "meaning": "A gravitationally bound system of billions of stars, stellar remnants, gas, and dust.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "GALVANIZE",
+    "meaning": "To shock or excite someone into taking immediate action.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "GARDEN",
+    "meaning": "A piece of ground adjoining a house used for growing flowers, fruit, or vegetables.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "GAUNTLET",
+    "meaning": "A stout armored glove worn in medieval armor, or an ordeal or challenge.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "GHASTLY",
+    "meaning": "Causing great horror or fear; frightful or macabre.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "GIRAFFE",
+    "meaning": "A large African mammal with a very long neck and patterned coat.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "GIZMO",
+    "meaning": "A gadget, especially one whose name the speaker does not know or cannot recall.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "GLACIER",
+    "meaning": "A slowly moving mass of dense river ice formed by the accumulation of snow.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "GLASS",
+    "meaning": "A hard, brittle transparent substance made by fusing sand with soda and lime.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "GLYPH",
+    "meaning": "A hieroglyphic character or symbol; a carved relief or symbolic figure.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "GNOME",
+    "meaning": "A small mythical creature regarded as a protector of earth treasures.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "GOLD",
+    "meaning": "A yellow precious metal, valued especially for use in jewelry and currency.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "GOSSIP",
+    "meaning": "Casual or unconstrained conversation or reports about other people, typically involving details that are not confirmed as being true.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "GRAFFITI",
+    "meaning": "Writing or drawings scribbled, scratched, or sprayed illicitly on a wall or other surface in a public place.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "GRAPES",
+    "meaning": "A green or purple berry growing in clusters on a grapevine.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "GUITAR",
+    "meaning": "A stringed musical instrument with a fretted fingerboard and six or twelve strings.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "HAIKU",
+    "meaning": "A Japanese poem of seventeen syllables, in three lines of five, seven, and five, traditionally evoking images of the natural world.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "HAMMER",
+    "meaning": "A tool with a heavy metal head used for pounding nails or forging metal.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "HAPHAZARD",
+    "meaning": "Lacking any obvious principle of organization; random and chaotic.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "HARBOR",
+    "meaning": "A sheltered body of water where ships, boats, and barges can dock safely.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "HARMONY",
+    "meaning": "The combination of simultaneously sounded musical notes to produce pleasing chords.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "HAVOC",
+    "meaning": "Widespread destruction, devastation, or great confusion and disorder.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "HAZARD",
+    "meaning": "A danger or risk; a potential source of harm or adverse health effect on a person.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "HEART",
+    "meaning": "The hollow muscular organ that pumps the blood through the circulatory system.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "HERO",
+    "meaning": "A person admired for courage, outstanding achievements, or noble qualities.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "HEURISTIC",
+    "meaning": "Enabling a person to discover or learn something for themselves through trial and experience.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "HIATUS",
+    "meaning": "A pause or gap in a sequence, series, or process.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "HIEROGLYPH",
+    "meaning": "A picture of an object representing a word, syllable, or sound, as used in ancient Egyptian writing.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "HORIZON",
+    "meaning": "The line at which the earth's surface and the sky appear to meet.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "HORSE",
+    "meaning": "A large domesticated plant-eating mammal with solid hooves and a flowing mane.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "HOUSE",
+    "meaning": "A building for human habitation, especially one that is lived in by a family.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "HUBRIS",
+    "meaning": "Excessive pride or self-confidence that often leads to downfall.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "HURRICANE",
+    "meaning": "A storm with a violent wind, in particular a tropical cyclone in the Caribbean.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "HYBRIDS",
+    "meaning": "Offspring of two plants or animals of different species or varieties.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "HYDRANT",
+    "meaning": "An upright water pipe, especially one in a street, with a nozzle to which a fire hose can be attached.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "HYGIENE",
+    "meaning": "Conditions or practices conducive to maintaining health and preventing disease, especially through cleanliness.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "HYPHEN",
+    "meaning": "The sign - used to join words to indicate that they have a combined meaning or to indicate the division of a word at the end of a line.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "HYPOTHESIS",
+    "meaning": "A proposed explanation made on the basis of limited evidence as a starting point for further investigation.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "HYPOXIA",
+    "meaning": "A condition in which the body or a region of the body is deprived of adequate oxygen supply at the tissue level.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "HYSTERIA",
+    "meaning": "Exaggerated or uncontrollable emotion or excitement, especially among a group of people.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ICEBERG",
+    "meaning": "A large floating mass of ice detached from a glacier or ice sheet and carried out to sea.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "ICEBOX",
+    "meaning": "A non-mechanical refrigerator chilled with blocks of ice.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ICONOCLAST",
+    "meaning": "A person who attacks cherished beliefs or established cultural institutions.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "IDIOSYNCRASY",
+    "meaning": "A mode of behavior or way of thought peculiar to an individual.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ILLICIT",
+    "meaning": "Forbidden by law, rules, or custom; unlawful.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ILLUSION",
+    "meaning": "A thing that is or is likely to be wrongly perceived or interpreted by the senses.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "IMMUNITY",
+    "meaning": "The ability of an organism to resist a particular infection or toxin.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "IMPETUOUS",
+    "meaning": "Acting or done quickly and without thought or care; impulsive.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "INCOGNITO",
+    "meaning": "Having one's true identity concealed, as under an assumed name or disguise.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "INEFFABLE",
+    "meaning": "Too great or extreme to be expressed or described in words.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "INERTIA",
+    "meaning": "A tendency to do nothing or remain unchanged, or the resistance of a physical object to motion.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "INTRINSIC",
+    "meaning": "Belonging naturally; essential and inherent.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "INVENTORY",
+    "meaning": "A complete list of items such as property, goods in stock, or the contents of a building.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ISLAND",
+    "meaning": "A piece of land surrounded by water on all sides.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "IVORY",
+    "meaning": "A hard creamy-white substance composing the main part of the tusks of an elephant or walrus.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "IVY",
+    "meaning": "An evergreen climbing plant, typically with five-pointed leaves.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "JACKPOT",
+    "meaning": "A large cash prize in a game or lottery, especially one that accumulates until it is won.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "JACUZZI",
+    "meaning": "A large bath or pool with underwater jets of water to massage the body.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "JAILHOUSE",
+    "meaning": "A prison or facility in which prisoners are confined.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "JALAPENO",
+    "meaning": "A medium-sized chili pepper pod with a burning pungent flavor.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "JAUNT",
+    "meaning": "A short excursion or journey for pleasure.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "JAZZ",
+    "meaning": "A type of music of black American origin characterized by improvisation, syncopation, and forceful rhythms.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "JEOPARDY",
+    "meaning": "Danger of loss, harm, or failure; peril.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "JEWELRY",
+    "meaning": "Personal ornaments, such as necklaces, rings, or bracelets, that are typically made from precious metals.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "JINX",
+    "meaning": "A person or thing that brings bad luck, or to bring bad luck upon someone.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "JOCKEY",
+    "meaning": "A person who rides in horse races, especially as a profession.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "JOGGING",
+    "meaning": "The activity of running at a steady, gentle pace as a form of physical exercise.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "JOKER",
+    "meaning": "A person who is fond of making jokes, or a playing card added to a pack.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "JOURNEY",
+    "meaning": "An act of traveling from one place to another, especially over a long distance.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "JUJITSU",
+    "meaning": "A Japanese martial art emphasizing grappling and using an opponent energy.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "JUKEBOX",
+    "meaning": "A coin-operated phonograph or digital player with a lighted front that plays selected records.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "JUMBO",
+    "meaning": "Very large of its kind; huge or oversized.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "JUNGLE",
+    "meaning": "An area of land overgrown with dense forest and tangled vegetation.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "JUNKET",
+    "meaning": "An extravagant trip or celebration, especially one enjoyed by a public official at public expense.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "JUPITER",
+    "meaning": "The largest planet in the solar system, a gas giant known for its Great Red Spot.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "JUXTAPOSE",
+    "meaning": "Place or deal with close together for contrasting effect.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "KALEIDOSCOPE",
+    "meaning": "A constantly changing pattern or sequence of elements; an optical instrument with mirrors.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "KAYAK",
+    "meaning": "A canoe of a type used originally by the Inuit, made of a light frame covered in watertight skin or fiberglass.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "KAZOO",
+    "meaning": "A small musical instrument with a membrane that produces a buzzing sound when the player hums into it.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "KHAKI",
+    "meaning": "A textile fabric of a dull brownish-yellow color, used especially for military uniforms.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "KILOBYTE",
+    "meaning": "A unit of memory or data equal to 1,024 bytes.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "KINETIC",
+    "meaning": "Relating to or resulting from motion.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "KING",
+    "meaning": "The male sovereign ruler of an independent state.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "KINGDOM",
+    "meaning": "A country, state, or territory ruled by a king or queen.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "KIOSK",
+    "meaning": "A small open-fronted hut or cubicle from which newspapers, refreshments, or tickets are sold.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "KITSCH",
+    "meaning": "Art, objects, or design considered to be in poor taste because of excessive garishness or sentimentality.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "KITTEN",
+    "meaning": "A young domesticated cat.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "KIWI",
+    "meaning": "A flightless New Zealand bird with hairlike feathers and a long slender bill, or the edible green fruit.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "KLEPTOMANIA",
+    "meaning": "A recurrent urge to steal, typically without regard for need or profit.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "KNAPSACK",
+    "meaning": "A bag with shoulder straps, carried on the back, and typically made of canvas or nylon.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "LABYRINTH",
+    "meaning": "A complicated irregular network of passages or paths in which it is difficult to find one's way; a maze.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "LACONIC",
+    "meaning": "Using very few words; brief, concise, and pithy.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "LANTERN",
+    "meaning": "A lamp with a transparent case protecting the flame or electric bulb, typically with a handle.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "LARYNX",
+    "meaning": "The hollow muscular organ forming an air passage to the lungs and holding the vocal cords; the voice box.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "LEAF",
+    "meaning": "A flattened structure of a higher plant, typically green and bladelike.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "LEMON",
+    "meaning": "A yellow oval citrus fruit with thick skin and acidic juice.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "LEOPARD",
+    "meaning": "A large predatory cat with a spotted yellowish-brown coat, native to Africa and southern Asia.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "LEVITATE",
+    "meaning": "To rise or cause to rise and hover in the air, especially by magical means.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "LIGHT",
+    "meaning": "The natural agent that stimulates sight and makes things visible.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "LIGHTNING",
+    "meaning": "The occurrence of a natural electrical discharge of very short duration between a cloud and the ground.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "LION",
+    "meaning": "A large predatory feline mammal native to Africa and India.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "LIQUOR",
+    "meaning": "An alcoholic drink, especially distilled spirits rather than wine or beer.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "LIZARD",
+    "meaning": "A reptile that typically has a long body, four legs, movable eyelids, and a tail.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "LOQUACIOUS",
+    "meaning": "Tending to talk a great deal; talkative and garrulous.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "LUMINESCENT",
+    "meaning": "Emitting light not caused by heat, such as in phosphorescence or fluorescence.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "LUXURY",
+    "meaning": "The state of great comfort and extravagant living.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "LYMPH",
+    "meaning": "A colorless fluid containing white blood cells that bathes the tissues and drains through the lymphatic system.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "LYNX",
+    "meaning": "A wild cat with yellowish-brown fur (sometimes spotted), a short tail, and tufted ears.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "MACHINATION",
+    "meaning": "A plot or scheme, especially an evil or cunning one.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "MAGIC",
+    "meaning": "The power of apparently influencing events by using mysterious or supernatural forces.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "MAGNET",
+    "meaning": "A piece of iron or other material that has its component atoms so ordered that it exhibits magnetism.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "MAGNETRON",
+    "meaning": "A high-powered vacuum tube that generates microwaves, used in radar and ovens.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "MALLEABLE",
+    "meaning": "Able to be hammered or pressed permanently out of shape without breaking.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "MANSION",
+    "meaning": "A large, impressive, and stately house.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "MARATHON",
+    "meaning": "A long-distance running race with an official distance of 42.195 kilometers (26 miles 385 yards).",
+    "difficulty": "medium"
+  },
+  {
+    "word": "MATRIX",
+    "meaning": "An environment or material in which something develops, a mold, or a rectangular array of numbers.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "MAVERICK",
+    "meaning": "An unorthodox or independent-minded person who refuses to conform.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "MAYHEM",
+    "meaning": "Violent or extreme disorder; chaos.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "MEADOW",
+    "meaning": "A piece of grassland, especially one used for hay or grazing livestock.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "MELANCHOLY",
+    "meaning": "A feeling of pensive sadness, typically with no obvious cause.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "METAMORPHOSIS",
+    "meaning": "A change of the form or nature of a thing or person into a completely different one.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "METEOR",
+    "meaning": "A small body of matter from outer space that enters the earth's atmosphere, appearing as a streak of light.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "MICROCOSM",
+    "meaning": "A community, place, or situation regarded as encapsulating in miniature the characteristics of something much larger.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "MICROWAVE",
+    "meaning": "An electromagnetic wave with a wavelength in the range 0.001–0.3 m, used in radar and cooking.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "MIMIC",
+    "meaning": "Imitate someone or their actions or words, typically in order to entertain or ridicule.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "MIRACLE",
+    "meaning": "A surprising and welcome event that is not explicable by natural or scientific laws.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "MIRAGE",
+    "meaning": "An optical illusion caused by atmospheric conditions, especially the appearance of water in a desert.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "MNEMONIC",
+    "meaning": "A device such as a pattern of letters, ideas, or associations that assists in remembering something.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "MONARCH",
+    "meaning": "A sovereign head of state, especially a king, queen, or emperor.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "MONKEY",
+    "meaning": "A small to medium-sized primate that typically has a long tail.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "MONSTER",
+    "meaning": "An imaginary creature that is typically large, ugly, and frightening.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "MOON",
+    "meaning": "The natural satellite that orbits the planet Earth.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "MORNING",
+    "meaning": "The period of time between sunrise and midday.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "MOSQUITO",
+    "meaning": "A slender long-legged fly with aquatic larvae, the female of which bites humans and animals to feed on blood.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "MOUNTAIN",
+    "meaning": "A large natural elevation of the earth's surface rising abruptly from the surrounding level.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "MUSIC",
+    "meaning": "Vocal or instrumental sounds combined in such a way as to produce beauty of form and harmony.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "MYRIAD",
+    "meaning": "A countless or extremely great number of people or things.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "MYSTERY",
+    "meaning": "Something that is difficult or impossible to understand or explain.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "MYSTIQUE",
+    "meaning": "A fascinating aura of mystery, awe, and power surrounding someone or something.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "MYTHOLOGY",
+    "meaning": "A collection of myths, especially one belonging to a particular religious or cultural tradition.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "NAVIGATOR",
+    "meaning": "A person who directs the route or course of a ship, aircraft, or other form of transport.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "NEBULA",
+    "meaning": "A giant interstellar cloud of dust and gas in outer space.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "NEXUS",
+    "meaning": "A connection or series of connections linking two or more things.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "NIGHTCLUB",
+    "meaning": "An entertainment venue that is open from the late evening until the early morning, having facilities such as a bar and disco.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "NOSTALGIA",
+    "meaning": "A sentimental longing or wistful affection for the past.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "NOWADAYS",
+    "meaning": "At the present time, in contrast with the past.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "NUMB",
+    "meaning": "Deprived of the power of sensation, thinking, or movement.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "NUMSKULL",
+    "meaning": "A stupid or foolish person.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "OASIS",
+    "meaning": "A fertile spot in a desert, where water is found.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "OBLIVION",
+    "meaning": "The state of being unaware or unconscious of what is happening, or the state of being forgotten.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "OBSCURE",
+    "meaning": "Not discovered or known about; uncertain; not clearly expressed.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "OBSOLETE",
+    "meaning": "No longer produced or used; out of date.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "OCEAN",
+    "meaning": "A very large expanse of sea, in particular each of the main areas into which the sea is divided.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "OCTOPUS",
+    "meaning": "An eight-armed aquatic mollusk with a soft body, suckered tentacles, and strong beak-like jaws.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "ODYSSEY",
+    "meaning": "A long and eventful or adventurous journey.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "OMNIPRESENT",
+    "meaning": "Widely or constantly encountered; widespread or present everywhere at the same time.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "ONYX",
+    "meaning": "A semi-precious variety of agate with different colors in parallel layers, often black.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ORACLE",
+    "meaning": "A priest or priestess acting as a medium through whom advice or prophecy was sought.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "ORANGE",
+    "meaning": "A round citrus fruit with a tough bright reddish-yellow rind and sweet juicy pulp.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "ORCHESTRA",
+    "meaning": "A large group of musicians playing together on various instruments, typically conducted by a director.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "OSTRACIZE",
+    "meaning": "Exclude someone from a society or group.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "OXYGEN",
+    "meaning": "A colorless, odorless reactive gas, the chemical element of atomic number 8 and the life-supporting component of the air.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "OXYMORON",
+    "meaning": "A figure of speech in which contradictory terms appear in conjunction (e.g. deafening silence).",
+    "difficulty": "hard"
+  },
+  {
+    "word": "OZONE",
+    "meaning": "A colorless unstable toxic gas with a pungent odor and powerful oxidizing properties, formed from oxygen.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "PAJAMA",
+    "meaning": "A suit of loose-fitting trousers and jacket for sleeping in.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "PANACEA",
+    "meaning": "A solution or remedy for all difficulties or diseases.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "PANTHER",
+    "meaning": "A leopard, especially a black one, or a puma or cougar.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "PAPER",
+    "meaning": "Material manufactured in thin sheets from the pulp of wood or other plants.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "PARADISE",
+    "meaning": "An ideal or idyllic place or state; ultimate happiness and bliss.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "PARADOX",
+    "meaning": "A seemingly absurd or self-contradictory statement or proposition that when investigated may prove to be well founded or true.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "PARAGON",
+    "meaning": "A person or thing regarded as a perfect model of excellence.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "PARIAH",
+    "meaning": "An outcast; one who is rejected or despised by society.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "PAUCITY",
+    "meaning": "The presence of something only in small or insufficient quantities or amounts; scarcity.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "PEACOCK",
+    "meaning": "A male peafowl with brilliant iridescent blue-green plumage and a fan-like tail.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "PENCIL",
+    "meaning": "An instrument for writing or drawing, consisting of a thin stick of graphite.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "PENGUIN",
+    "meaning": "A flightless seabird of southern waters with flipper-like wings and upright posture.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "PHANTOM",
+    "meaning": "A ghost, apparition, or figment of the imagination.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "PHARAOH",
+    "meaning": "A ruler in ancient Egypt.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "PHENOMENON",
+    "meaning": "A fact or situation that is observed to exist or happen, especially one whose cause is in question.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "PHOBIA",
+    "meaning": "An extreme or irrational fear of or aversion to something.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "PHOENIX",
+    "meaning": "A mythical bird that burns itself on a funeral pyre and rises renewed from ashes.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "PIANO",
+    "meaning": "A large keyboard musical instrument with a wooden soundboard and wire strings.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "PIQUE",
+    "meaning": "A feeling of irritation or resentment resulting from a slight, especially to one pride.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "PIRATE",
+    "meaning": "A person who attacks and robs ships at sea.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "PIXEL",
+    "meaning": "A minute area of illumination on a display screen, one of many from which an image is composed.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "PLANET",
+    "meaning": "A celestial body moving in an elliptical orbit around a star.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "PLANT",
+    "meaning": "A living organism of the kind exemplified by trees, shrubs, herbs, and grasses.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "PLATINUM",
+    "meaning": "A precious silvery-white chemical element of high density and resistant to corrosion.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "PLETHORA",
+    "meaning": "A large or excessive amount of something.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "PNEUMONIA",
+    "meaning": "Lung inflammation caused by bacterial or viral infection, in which the air sacs fill with pus and may become solid.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "POCKET",
+    "meaning": "A small bag sewn into or on clothing so as to form part of it, used for carrying small items.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "POLYGON",
+    "meaning": "A plane figure with at least three straight sides and angles, and typically five or more.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "PRAGMATIC",
+    "meaning": "Dealing with things sensibly and realistically in a way that is based on practical rather than theoretical considerations.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "PRODIGY",
+    "meaning": "A person, especially a young one, endowed with exceptional qualities or abilities.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "PROWESS",
+    "meaning": "Skill or expertise in a particular activity or field; bravery in battle.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "PSYCHE",
+    "meaning": "The human soul, mind, or spirit.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "PUZZLE",
+    "meaning": "A game, toy, or problem designed to test ingenuity or knowledge.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "PYGMY",
+    "meaning": "A member of certain peoples of very short stature in equatorial Africa and Southeast Asia.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "PYRAMID",
+    "meaning": "A monumental structure with a square or triangular base and sloping sides that meet in a point at the top.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "PYRITE",
+    "meaning": "A shiny yellow mineral consisting of iron disulfide; fool's gold.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "QUAGMIRE",
+    "meaning": "A soft boggy area of land that gives way underfoot, or an awkward, complex, or hazardous situation.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "QUANTUM",
+    "meaning": "A discrete quantity of energy proportional in magnitude to the frequency of the radiation it represents.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "QUARANTINE",
+    "meaning": "A state, period, or place of isolation in which people or animals that have been exposed to infectious disease are placed.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "QUARRY",
+    "meaning": "A place, typically a large, deep pit, from which stone or other materials are or have been extracted.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "QUARTZ",
+    "meaning": "A hard white or colorless mineral consisting of silicon dioxide, found widely in igneous and metamorphic rocks.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "QUASAR",
+    "meaning": "A massive and extremely remote celestial object, emitting exceptionally large amounts of energy.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "QUEEN",
+    "meaning": "The female ruler of an independent state, especially one who inherits the position.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "QUENCH",
+    "meaning": "To extinguish or satisfy a thirst, fire, or desire.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "QUEUE",
+    "meaning": "A line or sequence of people or vehicles awaiting their turn to be attended to or to proceed.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "QUIBBLE",
+    "meaning": "A slight objection or criticism about a trivial matter.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "QUIVER",
+    "meaning": "Tremble or shake with a slight rapid motion, or an archer's case for holding arrows.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "QUIXOTIC",
+    "meaning": "Exceedingly idealistic; unrealistic and impractical.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "QUIZ",
+    "meaning": "A test of knowledge, especially as a competition between individuals or teams.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "QUORUM",
+    "meaning": "The minimum number of members of an assembly or society that must be present at any of its meetings to make proceedings valid.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "RABBIT",
+    "meaning": "A burrowing, gregarious plant-eating mammal with long ears, long hind legs, and a short tail.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "RAINBOW",
+    "meaning": "An arch of colors formed in the sky in certain circumstances, caused by refraction of sunlight.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "RAZZMATAZZ",
+    "meaning": "Noisy, showy, and exciting activity and display designed to attract attention.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "REDUNDANT",
+    "meaning": "Not or no longer needed or useful; superfluous.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "REEF",
+    "meaning": "A ridge of jagged rock, coral, or sand just below or above the surface of the sea.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "RESILIENCE",
+    "meaning": "The capacity to recover quickly from difficulties; toughness.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "RHAPSODY",
+    "meaning": "An effusively enthusiastic or ecstatic expression of feeling.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "RHINOCEROS",
+    "meaning": "A large, heavily built plant-eating mammal with one or two horns on the snout.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "RHUBARB",
+    "meaning": "A plant of the dock family, with large leaves and thick reddish edible stalks used in pies.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "RHYTHM",
+    "meaning": "A strong, regular, repeated pattern of movement or sound.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "RICKSHAW",
+    "meaning": "A light two-wheeled passenger vehicle pulled by one person, formerly used in Asian countries.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "RIVER",
+    "meaning": "A large natural stream of water flowing in a channel to the sea, a lake, or another stream.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "ROBOT",
+    "meaning": "A machine capable of carrying out a complex series of actions automatically.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "ROCKET",
+    "meaning": "A cylindrical projectile that can be propelled to a great height or into space by gas exhaust.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "ROOKIE",
+    "meaning": "A new recruit, especially in an army or police force, or a first-year player in a professional sport.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ROSE",
+    "meaning": "A prickly bush or shrub that typically bears fragrant flowers.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "SAFARI",
+    "meaning": "An expedition to observe or hunt animals in their natural habitat, especially in East Africa.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "SAGACIOUS",
+    "meaning": "Having or showing keen mental discernment and good judgment; shrewd.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "SANCTUARY",
+    "meaning": "A place of refuge or safety; a holy place.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "SAPPHIRE",
+    "meaning": "A precious transparent blue gemstone variety of corundum.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "SATELLITE",
+    "meaning": "An artificial body placed in orbit around the earth or moon or another planet in order to collect information.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "SCHIZOID",
+    "meaning": "Characterized by emotional aloofness, solitary habits, and indifference to social relationships.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "SCHNAPPS",
+    "meaning": "A strong, dry alcoholic drink resembling gin, distilled from fermented potatoes or grain.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "SCHOOL",
+    "meaning": "An institution for educating children or adults.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "SCINTILLA",
+    "meaning": "A tiny trace or spark of a specified quality or feeling.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "SCORPION",
+    "meaning": "A terrestrial arachnid with lobster-like pincers and a poisonous sting at the end of its tail.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "SCRATCH",
+    "meaning": "Mark a surface with a sharp or pointed object, or rub skin with fingernails to relieve itching.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "SCRUTINY",
+    "meaning": "Critical observation or examination.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "SCULPTURE",
+    "meaning": "The art of making two- or three-dimensional representative or abstract forms by carving stone or wood.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "SERENDIPITY",
+    "meaning": "The occurrence and development of events by chance in a happy or beneficial way.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "SHADOW",
+    "meaning": "A dark area or shape produced by a body coming between rays of light and a surface.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "SHEEP",
+    "meaning": "A domesticated ruminant animal with a thick woolly coat and typically curved horns in the male.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "SHIELD",
+    "meaning": "A broad piece of armor held in the hand or strapped to the forearm for protection.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "SHIP",
+    "meaning": "A large seafaring vessel capable of carrying passengers or cargo across oceans.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "SHUFFLE",
+    "meaning": "Walk by dragging one's feet along or mix a deck of playing cards.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "SILHOUETTE",
+    "meaning": "The dark shape and outline of someone or something visible against a lighter background.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "SILVER",
+    "meaning": "A precious shiny grayish-white metal element.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "SIMULTANEOUS",
+    "meaning": "Occurring, operating, or done at the same time.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "SKELETON",
+    "meaning": "An internal or external framework of bone, cartilage, or other rigid material supporting a body.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "SKEPTIC",
+    "meaning": "A person inclined to question or doubt accepted opinions.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "SMILE",
+    "meaning": "A pleased, kind, or amused facial expression, typically with the corners of the mouth turned up.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "SNAKE",
+    "meaning": "A long limbless reptile that has no eyelids, a short tail, and jaws that can unhinge.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "SNOOP",
+    "meaning": "Investigate or look around secretly with illicit curiosity.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "SOLDIER",
+    "meaning": "A person who serves in an army.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "SOLILOQUY",
+    "meaning": "An act of speaking one thoughts aloud when by oneself or regardless of any hearers.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "SONOROUS",
+    "meaning": "Imposingly deep and full of sound; resonant.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "SPARROW",
+    "meaning": "A small brownish-gray bird with a short cone-shaped beak.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "SPECTRUM",
+    "meaning": "A band of colors, as seen in a rainbow, produced by separation of the components of light by their different degrees of refraction.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "SPHINX",
+    "meaning": "A mythical creature with the head of a human and the body of a lion, known for posing riddles.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "SPIDER",
+    "meaning": "An eight-legged predatory arachnid with an unsegmented body and venomous fangs.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "SPORADIC",
+    "meaning": "Occurring at irregular intervals or only in a few places; scattered or isolated.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "SPRING",
+    "meaning": "The season after winter and before summer, in which vegetation begins to appear.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "SPRITZ",
+    "meaning": "Squirt or spray a liquid at or on something in quick, short bursts.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "SQUARE",
+    "meaning": "A plane figure with four equal straight sides and four right angles.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "SQUAWK",
+    "meaning": "A loud, harsh, or discordant noise made by a bird or person.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "STAFF",
+    "meaning": "All the people employed by a particular organization, or a long wooden pole.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "STAR",
+    "meaning": "A luminous celestial sphere of plasma held together by its own gravity.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "STREET",
+    "meaning": "A public road in a city, town, or village, typically with houses and buildings on one or both sides.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "SUBMARINE",
+    "meaning": "A warship with a streamlined hull designed to operate completely submerged in the sea for long periods.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "SUBTERFUGE",
+    "meaning": "Deceit used in order to achieve one goal; trickery or deceitful evasion.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "SUCCINCT",
+    "meaning": "Briefly and clearly expressed; concise.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "SUMMER",
+    "meaning": "The warmest season of the year, between spring and autumn.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "SUNSET",
+    "meaning": "The time in the evening when the sun disappears or daylight fades.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "SUPERFLUOUS",
+    "meaning": "Unnecessary, especially through being more than enough.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "SURREPTITIOUS",
+    "meaning": "Kept secret, especially because it would not be approved of.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "SWEET",
+    "meaning": "Having the pleasant taste characteristic of sugar or honey.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "SWIZZLE",
+    "meaning": "An alcoholic drink of liquor, fruit juice, and crushed ice, or a small rod for stirring cocktails.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "SYCOPHANT",
+    "meaning": "A person who acts obsequiously toward someone important in order to gain advantage; a flatterer.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "SYMBIOSIS",
+    "meaning": "Interaction between two different organisms living in close physical association, typically to the advantage of both.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "SYMPHONY",
+    "meaning": "An elaborate musical composition for full orchestra, typically in four movements.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "SYNCHRONIZE",
+    "meaning": "To cause to occur or operate at the same time or rate.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "SYNDROME",
+    "meaning": "A group of symptoms that consistently occur together or a condition characterized by a set of associated symptoms.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "SYNTHESIS",
+    "meaning": "The combination of ideas to form a theory or system, or production of chemical compounds from simpler materials.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "SYZYGY",
+    "meaning": "A conjunction or opposition, especially of the moon with the sun in an astronomical alignment.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "TABLE",
+    "meaning": "A piece of furniture with a flat top and one or more legs, providing a level surface.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "TEMPEST",
+    "meaning": "A violent, windy storm accompanied by rain, hail, or snow.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "TEMPLE",
+    "meaning": "A building devoted to the worship of a god or gods.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "TENTATIVE",
+    "meaning": "Not certain or fixed; provisional; done without confidence.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "THRIFTLESS",
+    "meaning": "Spending money in an extravagant and wasteful way; careless with resources.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "THUNDER",
+    "meaning": "A loud rumbling or crashing noise heard after a lightning flash due to the expansion of rapidly heated air.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "TIGER",
+    "meaning": "A very large solitary cat with a yellow-brown coat striped with black.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "TOPAZ",
+    "meaning": "A precious stone, typically colorless, yellow, or pale blue, consisting of an aluminum silicate.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "TOPOGRAPHY",
+    "meaning": "The arrangement of the natural and artificial physical features of an area.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "TORNADO",
+    "meaning": "A mobile, destructive vortex of violently rotating winds having the appearance of a funnel-shaped cloud.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "TRAIN",
+    "meaning": "A series of connected railway carriages or wagons moved by a locomotive.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "TRANSCRIPT",
+    "meaning": "A written or printed version of material originally presented in another medium.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "TRANSIENT",
+    "meaning": "Lasting only for a short time; impermanent.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "TREASURE",
+    "meaning": "A quantity of precious metals, gems, or other valuable objects.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "TREE",
+    "meaning": "A woody perennial plant typically having a single stem or trunk growing to considerable height.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "TREPIDATION",
+    "meaning": "A feeling of fear or agitation about something that may happen.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "TSUNAMI",
+    "meaning": "A long high sea wave caused by an earthquake, submarine landslide, or other disturbance.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "TURTLE",
+    "meaning": "A slow-moving reptile with a hard bony or leathery shell into which it can withdraw its head and legs.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "TWELFTH",
+    "meaning": "Constituting number twelve in a sequence; 12th.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "TWILIGHT",
+    "meaning": "The soft glowing light from the sky when the sun is below the horizon.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "TYCOON",
+    "meaning": "A wealthy, powerful person in business or industry.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "TYPHOON",
+    "meaning": "A tropical storm in the region of the Indian or western Pacific oceans.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "UBIQUITOUS",
+    "meaning": "Present, appearing, or found everywhere at the same time.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "UMBRELLA",
+    "meaning": "A device consisting of a circular canopy of cloth on a folding metal frame supported by a central rod.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "UNCANNY",
+    "meaning": "Strange or mysterious, especially in an unsettling way.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "UNICORN",
+    "meaning": "A mythical animal typically represented as a white horse with a single straight spiral horn projecting from its forehead.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "UNILATERAL",
+    "meaning": "Performed by or affecting only one person, group, or country involved in a particular situation, without the agreement of another or the others.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "UNIVERSE",
+    "meaning": "All existing matter and space considered as a whole; the cosmos.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "UNZIP",
+    "meaning": "Open the zipper of a garment or container, or decompress a compressed file archive.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "VACUOUS",
+    "meaning": "Having or showing a lack of thought or intelligence; mindless.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "VALIANT",
+    "meaning": "Possessing or showing courage or determination; heroic.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "VALLEY",
+    "meaning": "A low area of land between hills or mountains, typically with a river or stream flowing through it.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "VAMPIRE",
+    "meaning": "A corpse supposed, in European folklore, to leave its grave at night to drink the blood of the living.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "VAPORIZE",
+    "meaning": "Convert or be converted into vapor; destroy or eliminate completely.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "VECTOR",
+    "meaning": "A quantity having direction as well as magnitude, especially as determining the position of one point in space relative to another.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "VEHEMENT",
+    "meaning": "Showing strong feeling; forceful, passionate, or intense.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "VELVET",
+    "meaning": "A closely woven fabric of silk, cotton, or nylon, that has a thick short pile on one side.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "VERBATIM",
+    "meaning": "In exactly the same words as were used originally.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "VICARIOUS",
+    "meaning": "Experienced in the imagination through the feelings or actions of another person.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "VICIOUS",
+    "meaning": "Deliberately cruel or violent; wild and dangerous.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "VILLAGE",
+    "meaning": "A group of houses and associated buildings, larger than a hamlet and smaller than a town.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "VINDICATE",
+    "meaning": "Clear someone of blame or suspicion; show or prove to be right, reasonable, or justified.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "VIRTUOSO",
+    "meaning": "A person highly skilled in music or another artistic pursuit.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "VISCERAL",
+    "meaning": "Relating to deep inward feelings rather than to the intellect.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "VIVACIOUS",
+    "meaning": "Attractively lively and animated.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "VOLCANO",
+    "meaning": "A mountain or hill having a crater through which lava, rock fragments, and vapor are erupted.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "VOODOO",
+    "meaning": "A black religious cult practiced in the Caribbean and the southern US, combining elements of Roman Catholic ritual with traditional African magical and religious rites.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "VORTEX",
+    "meaning": "A whirling mass of fluid or air, especially a whirlpool or whirlwind.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "VOYAGE",
+    "meaning": "A long journey involving travel by sea or in space.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "VOYEUR",
+    "meaning": "A person who gains enjoyment from secretly watching other people.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "WAFFLE",
+    "meaning": "A crisp batter cake baked in a patterned iron griddle.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "WALKWAY",
+    "meaning": "A passage or path for walking along, especially a raised or covered one.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "WALTZ",
+    "meaning": "A dance in triple time performed by a couple, who turn rhythmically around and around as they progress around the dance floor.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "WARRIOR",
+    "meaning": "A brave or experienced soldier or fighter.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "WATER",
+    "meaning": "A colorless, transparent, odorless liquid that forms the seas, lakes, rivers, and rain.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "WAVELENGTH",
+    "meaning": "The distance between successive crests of a wave, especially points in a sound wave or electromagnetic wave.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "WAVELET",
+    "meaning": "A small wave or ripple on water.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "WAVY",
+    "meaning": "Having or moving in a series of curving shapes along a line.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "WAXEN",
+    "meaning": "Having a smooth, pale, translucent surface or appearance resembling wax.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "WHIMSICAL",
+    "meaning": "Playfully quaint or fanciful, especially in an appealing and amusing way.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "WHISPER",
+    "meaning": "To speak very softly using one's breath without vibrating the vocal cords.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "WICKED",
+    "meaning": "Evil or morally wrong; mischievous or playfullly naughty.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "WINDOW",
+    "meaning": "An opening in the wall or roof of a building fitted with glass in a frame for admitting light.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "WINTER",
+    "meaning": "The coldest season of the year, between autumn and spring.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "WITCHCRAFT",
+    "meaning": "The practice of magic, especially black magic; the use of spells and the invocation of spirits.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "WIZARD",
+    "meaning": "A man who has magical powers, especially in legends and fairy tales.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "WOBBLY",
+    "meaning": "Tending to move unsteadily from side to side; shaky.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "WOLF",
+    "meaning": "A wild carnivorous mammal of the dog family living and hunting in packs.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "WRAITH",
+    "meaning": "A ghost or ghostlike image of someone, especially one seen shortly before or after their death.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "WRISTWATCH",
+    "meaning": "A watch worn on a strap or band around the wrist.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "WYVERN",
+    "meaning": "A winged two-legged dragon with a barbed tail.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "XENON",
+    "meaning": "The chemical element of atomic number 54, a noble gas used in photographic flashes and high-intensity lamps.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "XENOPHOBIA",
+    "meaning": "Dislike of or prejudice against people from other countries.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "XEROX",
+    "meaning": "A photographic copy of written or printed material made by a xerographic process.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "XYLOID",
+    "meaning": "Resembling or having the nature of wood; woody.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "XYLOPHONE",
+    "meaning": "A musical instrument played by striking a row of wooden bars of graduated length with small mallets.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "XYST",
+    "meaning": "An ancient Greek covered portico or open promenade used for athletic training.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "YACHT",
+    "meaning": "A medium-sized sailboat equipped for cruising or racing.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "YARN",
+    "meaning": "Spun thread used for knitting, weaving, or sewing, or a long or rambling story.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "YEARBOOK",
+    "meaning": "An annual publication giving information about the events of the preceding year.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "YEARNING",
+    "meaning": "A feeling of intense longing for something.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "YELLOW",
+    "meaning": "The color between green and orange in the spectrum, a primary subtractive color.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "YELP",
+    "meaning": "A short, sharp cry, especially of pain or alarm.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "YIELD",
+    "meaning": "Produce or provide a natural, agricultural, or industrial product, or give way to arguments or demands.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "YOKE",
+    "meaning": "A wooden crosspiece that is fastened over the necks of two animals and attached to the plow or cart that they are to pull.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "YOUTH",
+    "meaning": "The period between childhood and adult age.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ZEALOT",
+    "meaning": "A person who is fanatical and uncompromising in pursuit of their religious, political, or other ideals.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ZEALOUS",
+    "meaning": "Having or showing great energy or enthusiasm in pursuit of a cause or objective.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ZEBRA",
+    "meaning": "An African wild horse with black-and-white stripes and an erect mane.",
+    "difficulty": "easy"
+  },
+  {
+    "word": "ZEITGEIST",
+    "meaning": "The defining spirit or mood of a particular period of history as shown by the ideas and beliefs of the time.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ZENITH",
+    "meaning": "The time at which something is most powerful or successful; the highest point in the sky.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ZEPHYR",
+    "meaning": "A soft, gentle, and refreshing breeze.",
+    "difficulty": "medium"
+  },
+  {
+    "word": "ZERO",
+    "meaning": "No quantity or number; the figure 0 representing nil.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ZESTY",
+    "meaning": "Appealingly piquant, pungent, or full of flavor and energy.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ZIGZAG",
+    "meaning": "A line or course having abrupt alternate right and left turns.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ZILCH",
+    "meaning": "Nothing; zero.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ZIPPER",
+    "meaning": "A device consisting of two flexible strips of metal or plastic with interlocking projections, used for fastening clothes.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ZODIAC",
+    "meaning": "A belt of the heavens within about 8° either side of the ecliptic, including all apparent positions of the sun, moon, and most planets.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ZOMBIE",
+    "meaning": "A reanimated corpse in folklore, brought back to life by a mystical or supernatural process.",
+    "difficulty": "hard"
+  },
+  {
+    "word": "ZUCCHINI",
+    "meaning": "A small green variety of summer squash having a dark green skin and creamy flesh.",
+    "difficulty": "hard"
+  }
 ]

@@ -34,8 +34,8 @@ export default function HangmanCanvas({
     if (!ctx) return;
 
     // Reset canvas dimensions for high DPI
-    const width = 220;
-    const height = 240;
+    const width = 330;
+    const height = 360;
     canvas.width = width;
     canvas.height = height;
 
@@ -75,6 +75,8 @@ export default function HangmanCanvas({
   function drawAnimatedFrame(ctx, w, h, mistakes, isDead, mood, timeMs) {
     ctx.clearRect(0, 0, w, h);
     ctx.save();
+    const scale = w / 220;
+    ctx.scale(scale, scale);
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
@@ -399,6 +401,9 @@ export default function HangmanCanvas({
       if (!start) start = timestamp;
       const elapsed = timestamp - start;
       ctx.clearRect(0, 0, w, h);
+      ctx.save();
+      const scale = w / 220;
+      ctx.scale(scale, scale);
 
       const doorAngle = Math.min(Math.PI / 2.2, (elapsed / 400) * (Math.PI / 2.2));
       const swingAngle = Math.sin(elapsed * 0.006) * 0.25 * Math.max(0, 1 - elapsed / 2000);
@@ -414,6 +419,7 @@ export default function HangmanCanvas({
 
       drawGallows(doorAngle);
       drawSwingingMan(swingAngle, dropY, ropeSnapped);
+      ctx.restore();
 
       if (elapsed < duration) {
         animFrameRef.current = requestAnimationFrame(loop);
@@ -433,6 +439,9 @@ export default function HangmanCanvas({
       if (!start) start = timestamp;
       const elapsed = timestamp - start;
       ctx.clearRect(0, 0, w, h);
+      ctx.save();
+      const scale = w / 220;
+      ctx.scale(scale, scale);
 
       // Gallows
       ctx.lineWidth = 3;
@@ -481,6 +490,7 @@ export default function HangmanCanvas({
       ctx.moveTo(0, 140); ctx.lineTo(legCycle, 185);
       ctx.stroke();
 
+      ctx.restore();
       ctx.restore();
 
       if (elapsed < duration) {
