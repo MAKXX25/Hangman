@@ -233,6 +233,10 @@ function buildStatePayload(room, roomCode, forPlayer) {
 
   return {
     state: room.state,
+    teamNameA: room.teamNameA || 'Team A',
+    teamNameB: room.teamNameB || 'Team B',
+    leaderA: room.leaderA || null,
+    leaderB: room.leaderB || null,
     teamA: teamA.map((p) => {
       const pid = p.sessionId || p.id;
       return {
@@ -241,6 +245,7 @@ function buildStatePayload(room, roomCode, forPlayer) {
         socketId: p.socketId,
         name: p.name,
         isHost: !!p.isHost,
+        isLeader: p.socketId === room.leaderA,
         score: p.score || 0,
         connected: p.connected !== false,
         team: 'teamA',
@@ -255,6 +260,7 @@ function buildStatePayload(room, roomCode, forPlayer) {
         socketId: p.socketId,
         name: p.name,
         isHost: !!p.isHost,
+        isLeader: p.socketId === room.leaderB,
         score: p.score || 0,
         connected: p.connected !== false,
         team: 'teamB',
@@ -307,8 +313,23 @@ function buildStatePayload(room, roomCode, forPlayer) {
   };
 }
 
+function ensureTeamLeaders(room) {
+  if (!room) return;
+  const connectedA = (room.teamA || []).filter((p) => p.connected && p.socketId);
+  const connectedB = (room.teamB || []).filter((p) => p.connected && p.socketId);
+
+  if (!room.leaderA || !connectedA.some((p) => p.socketId === room.leaderA)) {
+    room.leaderA = connectedA.length > 0 ? connectedA[0].socketId : null;
+  }
+  if (!room.leaderB || !connectedB.some((p) => p.socketId === room.leaderB)) {
+    room.leaderB = connectedB.length > 0 ? connectedB[0].socketId : null;
+  }
+}
+
 // ─── Broadcast Authoritative State ────────────────────────────────────────────
 function broadcastState(io, room, roomCode) {
+  if (!room) return;
+  ensureTeamLeaders(room);
   const allPlayers = [...(room.teamA || []), ...(room.teamB || [])];
   allPlayers.forEach((player) => {
     if (player.socketId) {
@@ -494,6 +515,10 @@ io.on('connection', (socket) => {
       state: 'lobby',
       teamA: hostTeam === 'teamA' ? [hostPlayer] : [],
       teamB: hostTeam === 'teamB' ? [hostPlayer] : [],
+      teamNameA: 'Team A',
+      teamNameB: 'Team B',
+      leaderA: hostTeam === 'teamA' ? socket.id : null,
+      leaderB: hostTeam === 'teamB' ? socket.id : null,
       teamScores: { teamA: 0, teamB: 0 },
       game: null,
       timer: null,
@@ -546,7 +571,7 @@ io.on('connection', (socket) => {
 
     // ── Team Capacity Limit (Max 4 players per team) ────────────────────────
     const targetTeam = team === 'teamA' ? 'teamA' : 'teamB';
-    const targetTeamName = targetTeam === 'teamA' ? 'Team A' : 'Team B';
+    const targetTeamName = targetTeam === 'teamA' ? (room.teamNameA || 'Team A') : (room.teamNameB || 'Team B');
 
     if (room[targetTeam].length >= 4 && !isSelfReconnection) {
       socket.emit('join_error', {
@@ -558,6 +583,7 @@ io.on('connection', (socket) => {
     // Handle re-joining player with existing session
     const existingPlayer = [...room.teamA, ...room.teamB].find((p) => p.sessionId === sessionId);
     if (existingPlayer) {
+      const oldSocketId = existingPlayer.socketId;
       if (existingPlayer.disconnectTimeout) {
         clearTimeout(existingPlayer.disconnectTimeout);
         existingPlayer.disconnectTimeout = null;
@@ -565,6 +591,10 @@ io.on('connection', (socket) => {
       existingPlayer.socketId = socket.id;
       existingPlayer.connected = true;
       existingPlayer.name = cleanName;
+      if (room.leaderA === oldSocketId) room.leaderA = socket.id;
+      if (room.leaderB === oldSocketId) room.leaderB = socket.id;
+      if (!room.leaderA && room.teamA.some((p) => p.socketId === socket.id)) room.leaderA = socket.id;
+      if (!room.leaderB && room.teamB.some((p) => p.socketId === socket.id)) room.leaderB = socket.id;
       socket.join(code);
       socket.data.roomCode = code;
       socket.data.playerName = cleanName;
@@ -584,6 +614,13 @@ io.on('connection', (socket) => {
       disconnectTimeout: null,
     };
     room[targetTeam].push(newPlayer);
+
+    // Auto-Assign: When a player joins a team, if that team's leader is null, automatically assign this first player as the leader.
+    if (targetTeam === 'teamA') {
+      if (!room.leaderA) room.leaderA = socket.id;
+    } else {
+      if (!room.leaderB) room.leaderB = socket.id;
+    }
 
     socket.join(code);
     socket.data.roomCode = code;
@@ -631,6 +668,74 @@ io.on('connection', (socket) => {
     }
   });
 
+  // 2b. Assign Team Leader (Host Override Event)
+  socket.on('assign_leader', ({ socketId, team }) => {
+    const roomCode = socket.data.roomCode;
+    if (!roomCode || !rooms[roomCode]) return;
+    const room = rooms[roomCode];
+
+    const currentSessionId = socket.data.sessionId || sessionId;
+    const isHost = [...(room.teamA || []), ...(room.teamB || [])].some(
+      (p) => (p.socketId === socket.id || p.sessionId === currentSessionId) && p.isHost
+    );
+
+    if (!isHost) {
+      socket.emit('error_msg', 'Only the Room Host can assign team leaders.');
+      return;
+    }
+
+    const targetTeam = team === 'teamB' ? 'teamB' : 'teamA';
+    const playerInTeam = (room[targetTeam] || []).find((p) => p.socketId === socketId);
+
+    if (!playerInTeam) {
+      socket.emit('error_msg', 'Player not found in that team.');
+      return;
+    }
+
+    if (targetTeam === 'teamA') {
+      room.leaderA = socketId;
+    } else {
+      room.leaderB = socketId;
+    }
+
+    console.log(`👑 Host assigned "${playerInTeam.name}" (${socketId}) as leader of ${targetTeam === 'teamA' ? (room.teamNameA || 'Team A') : (room.teamNameB || 'Team B')} in room ${roomCode}`);
+    broadcastState(io, room, roomCode);
+  });
+
+  // 2c. Set Team Name (Leader Only Event)
+  socket.on('set_team_name', ({ team, name }) => {
+    const roomCode = socket.data.roomCode;
+    if (!roomCode || !rooms[roomCode]) return;
+    const room = rooms[roomCode];
+
+    const targetTeam = team === 'teamB' ? 'teamB' : 'teamA';
+    const currentLeader = targetTeam === 'teamA' ? room.leaderA : room.leaderB;
+
+    // Validate that the requesting socket is the actual team leader
+    if (socket.id !== currentLeader) {
+      socket.emit('error_msg', 'Only the Team Leader can set the team name.');
+      return;
+    }
+
+    const cleanName = (name || '').trim();
+    if (!cleanName) {
+      socket.emit('error_msg', 'Team name cannot be empty.');
+      return;
+    }
+
+    const sanitizedName = cleanName.slice(0, 30);
+
+    if (targetTeam === 'teamA') {
+      room.teamNameA = sanitizedName;
+    } else {
+      room.teamNameB = sanitizedName;
+    }
+
+    console.log(`🏷️ Team name updated for ${targetTeam}: "${sanitizedName}" by leader ${socket.id} in room ${roomCode}`);
+    broadcastState(io, room, roomCode);
+    io.to(roomCode).emit('team_name_updated', { team: targetTeam, name: sanitizedName });
+  });
+
   // 3. Word Suggestions Request
   socket.on('get_suggestions', () => {
     socket.emit('word_suggestions', {
@@ -639,7 +744,7 @@ io.on('connection', (socket) => {
   });
 
   // 4. Word Setter Submits Word (Any member of the setting team)
-  socket.on('set_word', ({ word }) => {
+  const handleSetSecretWord = ({ word, clue, meaning }) => {
     const roomCode = socket.data.roomCode;
     if (!roomCode || !rooms[roomCode]) return;
     const room = rooms[roomCode];
@@ -672,7 +777,7 @@ io.on('connection', (socket) => {
       return;
     }
 
-    const valid = isValidWord(clean);
+    const valid = isValidWord(clean) || !!clue;
     if (!valid) {
       socket.emit('word_validation', {
         valid: false,
@@ -685,8 +790,14 @@ io.on('connection', (socket) => {
     socket.emit('word_validation', { valid: true, reason: '' });
 
     const entry = DICTIONARY_ENTRIES.find((e) => e.word.toLowerCase() === clean);
+    const resolvedClue = (typeof clue === 'string' && clue.trim())
+      ? clue.trim()
+      : (typeof meaning === 'string' && meaning.trim())
+      ? meaning.trim()
+      : (entry ? entry.meaning : 'A valid English dictionary word.');
+
     room.game.word = clean;
-    room.game.meaning = entry ? entry.meaning : '';
+    room.game.meaning = resolvedClue;
     room.state = 'guessing';
     broadcastState(io, room, roomCode);
 
@@ -694,8 +805,12 @@ io.on('connection', (socket) => {
       wordLength: clean.length,
       currentTurn: room.game.currentTurn,
       wordSettingTeam: room.game.wordSettingTeam,
+      clue: resolvedClue,
     });
-  });
+  };
+
+  socket.on('set_word', handleSetSecretWord);
+  socket.on('set_secret_word', handleSetSecretWord);
 
   // 5. Team Guesses a Letter (Any player on the currently active team)
   socket.on('guess_letter', ({ letter }) => {
