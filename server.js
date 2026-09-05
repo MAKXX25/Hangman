@@ -232,6 +232,7 @@ function buildStatePayload(room, roomCode, forPlayer) {
   const isMyTeamTurn = myTeam === currentTurn;
 
   return {
+    status: room.status || (room.state === 'lobby' || room.state === 'waiting' ? 'waiting' : 'playing'),
     state: room.state,
     teamNameA: room.teamNameA || 'Team A',
     teamNameB: room.teamNameB || 'Team B',
@@ -246,6 +247,7 @@ function buildStatePayload(room, roomCode, forPlayer) {
         name: p.name,
         isHost: !!p.isHost,
         isLeader: p.socketId === room.leaderA,
+        isReady: !!p.isReady,
         score: p.score || 0,
         connected: p.connected !== false,
         team: 'teamA',
@@ -261,6 +263,7 @@ function buildStatePayload(room, roomCode, forPlayer) {
         name: p.name,
         isHost: !!p.isHost,
         isLeader: p.socketId === room.leaderB,
+        isReady: !!p.isReady,
         score: p.score || 0,
         connected: p.connected !== false,
         team: 'teamB',
@@ -276,6 +279,7 @@ function buildStatePayload(room, roomCode, forPlayer) {
         socketId: p.socketId,
         name: p.name,
         isHost: !!p.isHost,
+        isReady: !!p.isReady,
         score: p.score || 0,
         connected: p.connected !== false,
         team,
@@ -506,12 +510,14 @@ io.on('connection', (socket) => {
       socketId: socket.id,
       name: cleanName,
       isHost: true,
+      isReady: false,
       score: 0,
       connected: true,
       disconnectTimeout: null,
     };
 
     rooms[roomCode] = {
+      status: 'waiting',
       state: 'lobby',
       teamA: hostTeam === 'teamA' ? [hostPlayer] : [],
       teamB: hostTeam === 'teamB' ? [hostPlayer] : [],
@@ -609,6 +615,7 @@ io.on('connection', (socket) => {
       socketId: socket.id,
       name: cleanName,
       isHost: false,
+      isReady: false,
       score: 0,
       connected: true,
       disconnectTimeout: null,
@@ -629,43 +636,14 @@ io.on('connection', (socket) => {
 
     console.log(`👥 "${cleanName}" joined ${targetTeamName} in room ${code}. Team A: ${room.teamA.length}/4 | Team B: ${room.teamB.length}/4`);
 
-    // Auto-start match when both teams have at least 1 player and room is in lobby
-    if (room.state === 'lobby' && room.teamA.length >= 1 && room.teamB.length >= 1) {
-      room.state = 'setting';
-      room.game = {
-        word: null,
-        wordSettingTeam: 'teamA', // Team A sets first word
-        currentTurn: 'teamB',     // Team B guesses
-        wordSetterId: room.teamA[0].sessionId,
-        guesserId: room.teamB[0].sessionId,
-        guessedLetters: [],
-        wrongGuesses: [],
-        livesLeft: MAX_LIVES,
-        roundResult: null,
-      };
-
-      io.to(code).emit('game_start', {
-        roomCode: code,
-        currentTurn: room.game.currentTurn,
-        wordSettingTeam: room.game.wordSettingTeam,
-        teamA: room.teamA,
-        teamB: room.teamB,
-      });
-
-      broadcastState(io, room, code);
-      startSettingTimer(io, code);
-
-      // Send word suggestions to all members of the word setting team
-      room.teamA.forEach((member) => {
-        if (member.socketId) {
-          io.to(member.socketId).emit('word_suggestions', {
-            suggestions: getRandomSuggestions(12),
-          });
-        }
-      });
-    } else {
-      broadcastState(io, room, code);
-    }
+    // In Ready-Up architecture: Match does NOT automatically start on join.
+    // Instead, emit update_room and broadcastState so players remain in the waiting room to ready up and customize team names.
+    io.to(code).emit('update_room', {
+      roomCode: code,
+      teamA: room.teamA,
+      teamB: room.teamB,
+    });
+    broadcastState(io, room, code);
   });
 
   // 2b. Assign Team Leader (Host Override Event)
@@ -734,6 +712,84 @@ io.on('connection', (socket) => {
     console.log(`🏷️ Team name updated for ${targetTeam}: "${sanitizedName}" by leader ${socket.id} in room ${roomCode}`);
     broadcastState(io, room, roomCode);
     io.to(roomCode).emit('team_name_updated', { team: targetTeam, name: sanitizedName });
+  });
+
+  // 2d. Toggle Player Ready State (Waiting Room Phase)
+  socket.on('toggle_ready', () => {
+    const roomCode = socket.data.roomCode;
+    if (!roomCode || !rooms[roomCode]) return;
+    const room = rooms[roomCode];
+
+    // If game is already active / playing, ignore
+    if (room.status === 'playing') return;
+
+    const currentSessionId = socket.data.sessionId || sessionId;
+    const allPlayers = [...(room.teamA || []), ...(room.teamB || [])];
+    const player = allPlayers.find(
+      (p) => p.socketId === socket.id || p.sessionId === currentSessionId
+    );
+
+    if (!player) return;
+
+    // Flip ready boolean
+    player.isReady = !player.isReady;
+    console.log(`🎯 Player "${player.name}" (${player.sessionId}) toggled ready: ${player.isReady} in room ${roomCode}`);
+
+    // Emit update_room and broadcast state so everyone's UI reflects ready status
+    io.to(roomCode).emit('update_room', {
+      roomCode,
+      teamA: room.teamA,
+      teamB: room.teamB,
+    });
+    broadcastState(io, room, roomCode);
+
+    // The Start Condition:
+    // Check if all players in both teams are ready, and both teams have at least 1 player
+    const allReady = [...room.teamA, ...room.teamB].every((p) => p.isReady);
+    if (allReady && room.teamA.length > 0 && room.teamB.length > 0) {
+      room.status = 'playing';
+      room.state = 'setting';
+      room.game = {
+        word: null,
+        wordSettingTeam: 'teamA', // Team A sets first word
+        currentTurn: 'teamB',     // Team B guesses
+        wordSetterId: room.teamA[0].sessionId,
+        guesserId: room.teamB[0].sessionId,
+        guessedLetters: [],
+        wrongGuesses: [],
+        livesLeft: MAX_LIVES,
+        roundResult: null,
+      };
+
+      console.log(`🚀 All players ready in room ${roomCode}! Transitioning to active game state...`);
+
+      io.to(roomCode).emit('game_start', {
+        roomCode,
+        currentTurn: room.game.currentTurn,
+        wordSettingTeam: room.game.wordSettingTeam,
+        teamA: room.teamA,
+        teamB: room.teamB,
+      });
+      io.to(roomCode).emit('start_game', {
+        roomCode,
+        currentTurn: room.game.currentTurn,
+        wordSettingTeam: room.game.wordSettingTeam,
+        teamA: room.teamA,
+        teamB: room.teamB,
+      });
+
+      broadcastState(io, room, roomCode);
+      startSettingTimer(io, roomCode);
+
+      // Send word suggestions to all members of the word setting team
+      room.teamA.forEach((member) => {
+        if (member.socketId) {
+          io.to(member.socketId).emit('word_suggestions', {
+            suggestions: getRandomSuggestions(12),
+          });
+        }
+      });
+    }
   });
 
   // 3. Word Suggestions Request

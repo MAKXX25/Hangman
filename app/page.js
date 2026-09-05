@@ -5,6 +5,7 @@ import confetti from 'canvas-confetti';
 import Navbar from '../components/Navbar.jsx';
 import InteractiveHeroCard from '../components/InteractiveHeroCard.jsx';
 import CustomDropdown from '../components/CustomDropdown.jsx';
+import WaitingRoomUI from '../components/WaitingRoomUI.jsx';
 import {
   playMechanicalClick,
   speakDialogue,
@@ -106,6 +107,7 @@ export default function HangmanDuelApp() {
   });
   const [disconnectNotice, setDisconnectNotice] = useState(null); // { name: string, secondsLeft: number }
   const [gameState, setGameState] = useState('waiting'); // waiting | setting | guessing | roundover
+  const [roomStatus, setRoomStatus] = useState('waiting'); // 'waiting' | 'playing'
   const [players, setPlayers] = useState([]);
   const [teamA, setTeamA] = useState([]);
   const [teamB, setTeamB] = useState([]);
@@ -179,6 +181,23 @@ export default function HangmanDuelApp() {
       socket.emit('set_team_name', { team: myLeaderTeam, name: trimmed });
       setCustomTeamNameInput('');
       showToast(`Team name set to "${trimmed}"! 🛡️`);
+    }
+  };
+
+  const handleToggleReady = () => {
+    playMechanicalClick();
+    const socket = socketRef.current || getSocket();
+    if (socket) {
+      socket.emit('toggle_ready');
+    }
+  };
+
+  const handleSetTeamName = (teamKey, name) => {
+    playMechanicalClick();
+    const socket = socketRef.current || getSocket();
+    if (socket) {
+      socket.emit('set_team_name', { team: teamKey, name });
+      showToast(`Team name updated to "${name}"! 🛡️`);
     }
   };
 
@@ -1574,6 +1593,13 @@ export default function HangmanDuelApp() {
   // ── Apply Room State Updates ──────────────────────────────────────────────
   const applyState = useCallback((roomData) => {
     if (!roomData) return;
+    if (roomData.status) {
+      setRoomStatus(roomData.status);
+    } else if (roomData.state === 'lobby' || roomData.state === 'waiting') {
+      setRoomStatus('waiting');
+    } else if (['setting', 'guessing', 'roundover', 'gameover'].includes(roomData.state)) {
+      setRoomStatus('playing');
+    }
     setGameState(roomData.state);
     if (roomData.players) setPlayers(roomData.players);
     if (roomData.teamA) setTeamA(roomData.teamA);
@@ -1854,6 +1880,7 @@ export default function HangmanDuelApp() {
       setIsConnecting(false);
       setRoomCode(code);
       setScreen('waiting');
+      setRoomStatus('waiting');
       setGameState('waiting');
     };
 
@@ -1862,14 +1889,24 @@ export default function HangmanDuelApp() {
       if (code) setRoomCode(code);
       if (roomPlayers) setPlayers(roomPlayers);
       setScreen('game');
+      setRoomStatus('playing');
       setGameState('setting');
     };
 
     const onStateUpdate = (roomState) => {
-      if (roomState?.state && roomState.state !== 'lobby') {
+      if (roomState?.status === 'playing' || (roomState?.state && !['lobby', 'waiting'].includes(roomState.state))) {
         setScreen('game');
+        setRoomStatus('playing');
+      } else if (roomState?.status === 'waiting' || roomState?.state === 'lobby') {
+        setRoomStatus('waiting');
       }
       applyState(roomState);
+    };
+
+    const onUpdateRoom = (roomData) => {
+      if (roomData) {
+        applyState(roomData);
+      }
     };
 
     const onTimerTick = ({ secondsLeft, total }) => {
@@ -1907,6 +1944,7 @@ export default function HangmanDuelApp() {
       setDisconnectNotice(null);
       showToast('⚠️ Opponent left the game.', 4000);
       setGameState('lobby');
+      setRoomStatus('waiting');
       setScreen('waiting');
     };
 
@@ -1960,6 +1998,8 @@ export default function HangmanDuelApp() {
     sock.on('player_forfeit', onPlayerForfeit);
     sock.on('room_created', onRoomCreated);
     sock.on('game_start', onGameStart);
+    sock.on('start_game', onGameStart);
+    sock.on('update_room', onUpdateRoom);
     sock.on('state_update', onStateUpdate);
     sock.on('timer_tick', onTimerTick);
     sock.on('timer_expired', onTimerExpired);
@@ -1982,6 +2022,8 @@ export default function HangmanDuelApp() {
       sock.off('player_forfeit', onPlayerForfeit);
       sock.off('room_created', onRoomCreated);
       sock.off('game_start', onGameStart);
+      sock.off('start_game', onGameStart);
+      sock.off('update_room', onUpdateRoom);
       sock.off('state_update', onStateUpdate);
       sock.off('timer_tick', onTimerTick);
       sock.off('timer_expired', onTimerExpired);
@@ -3987,281 +4029,29 @@ export default function HangmanDuelApp() {
           <div className="absolute -bottom-32 left-1/3 w-[30rem] h-[30rem] bg-pink-500/20 rounded-full filter blur-3xl opacity-60 animate-blob [animation-delay:4s] mix-blend-screen" />
         </div>
 
-        <div className="waiting-card bg-[#11101e]/90 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] rounded-3xl relative z-10 p-7 sm:p-9 w-full max-w-lg mx-4 flex flex-col items-center gap-5 text-center transition-all">
-          <div className="pulse-ring mb-1" aria-label="Waiting status indicator"></div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-display uppercase">Waiting for opponent…</h2>
-          <p className="text-slate-300 text-sm max-w-sm">Share the room code or send an instant invite link to your friend:</p>
-          
-          {/* Room Code Box with Copy */}
-          <div className="w-full flex items-center justify-between gap-2 p-2 rounded-2xl bg-slate-950/80 border border-purple-500/30">
-            <div
-              className="flex-1 px-4 py-2 font-mono text-2xl sm:text-3xl font-black tracking-widest text-purple-300 select-all cursor-pointer text-left"
-              id="display-room-code"
-              onClick={copyRoomCode}
-              title="Click to copy room code"
-            >
-              {roomCode}
-            </div>
-            <button
-              id="btn-copy-code"
-              type="button"
-              className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium text-xs sm:text-sm flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
-              onClick={copyRoomCode}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-                <rect x="9" y="9" width="13" height="13" rx="2" />
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-              </svg>
-              <span>Copy Code</span>
-            </button>
-          </div>
-
-          {/* Instant Share Link Actions */}
-          <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            <button
-              id="btn-copy-link"
-              type="button"
-              onClick={copyInviteLink}
-              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 text-white font-display font-bold text-xs uppercase tracking-wider shadow-lg shadow-purple-600/30 hover:shadow-purple-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4">
-                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-              </svg>
-              <span>Copy Invite Link</span>
-            </button>
-
-            <button
-              id="btn-share-whatsapp"
-              type="button"
-              onClick={shareViaWhatsApp}
-              className="w-full py-3 px-4 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 font-display font-bold text-xs uppercase tracking-wider hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M17.472 14.382c-.301-.15-1.781-.878-2.057-.978-.276-.1-.476-.15-.676.15-.2.3-.776.978-.951 1.178-.175.2-.351.225-.651.075-.3-.15-1.267-.467-2.413-1.489-.893-.796-1.496-1.78-1.671-2.08-.175-.3-.019-.462.131-.611.135-.134.3-.35.45-.525.15-.175.2-.3.3-.5.1-.2.05-.375-.025-.525-.075-.15-.676-1.63-926-2.232-.243-.586-.49-.506-.676-.516-.175-.01-.375-.01-.575-.01-.2 0-.525.075-.8.375-.275.3-1.05 1.026-1.05 2.502s1.075 2.898 1.225 3.098c.15.2 2.115 3.23 5.124 4.531.716.31 1.275.495 1.71.634.72.23 1.375.197 1.893.12.578-.087 1.781-.728 2.032-1.431.25-.703.25-1.306.175-1.431-.075-.125-.275-.2-.576-.35zM12.04 2C6.52 2 2.04 6.48 2.04 12c0 1.98.58 3.83 1.58 5.4L2 22l4.78-1.55c1.52.92 3.3 1.45 5.26 1.45 5.52 0 10-4.48 10-10S17.56 2 12.04 2z" />
-              </svg>
-              <span>Share WhatsApp</span>
-            </button>
-          </div>
-
-          {/* ─── Team Rosters in Lobby / Waiting Room ───────────────────── */}
-          {!isPveMode && (
-            <div className="w-full flex flex-col gap-3 text-left my-1">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {/* Team A Roster Card */}
-                <div className="p-3 rounded-2xl bg-[#141226]/85 border border-cyan-500/30 backdrop-blur-md">
-                  <div className="flex items-center justify-between gap-1 mb-2 pb-1 border-b border-white/10">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm">🛡️</span>
-                      <span className="font-display font-bold text-xs sm:text-sm text-cyan-300 uppercase tracking-wide truncate max-w-[130px]">
-                        {teamNameA}
-                      </span>
-                      <span className="text-[10px] font-mono text-slate-400">({teamA.length}/4)</span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    {teamA.length > 0 ? (
-                      teamA.map((p) => {
-                        const isYou = p.sessionId === myPlayerId || p.socketId === currentSocketId || p.isYou;
-                        const isLeader = p.isLeader || (p.socketId && p.socketId === leaderA);
-                        return (
-                          <div
-                            key={p.sessionId || p.id}
-                            className={`flex items-center justify-between gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
-                              isYou
-                                ? 'bg-cyan-500/25 border border-cyan-400/50 text-cyan-100 shadow-sm'
-                                : 'bg-white/5 border border-white/10 text-slate-300'
-                            }`}
-                          >
-                            <div className="flex items-center gap-1.5 truncate">
-                              {isLeader && (
-                                <span title="Team Leader" className="text-yellow-400 drop-shadow-[0_0_6px_rgba(250,204,21,0.8)] animate-pulse text-sm">
-                                  👑
-                                </span>
-                              )}
-                              {p.isHost && (
-                                <span className="text-[8.5px] px-1 py-0.2 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 font-mono" title="Room Host">
-                                  HOST
-                                </span>
-                              )}
-                              <span className="truncate">{p.name}</span>
-                              {isYou && <span className="text-[9px] text-cyan-300 font-mono">(You)</span>}
-                            </div>
-
-                            {isHost && !isLeader && (
-                              <button
-                                type="button"
-                                onClick={() => handleAssignLeader(p.socketId, 'teamA')}
-                                className="text-[9px] px-2 py-0.5 rounded bg-amber-400/15 hover:bg-amber-400/30 text-amber-300 border border-amber-400/30 transition-all active:scale-95 cursor-pointer whitespace-nowrap"
-                                title={`Make ${p.name} Team Leader`}
-                              >
-                                Make Leader
-                              </button>
-                            )}
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <span className="text-xs text-slate-500 italic py-1">Waiting for players to join...</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Team B Roster Card */}
-                <div className="p-3 rounded-2xl bg-[#141226]/85 border border-purple-500/30 backdrop-blur-md">
-                  <div className="flex items-center justify-between gap-1 mb-2 pb-1 border-b border-white/10">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm">⚔️</span>
-                      <span className="font-display font-bold text-xs sm:text-sm text-purple-300 uppercase tracking-wide truncate max-w-[130px]">
-                        {teamNameB}
-                      </span>
-                      <span className="text-[10px] font-mono text-slate-400">({teamB.length}/4)</span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    {teamB.length > 0 ? (
-                      teamB.map((p) => {
-                        const isYou = p.sessionId === myPlayerId || p.socketId === currentSocketId || p.isYou;
-                        const isLeader = p.isLeader || (p.socketId && p.socketId === leaderB);
-                        return (
-                          <div
-                            key={p.sessionId || p.id}
-                            className={`flex items-center justify-between gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
-                              isYou
-                                ? 'bg-purple-500/25 border border-purple-400/50 text-purple-100 shadow-sm'
-                                : 'bg-white/5 border border-white/10 text-slate-300'
-                            }`}
-                          >
-                            <div className="flex items-center gap-1.5 truncate">
-                              {isLeader && (
-                                <span title="Team Leader" className="text-yellow-400 drop-shadow-[0_0_6px_rgba(250,204,21,0.8)] animate-pulse text-sm">
-                                  👑
-                                </span>
-                              )}
-                              {p.isHost && (
-                                <span className="text-[8.5px] px-1 py-0.2 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 font-mono" title="Room Host">
-                                  HOST
-                                </span>
-                              )}
-                              <span className="truncate">{p.name}</span>
-                              {isYou && <span className="text-[9px] text-purple-300 font-mono">(You)</span>}
-                            </div>
-
-                            {isHost && !isLeader && (
-                              <button
-                                type="button"
-                                onClick={() => handleAssignLeader(p.socketId, 'teamB')}
-                                className="text-[9px] px-2 py-0.5 rounded bg-amber-400/15 hover:bg-amber-400/30 text-amber-300 border border-amber-400/30 transition-all active:scale-95 cursor-pointer whitespace-nowrap"
-                                title={`Make ${p.name} Team Leader`}
-                              >
-                                Make Leader
-                              </button>
-                            )}
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <span className="text-xs text-slate-500 italic py-1">Waiting for players to join...</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* ─── TEAM NAME CHOOSER (LEADER ONLY) ─────────────────────────── */}
-              {isTeamLeader && (
-                <div className="w-full p-4 rounded-2xl bg-[#16142a]/95 border border-purple-500/40 backdrop-blur-xl shadow-2xl animate-fadeIn flex flex-col gap-3 text-left">
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <div className="flex items-center gap-2">
-                      <span className="text-yellow-400 text-lg">👑</span>
-                      <h3 className="font-display font-bold text-xs sm:text-sm text-white tracking-wide uppercase">
-                        Set {myLeaderTeam === 'teamA' ? 'Team A' : 'Team B'} Name
-                      </h3>
-                    </div>
-                    <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-yellow-400/15 text-yellow-300 border border-yellow-400/30">
-                      Team Leader Controls
-                    </span>
-                  </div>
-
-                  {/* Text Input & Confirm Button */}
-                  <div className="flex items-center gap-2 w-full">
-                    <input
-                      type="text"
-                      placeholder="Type a custom team name..."
-                      maxLength={30}
-                      value={customTeamNameInput}
-                      onChange={(e) => setCustomTeamNameInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleConfirmTeamName();
-                      }}
-                      className="flex-1 px-3.5 py-2 rounded-xl bg-black/50 border border-white/15 text-white placeholder-slate-400 text-xs sm:text-sm font-medium focus:outline-none focus:border-purple-400/80 transition-all backdrop-blur-md"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleConfirmTeamName}
-                      disabled={!customTeamNameInput.trim()}
-                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md active:scale-95 cursor-pointer whitespace-nowrap"
-                    >
-                      Confirm Name
-                    </button>
-                  </div>
-
-                  {/* 4 Suggested Names Grid (Clickable Glass Chips) & Reroll Button */}
-                  <div className="flex flex-col gap-2 pt-1 border-t border-white/5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-mono text-slate-400 font-semibold uppercase tracking-wider">
-                        Suggested Names:
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          playMechanicalClick();
-                          shuffleSuggestedNames();
-                        }}
-                        className="text-[11px] font-mono font-bold text-purple-300 hover:text-purple-200 transition-colors flex items-center gap-1 cursor-pointer"
-                      >
-                        <span>🎲 Reroll Names</span>
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      {suggestedNames.map((suggested, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => {
-                            playMechanicalClick();
-                            setCustomTeamNameInput(suggested);
-                          }}
-                          className="bg-white/10 hover:bg-white/20 rounded-full px-4 py-2 text-white text-xs font-semibold border border-white/10 hover:border-purple-400/40 transition-all active:scale-95 cursor-pointer text-center truncate backdrop-blur-md shadow-sm"
-                          title={`Select "${suggested}"`}
-                        >
-                          {suggested}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-          <div className="w-full p-3.5 sm:p-4 rounded-2xl bg-purple-950/40 border border-purple-500/30 backdrop-blur-md flex flex-col items-center gap-1.5 text-center transition-all duration-300 shadow-sm">
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs">💡</span>
-              <span className="font-mono text-[10px] sm:text-xs font-bold uppercase tracking-wider text-yellow-300">
-                DID YOU KNOW?
-              </span>
-            </div>
-            <p className={`text-xs sm:text-sm text-slate-200 font-medium leading-relaxed transition-opacity duration-300 ${isFactFading ? 'opacity-0' : 'opacity-100'}`}>
-              &ldquo;{liveTriviaFact}&rdquo;
-            </p>
-          </div>
-
-          <button id="btn-leave-waiting" className="btn btn-ghost btn-sm text-slate-400 hover:text-rose-400 text-xs transition-colors mt-1 cursor-pointer" onClick={handleLeaveGame}>
-            Leave Room
-          </button>
-        </div>
+        <WaitingRoomUI
+          roomCode={roomCode}
+          teamA={teamA}
+          teamB={teamB}
+          teamNameA={teamNameA}
+          teamNameB={teamNameB}
+          leaderA={leaderA}
+          leaderB={leaderB}
+          currentSocketId={currentSocketId}
+          myPlayerId={myPlayerId}
+          isHost={isHost}
+          onToggleReady={handleToggleReady}
+          onSetTeamName={handleSetTeamName}
+          onAssignLeader={handleAssignLeader}
+          onLeaveRoom={handleLeaveGame}
+          copyRoomCode={copyRoomCode}
+          copyInviteLink={copyInviteLink}
+          shareViaWhatsApp={shareViaWhatsApp}
+          liveTriviaFact={liveTriviaFact}
+          isFactFading={isFactFading}
+          suggestedNames={suggestedNames}
+          onRerollNames={shuffleSuggestedNames}
+        />
       </div>
 
       {/* ─── ACTIVE GAME ARENA ────────────────────────────────────────────── */}
@@ -4276,8 +4066,35 @@ export default function HangmanDuelApp() {
           <div className="absolute -bottom-32 left-1/3 w-[30rem] h-[30rem] bg-pink-500/15 rounded-full filter blur-3xl opacity-50 animate-blob [animation-delay:4s] mix-blend-screen" />
         </div>
 
-        {/* Header Bar */}
-        <header className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-1.5 sm:py-2 flex items-center justify-between gap-1 sm:gap-3 z-10 border-b border-white/10 flex-nowrap flex-shrink-0">
+        {/* Phase Gatekeeper: If in waiting phase in multiplayer, render WaitingRoomUI */}
+        {!isPveMode && roomStatus === 'waiting' ? (
+          <WaitingRoomUI
+            roomCode={roomCode}
+            teamA={teamA}
+            teamB={teamB}
+            teamNameA={teamNameA}
+            teamNameB={teamNameB}
+            leaderA={leaderA}
+            leaderB={leaderB}
+            currentSocketId={currentSocketId}
+            myPlayerId={myPlayerId}
+            isHost={isHost}
+            onToggleReady={handleToggleReady}
+            onSetTeamName={handleSetTeamName}
+            onAssignLeader={handleAssignLeader}
+            onLeaveRoom={handleLeaveGame}
+            copyRoomCode={copyRoomCode}
+            copyInviteLink={copyInviteLink}
+            shareViaWhatsApp={shareViaWhatsApp}
+            liveTriviaFact={liveTriviaFact}
+            isFactFading={isFactFading}
+            suggestedNames={suggestedNames}
+            onRerollNames={shuffleSuggestedNames}
+          />
+        ) : (
+          <>
+            {/* Header Bar */}
+            <header className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-1.5 sm:py-2 flex items-center justify-between gap-1 sm:gap-3 z-10 border-b border-white/10 flex-nowrap flex-shrink-0">
           <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             <div className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg bg-purple-950/40 border border-purple-500/30 text-purple-400 flex-shrink-0">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 sm:w-4 sm:h-4">
@@ -5338,7 +5155,9 @@ export default function HangmanDuelApp() {
             </div>
           )}
         </main>
-      </div>
+      </>
+    )}
+  </div>
 
       {/* ─── PVE DIFFICULTY & MATCH LENGTH SELECTION MODAL ────────────────── */}
       {showPveModal && (
