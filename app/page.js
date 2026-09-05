@@ -2551,7 +2551,7 @@ export default function HangmanDuelApp() {
   };
 
   // ── 4. Submit Secret Word (Chooser / Word Setter) ─────────────────────────
-  const handleSetWord = async (customWord = secretWordInput) => {
+  const handleSetWord = async (customWord = secretWordInput, customClue = null) => {
     // Sanitize Again: extract input and clean with .trim().toLowerCase()
     const finalWord = (customWord || secretWordInput || '').trim().toLowerCase();
 
@@ -2561,11 +2561,27 @@ export default function HangmanDuelApp() {
 
     // State Management: Wrap the logic in a try/catch/finally block
     try {
-      if (!finalWord) {
-        throw new Error("Invalid word");
+      if (!finalWord || !/^[a-z]+$/.test(finalWord) || finalWord.length < 2) {
+        throw new Error("Word must be at least 2 letters and contain only letters.");
       }
 
-      const clue = await validateAndFetchClue(finalWord);
+      // Fast-path 1: Clue passed directly (e.g., from word suggestions card click)
+      let clue = (typeof customClue === 'string' && customClue.trim()) ? customClue.trim() : null;
+
+      // Fast-path 2: Use live preview definition if already loaded for this word
+      if (!clue && liveWordDef?.found && liveWordDef?.word?.toLowerCase() === finalWord && liveWordDef?.definition) {
+        clue = liveWordDef.definition;
+      }
+
+      // Fast-path 3: Check local curated dictionary meaning (0ms)
+      if (!clue) {
+        clue = getWordMeaning(finalWord);
+      }
+
+      // Fast-path 4: Validate and fetch clue (via fast cached / api route / 275k words)
+      if (!clue) {
+        clue = await validateAndFetchClue(finalWord);
+      }
 
       // The Check: if (!clue) { throw new Error("Invalid word"); }
       if (!clue) {
@@ -2581,7 +2597,7 @@ export default function HangmanDuelApp() {
       setSetterWordSubmitted(true);
     } catch (err) {
       // Error Catching: In the catch block, set the error state
-      setError("Invalid word. Please enter a real English word.");
+      setError(err?.message && err.message !== "Invalid word" ? err.message : "Invalid word. Please enter a real English word.");
     } finally {
       // Cleanup: In the finally block, ensure isVerifying(false) is called
       setIsVerifying(false);
@@ -4617,7 +4633,7 @@ export default function HangmanDuelApp() {
                           playMechanicalClick();
                           const w = item.word.toUpperCase();
                           setSecretWordInput(w);
-                          handleSetWord(w);
+                          handleSetWord(w, item.meaning);
                         }}
                       >
                         <span className="suggestion-word">{item.word}</span>

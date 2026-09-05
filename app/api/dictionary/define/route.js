@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import dictionaryJson from '../../../../dictionary.json';
+import { isValidWord } from '../../../../lib/dictionary.js';
 
 // In-memory cache for fast repeated lookups across players
 const DEFINITION_CACHE = new Map();
@@ -35,15 +36,15 @@ export async function GET(request) {
     }, { status: 400 });
   }
 
-  // 1. Check in-memory cache
+  // 1. Check in-memory cache (0ms)
   if (DEFINITION_CACHE.has(clean)) {
     return NextResponse.json(DEFINITION_CACHE.get(clean));
   }
 
-  // 2. Query Free Dictionary API (api.dictionaryapi.dev)
+  // 2. Query Free Dictionary API (api.dictionaryapi.dev) with 1500ms timeout
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 4000);
+    const timeout = setTimeout(() => controller.abort(), 1500);
 
     const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(clean)}`, {
       signal: controller.signal,
@@ -102,10 +103,10 @@ export async function GET(request) {
     console.warn(`[Dictionary Lookup Notice] Primary API error for "${clean}":`, err.message);
   }
 
-  // 3. Fallback: Datamuse API with definitions mode
+  // 3. Fallback: Datamuse API with definitions mode (1200ms timeout)
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 3500);
+    const timeout = setTimeout(() => controller.abort(), 1200);
 
     const dmRes = await fetch(`https://api.datamuse.com/words?sp=${encodeURIComponent(clean)}&md=d&max=1`, {
       signal: controller.signal,
@@ -147,11 +148,27 @@ export async function GET(request) {
     console.warn(`[Dictionary Lookup Notice] Datamuse fallback error for "${clean}":`, err.message);
   }
 
-  // 4. Fallback: Word not found in online dictionaries
+  // 4. Fallback: Check authentic English dictionary set (275,000+ words)
+  if (isValidWord(clean)) {
+    const validWordResult = {
+      word: clean.toUpperCase(),
+      found: true,
+      definition: 'A valid English dictionary word.',
+      partOfSpeech: 'noun',
+      phonetic: '',
+      example: '',
+      synonyms: [],
+      source: 'English Dictionary'
+    };
+    DEFINITION_CACHE.set(clean, validWordResult);
+    return NextResponse.json(validWordResult);
+  }
+
+  // 5. Fallback: Word genuinely not found in any English dictionary
   const notFoundResult = {
     word: clean.toUpperCase(),
     found: false,
-    reason: `"${clean.toUpperCase()}" was not found in standard online English dictionaries.`
+    reason: `"${clean.toUpperCase()}" was not found in standard English dictionaries.`
   };
   return NextResponse.json(notFoundResult, { status: 404 });
 }
