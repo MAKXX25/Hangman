@@ -13,7 +13,7 @@ import {
   isSfxMuted,
   setSfxMuted
 } from '../lib/audio.js';
-import { getSocket, isBackendConfigured, getBackendUrl } from '../lib/socket.js';
+import { getSocket, getSessionId, isBackendConfigured, getBackendUrl } from '../lib/socket.js';
 import { ServerlessSocket } from '../lib/serverlessSocket.js';
 import { getRandomWord, isValidWord, getRandomSuggestions, getWordMeaning } from '../lib/dictionary.js';
 import { getRandomFact } from '../lib/facts.js';
@@ -92,7 +92,13 @@ export default function HangmanDuelApp() {
   }, []);
 
   // Multiplayer Game State
-  const [myPlayerId, setMyPlayerId] = useState('');
+  const [myPlayerId, setMyPlayerId] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return getSessionId() || '';
+    }
+    return '';
+  });
+  const [disconnectNotice, setDisconnectNotice] = useState(null); // { name: string, secondsLeft: number }
   const [gameState, setGameState] = useState('waiting'); // waiting | setting | guessing | roundover
   const [players, setPlayers] = useState([]);
   const [game, setGame] = useState(null);
@@ -100,6 +106,22 @@ export default function HangmanDuelApp() {
   const [timerSecondsLeft, setTimerSecondsLeft] = useState(60);
   const [timerTotal, setTimerTotal] = useState(60);
   const [setterWordSubmitted, setSetterWordSubmitted] = useState(false);
+
+  // ── Reconnection Grace Period Countdown ────────────────────────────────────
+  useEffect(() => {
+    if (!disconnectNotice) return;
+    const interval = setInterval(() => {
+      setDisconnectNotice((prev) => {
+        if (!prev) return null;
+        if (prev.secondsLeft <= 1) {
+          clearInterval(interval);
+          return null;
+        }
+        return { ...prev, secondsLeft: prev.secondsLeft - 1 };
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [disconnectNotice]);
 
   // Word Setter State
   const [secretWordInput, setSecretWordInput] = useState('');
@@ -1676,10 +1698,11 @@ export default function HangmanDuelApp() {
     if (!sock) return () => {};
 
     const onConnect = () => {
-      console.log(`✅ [Socket Connected] Successfully connected to backend: ${getBackendUrl()} (ID: ${sock.id})`);
+      const sessId = isBackendConfigured() ? (getSessionId() || sock.id) : sock.id;
+      console.log(`✅ [Socket Connected] Successfully connected to backend: ${getBackendUrl()} (Socket ID: ${sock.id}, Session ID: ${sessId})`);
       if (wakeUpTimerRef.current) clearTimeout(wakeUpTimerRef.current);
       setConnectionStatus('connected');
-      setMyPlayerId(sock.id);
+      setMyPlayerId(sessId);
       setLobbyError('');
     };
 
@@ -1694,6 +1717,40 @@ export default function HangmanDuelApp() {
       if (reason === 'io server disconnect' && typeof sock.connect === 'function') {
         sock.connect();
       }
+    };
+
+    const onGameRestored = (restoredData) => {
+      console.log('🔄 [Game Restored] Active session restored from backend:', restoredData);
+      setIsConnecting(false);
+      setDisconnectNotice(null);
+      if (restoredData.roomCode) setRoomCode(restoredData.roomCode);
+      if (restoredData.state === 'lobby') {
+        setScreen('waiting');
+      } else if (restoredData.state && restoredData.state !== 'lobby') {
+        setScreen('game');
+      }
+      applyState(restoredData);
+      showToast('🔄 Reconnected to active game!', 3000);
+    };
+
+    const onPlayerDisconnected = ({ playerName, gracePeriodSeconds }) => {
+      console.warn(`⏳ [Player Disconnected] ${playerName} disconnected. Waiting ${gracePeriodSeconds}s...`);
+      setDisconnectNotice({
+        name: playerName || 'Opponent',
+        secondsLeft: gracePeriodSeconds || 60,
+      });
+      showToast(`⏳ ${playerName || 'Opponent'} temporarily disconnected. Waiting for reconnection...`, 4000);
+    };
+
+    const onPlayerReconnected = ({ name }) => {
+      console.log(`✅ [Player Reconnected] ${name} has reconnected.`);
+      setDisconnectNotice(null);
+      showToast(`✅ ${name || 'Opponent'} reconnected!`, 3000);
+    };
+
+    const onPlayerForfeit = ({ message }) => {
+      setDisconnectNotice(null);
+      showToast(`🏆 ${message || 'Opponent did not reconnect. You win by default!'}`, 5000);
     };
 
     const onRoomCreated = ({ roomCode: code }) => {
@@ -1750,6 +1807,7 @@ export default function HangmanDuelApp() {
     };
 
     const onOpponentLeft = () => {
+      setDisconnectNotice(null);
       showToast('⚠️ Opponent left the game.', 4000);
       setGameState('lobby');
       setScreen('waiting');
@@ -1789,6 +1847,10 @@ export default function HangmanDuelApp() {
     sock.on('connect', onConnect);
     sock.on('connect_error', onConnectError);
     sock.on('disconnect', onDisconnect);
+    sock.on('game_restored', onGameRestored);
+    sock.on('player_disconnected', onPlayerDisconnected);
+    sock.on('player_reconnected', onPlayerReconnected);
+    sock.on('player_forfeit', onPlayerForfeit);
     sock.on('room_created', onRoomCreated);
     sock.on('game_start', onGameStart);
     sock.on('state_update', onStateUpdate);
@@ -1806,6 +1868,10 @@ export default function HangmanDuelApp() {
       sock.off('connect', onConnect);
       sock.off('connect_error', onConnectError);
       sock.off('disconnect', onDisconnect);
+      sock.off('game_restored', onGameRestored);
+      sock.off('player_disconnected', onPlayerDisconnected);
+      sock.off('player_reconnected', onPlayerReconnected);
+      sock.off('player_forfeit', onPlayerForfeit);
       sock.off('room_created', onRoomCreated);
       sock.off('game_start', onGameStart);
       sock.off('state_update', onStateUpdate);
@@ -1858,7 +1924,8 @@ export default function HangmanDuelApp() {
 
       if (socket.connected) {
         setConnectionStatus('connected');
-        setMyPlayerId(socket.id);
+        const sessId = getSessionId() || socket.id;
+        setMyPlayerId(sessId);
       } else {
         setConnectionStatus('connecting');
         wakeUpTimerRef.current = setTimeout(() => {
@@ -2453,6 +2520,11 @@ export default function HangmanDuelApp() {
 
   // ── 7. Leave Game ──────────────────────────────────────────────────────────
   const handleLeaveGame = () => {
+    const socket = socketRef.current || getSocket();
+    if (socket && typeof socket.emit === 'function') {
+      socket.emit('leave_room');
+    }
+    setDisconnectNotice(null);
     setScreen('lobby');
     setRoomCode('');
     setJoinCode('');
@@ -4492,6 +4564,22 @@ export default function HangmanDuelApp() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Opponent Reconnection Banner Overlay */}
+      {disconnectNotice && (
+        <div
+          id="reconnection-overlay"
+          className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-6 py-3.5 rounded-2xl bg-amber-950/95 border border-amber-500/60 shadow-2xl backdrop-blur-xl text-amber-200 text-sm font-semibold animate-pulse"
+        >
+          <span className="relative flex h-3 w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+          </span>
+          <span>
+            Opponent <strong className="text-amber-100">{disconnectNotice.name}</strong> disconnected. Waiting for reconnection ({disconnectNotice.secondsLeft}s)...
+          </span>
         </div>
       )}
 

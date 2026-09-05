@@ -149,8 +149,11 @@ function getHiddenWord(word, guessed = []) {
     .join(' ');
 }
 
-function findPlayer(room, socketId) {
-  return room.players.find((p) => p.id === socketId);
+function findPlayer(room, idOrSessionId) {
+  if (!room || !room.players) return null;
+  return room.players.find(
+    (p) => p.sessionId === idOrSessionId || p.id === idOrSessionId || p.socketId === idOrSessionId
+  );
 }
 
 // ─── Timer Management ──────────────────────────────────────────────────────────
@@ -205,50 +208,63 @@ function startSettingTimer(io, roomCode) {
   }, 1000);
 }
 
-// ─── Broadcast Authoritative State ────────────────────────────────────────────
-function broadcastState(io, room, roomCode) {
+// ─── Build Authoritative State Payload ────────────────────────────────────────
+function buildStatePayload(room, roomCode, forPlayer) {
   const timerSecondsLeft = room.timer ? room.timer.secondsLeft : null;
   const timerTotal = (room.settings && room.settings.wordPickTime) || DEFAULT_WORD_PICK_TIME;
 
-  room.players.forEach((player) => {
-    const isWordSetter = room.game && room.game.wordSetterId === player.id;
-    const setterPlayer = room.players.find((p) => p.id === (room.game && room.game.wordSetterId));
-    const guesserPlayer = room.players.find((p) => p.id === (room.game && room.game.guesserId));
+  const myId = forPlayer ? (forPlayer.sessionId || forPlayer.id) : null;
+  const isWordSetter = room.game && (room.game.wordSetterId === myId);
+  const setterPlayer = room.players.find((p) => (p.sessionId || p.id) === (room.game && room.game.wordSetterId));
+  const guesserPlayer = room.players.find((p) => (p.sessionId || p.id) === (room.game && room.game.guesserId));
 
-    const payload = {
-      state: room.state,
-      players: room.players.map((p) => ({
-        id: p.id,
+  return {
+    state: room.state,
+    players: room.players.map((p) => {
+      const pid = p.sessionId || p.id;
+      return {
+        id: pid,
+        sessionId: pid,
+        socketId: p.socketId,
         name: p.name,
         score: p.score,
-        isYou: p.id === player.id,
-      })),
-      settings: room.settings || { wordPickTime: DEFAULT_WORD_PICK_TIME },
-      timerSecondsLeft,
-      timerTotal,
-      game: room.game
-        ? {
-            wordLength: room.game.word ? room.game.word.length : 0,
-            hiddenWord: room.game.word ? getHiddenWord(room.game.word, room.game.guessedLetters) : '',
-            guessedLetters: room.game.guessedLetters,
-            livesLeft: room.game.livesLeft,
-            maxLives: MAX_LIVES,
-            wordSetterId: room.game.wordSetterId,
-            guesserId: room.game.guesserId,
-            setterName: setterPlayer ? setterPlayer.name : 'Word Setter',
-            guesserName: guesserPlayer ? guesserPlayer.name : 'Guesser',
-            isWordSetter,
-            word: isWordSetter || room.state === 'roundover' ? room.game.word : null,
-            meaning: room.game.meaning || '',
-            hint: room.game.meaning || '',
-            roundResult: room.game.roundResult || null,
-            wrongGuesses: room.game.wrongGuesses || [],
-          }
-        : null,
-      roomCode,
-    };
+        connected: p.connected !== false,
+        isYou: pid === myId,
+      };
+    }),
+    settings: room.settings || { wordPickTime: DEFAULT_WORD_PICK_TIME },
+    timerSecondsLeft,
+    timerTotal,
+    game: room.game
+      ? {
+          wordLength: room.game.word ? room.game.word.length : 0,
+          hiddenWord: room.game.word ? getHiddenWord(room.game.word, room.game.guessedLetters) : '',
+          guessedLetters: room.game.guessedLetters,
+          livesLeft: room.game.livesLeft,
+          maxLives: MAX_LIVES,
+          wordSetterId: room.game.wordSetterId,
+          guesserId: room.game.guesserId,
+          setterName: setterPlayer ? setterPlayer.name : 'Word Setter',
+          guesserName: guesserPlayer ? guesserPlayer.name : 'Guesser',
+          isWordSetter,
+          word: isWordSetter || room.state === 'roundover' ? room.game.word : null,
+          meaning: room.game.meaning || '',
+          hint: room.game.meaning || '',
+          roundResult: room.game.roundResult || null,
+          wrongGuesses: room.game.wrongGuesses || [],
+        }
+      : null,
+    roomCode,
+  };
+}
 
-    io.to(player.id).emit('state_update', payload);
+// ─── Broadcast Authoritative State ────────────────────────────────────────────
+function broadcastState(io, room, roomCode) {
+  room.players.forEach((player) => {
+    if (player.socketId) {
+      const payload = buildStatePayload(room, roomCode, player);
+      io.to(player.socketId).emit('state_update', payload);
+    }
   });
 }
 
@@ -336,13 +352,69 @@ app.get('/api/dictionary', (req, res) => {
 
 // ─── Socket.io Event Handlers ─────────────────────────────────────────────────
 io.on('connection', (socket) => {
-  console.log(`🔌 Client connected: ${socket.id} (Transport: ${socket.conn.transport.name})`);
+  const sessionId = socket.handshake?.auth?.sessionId || socket.handshake?.query?.sessionId || socket.id;
+  socket.data.sessionId = sessionId;
+  console.log(`🔌 Client connected: ${socket.id} (Session ID: ${sessionId}, Transport: ${socket.conn.transport.name})`);
 
   // Broadcast updated live players count to everyone
   io.emit('stats_update', getStatsPayload(io));
-
-  // Also send stats directly to the newly connected client
   socket.emit('stats_update', getStatsPayload(io));
+
+  // Check if this sessionId already belongs to a player in an active room
+  let existingRoomCode = null;
+  let existingRoom = null;
+  let existingPlayer = null;
+
+  for (const [code, r] of Object.entries(rooms)) {
+    const p = r.players.find((pl) => pl.sessionId === sessionId || pl.id === sessionId);
+    if (p) {
+      existingRoomCode = code;
+      existingRoom = r;
+      existingPlayer = p;
+      break;
+    }
+  }
+
+  if (existingRoom && existingPlayer) {
+    console.log(`♻️ [Session Rejoin] Player "${existingPlayer.name}" (${sessionId}) reconnected to room ${existingRoomCode}`);
+
+    // Clear any disconnect grace period timer
+    if (existingPlayer.disconnectTimeout) {
+      clearTimeout(existingPlayer.disconnectTimeout);
+      existingPlayer.disconnectTimeout = null;
+    }
+
+    existingPlayer.socketId = socket.id;
+    existingPlayer.connected = true;
+
+    socket.join(existingRoomCode);
+    socket.data.roomCode = existingRoomCode;
+    socket.data.playerName = existingPlayer.name;
+
+    // Notify the room/opponent that player has reconnected
+    socket.to(existingRoomCode).emit('player_reconnected', {
+      sessionId,
+      name: existingPlayer.name,
+    });
+
+    // Send authoritative restored state specifically to this player
+    const restoredPayload = buildStatePayload(existingRoom, existingRoomCode, existingPlayer);
+    socket.emit('game_restored', restoredPayload);
+
+    // If game is in 'setting' state and this player is the setter, re-send suggestions
+    if (
+      existingRoom.state === 'setting' &&
+      existingRoom.game &&
+      (existingRoom.game.wordSetterId === sessionId || existingRoom.game.wordSetterId === existingPlayer.id)
+    ) {
+      socket.emit('word_suggestions', {
+        suggestions: getRandomSuggestions(12),
+      });
+    }
+
+    // Broadcast updated state to all participants in room
+    broadcastState(io, existingRoom, existingRoomCode);
+  }
 
   // 1. Create Room
   socket.on('create_room', ({ playerName, wordPickTime }) => {
@@ -363,7 +435,17 @@ io.on('connection', (socket) => {
 
     rooms[roomCode] = {
       state: 'lobby',
-      players: [{ id: socket.id, name: playerName.trim(), score: 0 }],
+      players: [
+        {
+          id: sessionId,
+          sessionId: sessionId,
+          socketId: socket.id,
+          name: playerName.trim(),
+          score: 0,
+          connected: true,
+          disconnectTimeout: null,
+        },
+      ],
       game: null,
       timer: null,
       settings: { wordPickTime: pickedTime },
@@ -375,7 +457,7 @@ io.on('connection', (socket) => {
 
     socket.emit('room_created', { roomCode });
     broadcastState(io, rooms[roomCode], roomCode);
-    console.log(`🎮 Room ${roomCode} created by "${playerName.trim()}" (timer: ${pickedTime}s)`);
+    console.log(`🎮 Room ${roomCode} created by "${playerName.trim()}" (Session: ${sessionId}, timer: ${pickedTime}s)`);
   });
 
   // 2. Join Room
@@ -391,6 +473,25 @@ io.on('connection', (socket) => {
     }
 
     const room = rooms[code];
+
+    // Check if player is already registered in this room (reconnection/tab reload during join)
+    const existingIndex = room.players.findIndex((p) => p.sessionId === sessionId || p.id === sessionId);
+    if (existingIndex !== -1) {
+      const p = room.players[existingIndex];
+      if (p.disconnectTimeout) {
+        clearTimeout(p.disconnectTimeout);
+        p.disconnectTimeout = null;
+      }
+      p.socketId = socket.id;
+      p.connected = true;
+      p.name = playerName.trim();
+      socket.join(code);
+      socket.data.roomCode = code;
+      socket.data.playerName = p.name;
+      broadcastState(io, room, code);
+      return;
+    }
+
     if (room.players.length >= 2) {
       socket.emit('error_msg', 'Room is full (2 players max).');
       return;
@@ -400,38 +501,58 @@ io.on('connection', (socket) => {
       return;
     }
 
-    room.players.push({ id: socket.id, name: playerName.trim(), score: 0 });
+    room.players.push({
+      id: sessionId,
+      sessionId: sessionId,
+      socketId: socket.id,
+      name: playerName.trim(),
+      score: 0,
+      connected: true,
+      disconnectTimeout: null,
+    });
     socket.join(code);
     socket.data.roomCode = code;
     socket.data.playerName = playerName.trim();
 
     // Auto-start: Host (Player 1) is Setter, Joiner (Player 2) is Guesser
+    const setterSessionId = room.players[0].sessionId || room.players[0].id;
+    const guesserSessionId = room.players[1].sessionId || room.players[1].id;
+
     room.state = 'setting';
     room.game = {
       word: null,
-      wordSetterId: room.players[0].id,
-      guesserId: room.players[1].id,
+      wordSetterId: setterSessionId,
+      guesserId: guesserSessionId,
       guessedLetters: [],
       wrongGuesses: [],
       livesLeft: MAX_LIVES,
       roundResult: null,
     };
 
-    // Emit game_start to both players simultaneously
+    // Emit game_start to both players
     io.to(code).emit('game_start', {
       roomCode: code,
       wordSetterId: room.game.wordSetterId,
       guesserId: room.game.guesserId,
-      players: room.players.map((p) => ({ id: p.id, name: p.name, score: p.score })),
+      players: room.players.map((p) => ({
+        id: p.sessionId || p.id,
+        sessionId: p.sessionId || p.id,
+        name: p.name,
+        score: p.score,
+        connected: p.connected !== false,
+      })),
     });
 
     broadcastState(io, room, code);
     startSettingTimer(io, code);
 
-    // Send word suggestions to the word setter
-    io.to(room.game.wordSetterId).emit('word_suggestions', {
-      suggestions: getRandomSuggestions(12),
-    });
+    // Send word suggestions to the word setter's active socket
+    const setterPlayer = room.players.find((p) => (p.sessionId || p.id) === setterSessionId);
+    if (setterPlayer && setterPlayer.socketId) {
+      io.to(setterPlayer.socketId).emit('word_suggestions', {
+        suggestions: getRandomSuggestions(12),
+      });
+    }
 
     console.log(`👥 "${playerName.trim()}" joined room ${code}. Game started.`);
   });
@@ -453,7 +574,9 @@ io.on('connection', (socket) => {
       socket.emit('error_msg', 'Not the right time to set a word.');
       return;
     }
-    if (room.game.wordSetterId !== socket.id) {
+
+    const currentSessionId = socket.data.sessionId || sessionId;
+    if (room.game.wordSetterId !== currentSessionId && room.game.wordSetterId !== socket.id) {
       socket.emit('error_msg', 'Only the Word Setter can submit a word.');
       return;
     }
@@ -503,7 +626,9 @@ io.on('connection', (socket) => {
       socket.emit('error_msg', 'No active guessing round.');
       return;
     }
-    if (room.game.guesserId !== socket.id) {
+
+    const currentSessionId = socket.data.sessionId || sessionId;
+    if (room.game.guesserId !== currentSessionId && room.game.guesserId !== socket.id) {
       socket.emit('error_msg', 'Only the Guesser can guess letters.');
       return;
     }
@@ -576,33 +701,138 @@ io.on('connection', (socket) => {
       wordSetterId: room.game.wordSetterId,
     });
 
-    io.to(room.game.wordSetterId).emit('word_suggestions', {
-      suggestions: getRandomSuggestions(12),
-    });
+    const newSetter = findPlayer(room, room.game.wordSetterId);
+    if (newSetter && newSetter.socketId) {
+      io.to(newSetter.socketId).emit('word_suggestions', {
+        suggestions: getRandomSuggestions(12),
+      });
+    }
   });
 
-  // 7. Disconnect
-  socket.on('disconnect', () => {
+  // 7. Explicit Leave Room (User voluntarily clicks Leave Game)
+  socket.on('leave_room', () => {
     const roomCode = socket.data.roomCode;
+    const currentSessionId = socket.data.sessionId || sessionId;
+    if (!roomCode || !rooms[roomCode]) return;
+
+    const room = rooms[roomCode];
+    stopSettingTimer(roomCode);
+
+    const leavingPlayer = room.players.find(
+      (p) => p.sessionId === currentSessionId || p.socketId === socket.id
+    );
+    if (leavingPlayer && leavingPlayer.disconnectTimeout) {
+      clearTimeout(leavingPlayer.disconnectTimeout);
+    }
+
+    room.players = room.players.filter(
+      (p) => p.sessionId !== currentSessionId && p.socketId !== socket.id
+    );
+    socket.leave(roomCode);
+    socket.data.roomCode = null;
+
+    if (room.players.length === 0) {
+      delete rooms[roomCode];
+      console.log(`🗑 Room ${roomCode} deleted (player left voluntarily).`);
+    } else {
+      room.state = 'lobby';
+      room.game = null;
+      const remaining = room.players[0];
+      if (remaining && remaining.socketId) {
+        io.to(remaining.socketId).emit('opponent_left');
+      }
+      broadcastState(io, room, roomCode);
+    }
+    io.emit('stats_update', getStatsPayload(io));
+  });
+
+  // 8. Graceful Disconnect (Handling Refresh, Dropouts & Network Loss)
+  socket.on('disconnect', (reason) => {
+    const roomCode = socket.data.roomCode;
+    const currentSessionId = socket.data.sessionId || sessionId;
+    console.log(`🔌 Socket disconnected: ${socket.id} (Session: ${currentSessionId}, Room: ${roomCode || 'none'}, Reason: ${reason})`);
+
     if (!roomCode || !rooms[roomCode]) {
       io.emit('stats_update', getStatsPayload(io));
       return;
     }
     const room = rooms[roomCode];
+    const player = room.players.find(
+      (p) => p.sessionId === currentSessionId || p.socketId === socket.id
+    );
 
-    stopSettingTimer(roomCode);
-    room.players = room.players.filter((p) => p.id !== socket.id);
-
-    if (room.players.length === 0) {
-      delete rooms[roomCode];
-      console.log(`🗑 Room ${roomCode} deleted (all players disconnected).`);
-    } else {
-      room.state = 'lobby';
-      room.game = null;
-      io.to(room.players[0].id).emit('opponent_left');
-      broadcastState(io, room, roomCode);
-      console.log(`👋 Player left room ${roomCode}. Waiting for new opponent.`);
+    if (!player) {
+      io.emit('stats_update', getStatsPayload(io));
+      return;
     }
+
+    // Lobby Disconnect: Give 30s grace period for host refresh before cleanup
+    if (room.state === 'lobby') {
+      player.connected = false;
+      player.socketId = null;
+
+      if (player.disconnectTimeout) clearTimeout(player.disconnectTimeout);
+      player.disconnectTimeout = setTimeout(() => {
+        if (!rooms[roomCode]) return;
+        const currentRoom = rooms[roomCode];
+        const p = currentRoom.players.find((pl) => pl.sessionId === currentSessionId);
+        if (p && !p.connected) {
+          currentRoom.players = currentRoom.players.filter((pl) => pl.sessionId !== currentSessionId);
+          if (currentRoom.players.length === 0) {
+            delete rooms[roomCode];
+            console.log(`🗑 Empty lobby ${roomCode} deleted after 30s timeout.`);
+          } else {
+            broadcastState(io, currentRoom, roomCode);
+          }
+          io.emit('stats_update', getStatsPayload(io));
+        }
+      }, 30000);
+
+      broadcastState(io, room, roomCode);
+      io.emit('stats_update', getStatsPayload(io));
+      return;
+    }
+
+    // Active Duel Disconnect: 60s Reconnection Grace Period
+    player.connected = false;
+    player.socketId = null;
+
+    // Broadcast player_disconnected event to remaining player
+    io.to(roomCode).emit('player_disconnected', {
+      sessionId: player.sessionId,
+      playerName: player.name,
+      gracePeriodSeconds: 60,
+    });
+
+    broadcastState(io, room, roomCode);
+    console.log(`⏳ Player "${player.name}" (${player.sessionId}) disconnected from ${roomCode}. Starting 60s grace timer.`);
+
+    if (player.disconnectTimeout) clearTimeout(player.disconnectTimeout);
+
+    player.disconnectTimeout = setTimeout(() => {
+      if (!rooms[roomCode]) return;
+      const currentRoom = rooms[roomCode];
+      const p = currentRoom.players.find((pl) => pl.sessionId === currentSessionId);
+
+      if (p && !p.connected) {
+        console.log(`⏰ 60s grace period expired for "${p.name}" in room ${roomCode}. Forfeiting.`);
+        stopSettingTimer(roomCode);
+
+        // Find remaining connected opponent
+        const opponent = currentRoom.players.find((pl) => pl.sessionId !== currentSessionId);
+        if (opponent && opponent.connected && opponent.socketId) {
+          io.to(opponent.socketId).emit('player_forfeit', {
+            winner: opponent.name,
+            message: `${p.name} did not reconnect in time. You win by default!`,
+          });
+          io.to(opponent.socketId).emit('opponent_left');
+        }
+
+        delete rooms[roomCode];
+        console.log(`🗑 Room ${roomCode} deleted after disconnect timeout.`);
+        io.emit('stats_update', getStatsPayload(io));
+      }
+    }, 60000);
 
     io.emit('stats_update', getStatsPayload(io));
   });
