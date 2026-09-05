@@ -17,6 +17,7 @@ import { getSocket, getSessionId, isBackendConfigured, getBackendUrl } from '../
 import { ServerlessSocket } from '../lib/serverlessSocket.js';
 import { getRandomWord, isValidWord, getRandomSuggestions, getWordMeaning } from '../lib/dictionary.js';
 import { getRandomFact } from '../lib/facts.js';
+import { useRandomFacts } from '../hooks/useRandomFacts.js';
 import {
   MAX_LIVES,
   DEFAULT_WORD_PICK_TIME,
@@ -149,6 +150,17 @@ export default function HangmanDuelApp() {
   const [isLookingUpDef, setIsLookingUpDef] = useState(false);
 
   // Facts & Scramble State
+  const isWaitingScreenActive = screen === 'waiting';
+  const isGuesserWaitingActive = gameState === 'setting' && !isWordSetter;
+  const isWatcherActive = (gameState === 'guessing' || gameState === 'roundover') && isWordSetter;
+  const isFactsStreamActive = isWaitingScreenActive || isGuesserWaitingActive || isWatcherActive;
+
+  const {
+    fact: liveTriviaFact,
+    isFading: isFactFading,
+    fetchNextFact,
+  } = useRandomFacts(isFactsStreamActive, 8000);
+
   const [currentGuesserFact, setCurrentGuesserFact] = useState('');
   const [guesserFactFade, setGuesserFactFade] = useState(false);
   const [currentWatchFact, setCurrentWatchFact] = useState('');
@@ -3709,7 +3721,20 @@ export default function HangmanDuelApp() {
             </button>
           </div>
 
-          <button id="btn-leave-waiting" className="btn btn-ghost btn-sm text-slate-400 hover:text-rose-400 text-xs transition-colors mt-2 cursor-pointer" onClick={handleLeaveGame}>
+          {/* Infinite Trivia Stream Card */}
+          <div className="w-full p-3.5 sm:p-4 rounded-2xl bg-purple-950/40 border border-purple-500/30 backdrop-blur-md flex flex-col items-center gap-1.5 text-center transition-all duration-300 shadow-sm">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs">💡</span>
+              <span className="font-mono text-[10px] sm:text-xs font-bold uppercase tracking-wider text-yellow-300">
+                DID YOU KNOW?
+              </span>
+            </div>
+            <p className={`text-xs sm:text-sm text-slate-200 font-medium leading-relaxed transition-opacity duration-300 ${isFactFading ? 'opacity-0' : 'opacity-100'}`}>
+              &ldquo;{liveTriviaFact}&rdquo;
+            </p>
+          </div>
+
+          <button id="btn-leave-waiting" className="btn btn-ghost btn-sm text-slate-400 hover:text-rose-400 text-xs transition-colors mt-1 cursor-pointer" onClick={handleLeaveGame}>
             Leave Room
           </button>
         </div>
@@ -4213,7 +4238,9 @@ export default function HangmanDuelApp() {
 
                   <div className="did-you-know" id="guesser-fact-card">
                     <div className="dyk-badge">💡 Did You Know?</div>
-                    <p id="fact-text" className="dyk-text">{currentGuesserFact}</p>
+                    <p id="fact-text" className={`dyk-text transition-opacity duration-300 ${isFactFading ? 'opacity-0' : 'opacity-100'}`}>
+                      {liveTriviaFact}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -4547,8 +4574,8 @@ export default function HangmanDuelApp() {
                   <span>💡</span>
                   <span>Hangman Trivia</span>
                 </div>
-                <p className="text-[11px] sm:text-xs md:text-sm text-slate-300 leading-normal italic truncate">
-                  &ldquo;{currentWatchFact}&rdquo;
+                <p className={`text-[11px] sm:text-xs md:text-sm text-slate-300 leading-normal italic truncate transition-opacity duration-300 ${isFactFading ? 'opacity-0' : 'opacity-100'}`}>
+                  &ldquo;{liveTriviaFact}&rdquo;
                 </p>
               </div>
             </section>
