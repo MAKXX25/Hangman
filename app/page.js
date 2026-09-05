@@ -59,6 +59,7 @@ export default function HangmanDuelApp() {
   const [playerName, setPlayerName] = useState('');
   const [roomCode, setRoomCode] = useState('');
   const [joinCode, setJoinCode] = useState('');
+  const [activeMode, setActiveMode] = useState('1v1'); // '1v1' | 'team' | 'pve'
   const [lobbyError, setLobbyError] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('connecting'); // 'connecting' | 'waking_up' | 'connected' | 'missing_env' | 'error'
@@ -2196,6 +2197,7 @@ export default function HangmanDuelApp() {
       return;
     }
 
+    const chosenTeam = activeMode === 'team' ? selectedTeam : 'teamA';
     setLobbyError('');
     setIsPveMode(false);
     setIsConnecting(true);
@@ -2212,7 +2214,7 @@ export default function HangmanDuelApp() {
 
       if (sock.connected) {
         showToast('Creating room… 🎮');
-        sock.emit('create_room', { playerName: name, wordPickTime, team: selectedTeam });
+        sock.emit('create_room', { playerName: name, wordPickTime, team: chosenTeam });
         setTimeout(() => { setIsConnecting(false); }, 15000);
         return;
       }
@@ -2236,7 +2238,7 @@ export default function HangmanDuelApp() {
         setConnectionStatus('connected');
         setMyPlayerId(sock.id);
         showToast('Connected! Creating room… 🎮', 2000);
-        sock.emit('create_room', { playerName: name, wordPickTime, team: selectedTeam });
+        sock.emit('create_room', { playerName: name, wordPickTime, team: chosenTeam });
       };
 
       sock.once('connect', onConnectEmit);
@@ -2262,7 +2264,7 @@ export default function HangmanDuelApp() {
           setConnectionStatus('connected');
           setMyPlayerId(p2pSocket.id);
           attachSocketListeners(p2pSocket);
-          p2pSocket.emit('create_room', { playerName: name, wordPickTime, team: selectedTeam });
+          p2pSocket.emit('create_room', { playerName: name, wordPickTime, team: chosenTeam });
         }
       }, 35000);
 
@@ -2277,7 +2279,7 @@ export default function HangmanDuelApp() {
     setConnectionStatus('connected');
     setMyPlayerId(p2pSocket.id);
     attachSocketListeners(p2pSocket);
-    p2pSocket.emit('create_room', { playerName: name, wordPickTime, team: selectedTeam });
+    p2pSocket.emit('create_room', { playerName: name, wordPickTime, team: chosenTeam });
     setTimeout(() => { setIsConnecting(false); }, 15000);
   };
 
@@ -2296,6 +2298,7 @@ export default function HangmanDuelApp() {
       return;
     }
 
+    const chosenTeam = activeMode === 'team' ? selectedTeam : 'teamB';
     setLobbyError('');
     setIsPveMode(false);
     setIsConnecting(true);
@@ -2312,7 +2315,7 @@ export default function HangmanDuelApp() {
 
       if (sock.connected) {
         showToast('Joining game room… 🎯');
-        sock.emit('join_room', { roomCode: code, playerName: name, team: selectedTeam });
+        sock.emit('join_room', { roomCode: code, playerName: name, team: chosenTeam });
         setTimeout(() => { setIsConnecting(false); }, 15000);
         return;
       }
@@ -2335,7 +2338,7 @@ export default function HangmanDuelApp() {
         setConnectionStatus('connected');
         setMyPlayerId(sock.id);
         showToast('Connected! Joining room… 🎯', 2000);
-        sock.emit('join_room', { roomCode: code, playerName: name, team: selectedTeam });
+        sock.emit('join_room', { roomCode: code, playerName: name, team: chosenTeam });
       };
 
       sock.once('connect', onConnectJoin);
@@ -2359,7 +2362,7 @@ export default function HangmanDuelApp() {
           setConnectionStatus('connected');
           setMyPlayerId(p2pSocket.id);
           attachSocketListeners(p2pSocket);
-          p2pSocket.emit('join_room', { roomCode: code, playerName: name, team: selectedTeam });
+          p2pSocket.emit('join_room', { roomCode: code, playerName: name, team: chosenTeam });
         }
       }, 35000);
 
@@ -2374,7 +2377,7 @@ export default function HangmanDuelApp() {
     setConnectionStatus('connected');
     setMyPlayerId(p2pSocket.id);
     attachSocketListeners(p2pSocket);
-    p2pSocket.emit('join_room', { roomCode: code, playerName: name, team: selectedTeam });
+    p2pSocket.emit('join_room', { roomCode: code, playerName: name, team: chosenTeam });
     setTimeout(() => { setIsConnecting(false); }, 15000);
   };
 
@@ -3058,9 +3061,9 @@ export default function HangmanDuelApp() {
                     </div>
                   </div>
 
-                  <div className="lobby-form flex flex-col gap-4">
-                    {/* Your Name Input */}
-                    <div className="input-group flex flex-col gap-1.5">
+                  <div className="lobby-form flex flex-col">
+                    {/* 1. Global Input: Your Name (Always Visible) */}
+                    <div className="input-group flex flex-col gap-1.5 mb-4">
                       <label htmlFor="input-name" className="text-xs font-bold uppercase tracking-wider text-slate-300">
                         Your Name
                       </label>
@@ -3073,14 +3076,22 @@ export default function HangmanDuelApp() {
                         className={`w-full px-4 py-3 bg-slate-950/70 border ${lobbyError ? 'border-red-500/80 focus:border-red-400 focus:ring-2 focus:ring-red-500/30' : 'border-white/15 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30'} rounded-2xl text-white placeholder-slate-400 backdrop-blur-md outline-none transition-all text-sm`}
                         value={playerName}
                         onChange={(e) => handlePlayerNameChange(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter') handleCreateRoom(); }}
+                        onKeyDown={(e) => { 
+                          if (e.key === 'Enter') {
+                            if (activeMode === 'pve') {
+                              startPveGame(pveDifficulty, 1, { human: 0, bot: 0 }, pveMaxRounds);
+                            } else {
+                              handleCreateRoom();
+                            }
+                          } 
+                        }}
                       />
 
-                      {/* ── High-Visibility Red Error Block for Duplicate Name / Join Errors ── */}
+                      {/* ── High-Visibility Error Block for Duplicate Name / Validation Errors ── */}
                       {lobbyError && (
                         <div
                           id="duplicate-name-error"
-                          className="mt-2.5 p-3 rounded-xl bg-red-950/90 border border-red-500/70 text-red-200 text-xs font-semibold flex items-center gap-2.5 shadow-lg shadow-red-950/50 animate-shake"
+                          className="mt-2 p-3 rounded-xl bg-red-950/90 border border-red-500/70 text-red-200 text-xs font-semibold flex items-center gap-2.5 shadow-lg shadow-red-950/50 animate-shake"
                           role="alert"
                         >
                           <span className="text-base flex-shrink-0">⚠️</span>
@@ -3094,169 +3105,362 @@ export default function HangmanDuelApp() {
                       )}
                     </div>
 
-                    {/* Create Room Button */}
-                    <div className="create-section flex flex-col gap-2">
+                    {/* 2. The Segmented Tab Controller (The UI Switcher) */}
+                    <div className="flex p-1 space-x-1 bg-[#0a0a0f] border border-white/10 rounded-xl mb-6 select-none">
                       <button
-                        id="btn-create"
-                        className={`btn btn-primary w-full py-3.5 px-6 rounded-2xl font-bold font-display uppercase tracking-wider text-white bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 shadow-lg shadow-purple-600/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-purple-500/50 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer ${isConnecting ? 'loading' : ''}`}
-                        disabled={isConnecting}
-                        onClick={handleCreateRoom}
+                        type="button"
+                        id="tab-1v1"
+                        onClick={() => {
+                          playMechanicalClick();
+                          setActiveMode('1v1');
+                          setLobbyError('');
+                        }}
+                        className={`w-full rounded-lg py-2.5 text-sm transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5 ${
+                          activeMode === '1v1'
+                            ? 'bg-white/10 text-white shadow-sm font-medium'
+                            : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+                        }`}
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5">
-                          <path d="M12 5v14M5 12h14" />
-                        </svg>
-                        {isConnecting ? 'Creating Room… 🎮' : 'Create Room (Host)'}
+                        <span>⚔️</span>
+                        <span>1v1 Duel</span>
                       </button>
 
-                      {/* Host Settings Accordion */}
-                      <div className="host-settings-toggle">
-                        <button
-                          id="btn-advanced"
-                          className="btn-advanced-toggle text-xs text-slate-400 hover:text-white transition-colors"
-                          aria-expanded={advancedOpen}
-                          onClick={() => setAdvancedOpen(!advancedOpen)}
-                          type="button"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
-                            <circle cx="12" cy="12" r="3" />
-                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14" />
-                          </svg>
-                          Advanced Host Settings
-                          <svg className="chevron w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <polyline points="6 9 12 15 18 9" />
-                          </svg>
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        id="tab-team"
+                        onClick={() => {
+                          playMechanicalClick();
+                          setActiveMode('team');
+                          setLobbyError('');
+                        }}
+                        className={`w-full rounded-lg py-2.5 text-sm transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5 ${
+                          activeMode === 'team'
+                            ? 'bg-white/10 text-white shadow-sm font-medium'
+                            : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+                        }`}
+                      >
+                        <span>🛡️</span>
+                        <span>Team Mode</span>
+                      </button>
 
-                      <div id="host-settings" className={`host-settings ${advancedOpen ? 'expanded' : 'collapsed'}`}>
-                        <div className="host-settings-inner">
-                          <div className="setting-row flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                            <label htmlFor="select-timer" className="setting-label text-xs">
-                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-                                <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+                      <button
+                        type="button"
+                        id="tab-pve"
+                        onClick={() => {
+                          playMechanicalClick();
+                          setActiveMode('pve');
+                          setLobbyError('');
+                        }}
+                        className={`w-full rounded-lg py-2.5 text-sm transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5 ${
+                          activeMode === 'pve'
+                            ? 'bg-white/10 text-white shadow-sm font-medium'
+                            : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+                        }`}
+                      >
+                        <span>🤖</span>
+                        <span>Solo PvE</span>
+                      </button>
+                    </div>
+
+                    {/* 3. Conditional Mode Blocks */}
+
+                    {/* ─── A. 1V1 DUEL MODE BLOCK ────────────────────────────────── */}
+                    {activeMode === '1v1' && (
+                      <div className="flex flex-col gap-4 animate-fadeIn">
+                        {/* Standard Purple Create Room Button */}
+                        <div className="create-section flex flex-col gap-2">
+                          <button
+                            id="btn-create"
+                            className={`btn btn-primary w-full py-3.5 px-6 rounded-2xl font-bold font-display uppercase tracking-wider text-white bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 shadow-lg shadow-purple-600/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-purple-500/50 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer ${isConnecting ? 'loading' : ''}`}
+                            disabled={isConnecting}
+                            onClick={handleCreateRoom}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5">
+                              <path d="M12 5v14M5 12h14" />
+                            </svg>
+                            {isConnecting ? 'Creating Room… 🎮' : 'Create Room (Host)'}
+                          </button>
+
+                          {/* Host Settings Accordion */}
+                          <div className="host-settings-toggle">
+                            <button
+                              id="btn-advanced"
+                              className="btn-advanced-toggle text-xs text-slate-400 hover:text-white transition-colors cursor-pointer"
+                              aria-expanded={advancedOpen}
+                              onClick={() => setAdvancedOpen(!advancedOpen)}
+                              type="button"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
+                                <circle cx="12" cy="12" r="3" />
+                                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14" />
                               </svg>
-                              Word Pick Time Limit
-                            </label>
-                            <div className="w-full sm:w-52">
-                              <CustomDropdown
-                                id="select-timer"
-                                value={wordPickTime}
-                                onChange={(val) => setWordPickTime(Number(val))}
-                              />
+                              Advanced Host Settings
+                              <svg className="chevron w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <polyline points="6 9 12 15 18 9" />
+                              </svg>
+                            </button>
+                          </div>
+
+                          <div id="host-settings" className={`host-settings ${advancedOpen ? 'expanded' : 'collapsed'}`}>
+                            <div className="host-settings-inner">
+                              <div className="setting-row flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                                <label htmlFor="select-timer" className="setting-label text-xs">
+                                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                                    <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+                                  </svg>
+                                  Word Pick Time Limit
+                                </label>
+                                <div className="w-full sm:w-52">
+                                  <CustomDropdown
+                                    id="select-timer"
+                                    value={wordPickTime}
+                                    onChange={(val) => setWordPickTime(Number(val))}
+                                  />
+                                </div>
+                              </div>
+                              <p className="setting-hint text-xs">If the Word Setter doesn't pick in time, a random word is chosen automatically.</p>
                             </div>
                           </div>
-                          <p className="setting-hint text-xs">If the Word Setter doesn't pick in time, a random word is chosen automatically.</p>
+                        </div>
+
+                        <div className="divider"><span>or join with code</span></div>
+
+                        {/* Standard 1v1 Join Code Row */}
+                        <div className="join-row flex gap-2">
+                          <input
+                            id="input-room-code"
+                            type="text"
+                            placeholder="Room Code"
+                            maxLength={6}
+                            autoCapitalize="characters"
+                            autoCorrect="off"
+                            spellCheck="false"
+                            autoComplete="off"
+                            className="flex-1 px-4 py-3 bg-slate-950/70 border border-white/15 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30 rounded-2xl text-white font-mono uppercase tracking-widest placeholder-slate-400 backdrop-blur-md outline-none transition-all text-sm"
+                            value={joinCode}
+                            onChange={(e) => setJoinCode(e.target.value.replace(/\s+/g, '').toUpperCase())}
+                            onKeyDown={(e) => { if (e.key === 'Enter') handleJoinRoom(); }}
+                          />
+                          <button 
+                            id="btn-join" 
+                            className="btn btn-primary py-3 px-6 rounded-2xl font-semibold text-white tracking-wide bg-gradient-to-r from-violet-500 to-purple-600 shadow-md shadow-purple-500/20 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] active:scale-95 flex items-center justify-center cursor-pointer disabled:opacity-50 text-sm" 
+                            disabled={isConnecting}
+                            onClick={handleJoinRoom}
+                          >
+                            {isConnecting ? 'Joining… 🎯' : 'Join Duel'}
+                          </button>
                         </div>
                       </div>
-                    </div>
+                    )}
 
-                    <div className="divider"><span>or join with code</span></div>
+                    {/* ─── B. TEAM MODE BLOCK (UP TO 4V4) ────────────────────────── */}
+                    {activeMode === 'team' && (
+                      <div className="flex flex-col gap-4 animate-fadeIn">
+                        {/* Distinct Create Team Room Button */}
+                        <div className="create-section flex flex-col gap-2">
+                          <button
+                            id="btn-create-team"
+                            className={`btn w-full py-3.5 px-6 rounded-2xl font-bold font-display uppercase tracking-wider text-white bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 shadow-lg shadow-cyan-600/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-cyan-500/50 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer ${isConnecting ? 'loading' : ''}`}
+                            disabled={isConnecting}
+                            onClick={handleCreateRoom}
+                          >
+                            <Users className="w-5 h-5" />
+                            {isConnecting ? 'Creating Team Room… 🛡️' : 'Create Team Room (Host)'}
+                          </button>
 
-                    {/* ── Glassmorphism Team Selection Buttons (Team A vs Team B) ── */}
-                    <div className="team-selection-box flex flex-col gap-1.5 my-1">
-                      <label className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                        Select Your Squad (Max 4 per Team)
-                      </label>
-                      <div className="grid grid-cols-2 gap-2.5">
-                        {/* Team A Button */}
-                        <button
-                          type="button"
-                          id="btn-team-a"
-                          className={`p-3 rounded-2xl border transition-all text-left flex flex-col gap-1 cursor-pointer backdrop-blur-md ${
-                            selectedTeam === 'teamA'
-                              ? 'bg-cyan-500/20 border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)] text-white ring-1 ring-cyan-400/50'
-                              : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-white'
-                          }`}
-                          onClick={() => setSelectedTeam('teamA')}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="font-bold text-xs sm:text-sm flex items-center gap-1.5 text-cyan-300">
-                              <span>🛡️</span> TEAM A
-                            </span>
-                            {selectedTeam === 'teamA' && (
-                              <span className="text-[9px] font-mono font-black bg-cyan-400/20 text-cyan-300 px-1.5 py-0.5 rounded border border-cyan-400/40">
-                                SELECTED
-                              </span>
-                            )}
+                          {/* Host Settings Accordion */}
+                          <div className="host-settings-toggle">
+                            <button
+                              id="btn-advanced-team"
+                              className="btn-advanced-toggle text-xs text-slate-400 hover:text-white transition-colors cursor-pointer"
+                              aria-expanded={advancedOpen}
+                              onClick={() => setAdvancedOpen(!advancedOpen)}
+                              type="button"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
+                                <circle cx="12" cy="12" r="3" />
+                                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14" />
+                              </svg>
+                              Advanced Team Settings
+                              <svg className="chevron w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <polyline points="6 9 12 15 18 9" />
+                              </svg>
+                            </button>
                           </div>
-                          <span className="text-[10.5px] text-slate-400">Word Setters (Max 4)</span>
-                        </button>
 
-                        {/* Team B Button */}
-                        <button
-                          type="button"
-                          id="btn-team-b"
-                          className={`p-3 rounded-2xl border transition-all text-left flex flex-col gap-1 cursor-pointer backdrop-blur-md ${
-                            selectedTeam === 'teamB'
-                              ? 'bg-purple-500/20 border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.4)] text-white ring-1 ring-purple-400/50'
-                              : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-white'
-                          }`}
-                          onClick={() => setSelectedTeam('teamB')}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="font-bold text-xs sm:text-sm flex items-center gap-1.5 text-purple-300">
-                              <span>⚔️</span> TEAM B
-                            </span>
-                            {selectedTeam === 'teamB' && (
-                              <span className="text-[9px] font-mono font-black bg-purple-400/20 text-purple-300 px-1.5 py-0.5 rounded border border-purple-400/40">
-                                SELECTED
-                              </span>
-                            )}
+                          <div id="host-settings-team" className={`host-settings ${advancedOpen ? 'expanded' : 'collapsed'}`}>
+                            <div className="host-settings-inner">
+                              <div className="setting-row flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                                <label htmlFor="select-timer-team" className="setting-label text-xs">
+                                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                                    <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+                                  </svg>
+                                  Word Pick Time Limit
+                                </label>
+                                <div className="w-full sm:w-52">
+                                  <CustomDropdown
+                                    id="select-timer-team"
+                                    value={wordPickTime}
+                                    onChange={(val) => setWordPickTime(Number(val))}
+                                  />
+                                </div>
+                              </div>
+                              <p className="setting-hint text-xs">If the Word Setter doesn't pick in time, a random word is chosen automatically.</p>
+                            </div>
                           </div>
-                          <span className="text-[10.5px] text-slate-400">Challengers (Max 4)</span>
-                        </button>
+                        </div>
+
+                        {/* Select Your Squad Toggle Boxes */}
+                        <div className="team-selection-box flex flex-col gap-1.5 my-1">
+                          <label className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                            Select Your Squad (Max 4 per Team)
+                          </label>
+                          <div className="grid grid-cols-2 gap-2.5">
+                            {/* Team A Button */}
+                            <button
+                              type="button"
+                              id="btn-team-a"
+                              className={`p-3 rounded-2xl border transition-all text-left flex flex-col gap-1 cursor-pointer backdrop-blur-md ${
+                                selectedTeam === 'teamA'
+                                  ? 'bg-cyan-500/20 border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)] text-white ring-1 ring-cyan-400/50'
+                                  : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-white'
+                              }`}
+                              onClick={() => {
+                                playMechanicalClick();
+                                setSelectedTeam('teamA');
+                              }}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="font-bold text-xs sm:text-sm flex items-center gap-1.5 text-cyan-300">
+                                  <span>🛡️</span> {teamNameA || 'TEAM A'}
+                                </span>
+                                {selectedTeam === 'teamA' && (
+                                  <span className="text-[9px] font-mono font-black bg-cyan-400/20 text-cyan-300 px-1.5 py-0.5 rounded border border-cyan-400/40">
+                                    SELECTED
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[10.5px] text-slate-400">Word Setters (Max 4)</span>
+                            </button>
+
+                            {/* Team B Button */}
+                            <button
+                              type="button"
+                              id="btn-team-b"
+                              className={`p-3 rounded-2xl border transition-all text-left flex flex-col gap-1 cursor-pointer backdrop-blur-md ${
+                                selectedTeam === 'teamB'
+                                  ? 'bg-purple-500/20 border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.4)] text-white ring-1 ring-purple-400/50'
+                                  : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-white'
+                              }`}
+                              onClick={() => {
+                                playMechanicalClick();
+                                setSelectedTeam('teamB');
+                              }}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="font-bold text-xs sm:text-sm flex items-center gap-1.5 text-purple-300">
+                                  <span>⚔️</span> {teamNameB || 'TEAM B'}
+                                </span>
+                                {selectedTeam === 'teamB' && (
+                                  <span className="text-[9px] font-mono font-black bg-purple-400/20 text-purple-300 px-1.5 py-0.5 rounded border border-purple-400/40">
+                                    SELECTED
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[10.5px] text-slate-400">Challengers (Max 4)</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="divider"><span>or join team with code</span></div>
+
+                        {/* Join Team Room Code Row */}
+                        <div className="join-row flex gap-2">
+                          <input
+                            id="input-room-code"
+                            type="text"
+                            placeholder="Room Code"
+                            maxLength={6}
+                            autoCapitalize="characters"
+                            autoCorrect="off"
+                            spellCheck="false"
+                            autoComplete="off"
+                            className="flex-1 px-4 py-3 bg-slate-950/70 border border-white/15 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30 rounded-2xl text-white font-mono uppercase tracking-widest placeholder-slate-400 backdrop-blur-md outline-none transition-all text-sm"
+                            value={joinCode}
+                            onChange={(e) => setJoinCode(e.target.value.replace(/\s+/g, '').toUpperCase())}
+                            onKeyDown={(e) => { if (e.key === 'Enter') handleJoinRoom(); }}
+                          />
+                          <button 
+                            id="btn-join" 
+                            className="btn btn-secondary py-3 px-6 rounded-2xl font-semibold text-white tracking-wide bg-gradient-to-r from-cyan-500 to-blue-600 shadow-md shadow-cyan-500/20 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(6,182,212,0.5)] active:scale-95 flex items-center justify-center cursor-pointer disabled:opacity-50 text-sm" 
+                            disabled={isConnecting}
+                            onClick={handleJoinRoom}
+                          >
+                            {isConnecting ? 'Joining… 🎯' : `Join ${selectedTeam === 'teamA' ? (teamNameA || 'Team A') : (teamNameB || 'Team B')}`}
+                          </button>
+                        </div>
                       </div>
-                    </div>
+                    )}
 
-                    {/* Join Room Code Row */}
-                    <div className="join-row flex gap-2">
-                      <input
-                        id="input-room-code"
-                        type="text"
-                        placeholder="Room Code"
-                        maxLength={6}
-                        autoCapitalize="characters"
-                        autoCorrect="off"
-                        spellCheck="false"
-                        autoComplete="off"
-                        className="flex-1 px-4 py-3 bg-slate-950/70 border border-white/15 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30 rounded-2xl text-white font-mono uppercase tracking-widest placeholder-slate-400 backdrop-blur-md outline-none transition-all text-sm"
-                        value={joinCode}
-                        onChange={(e) => setJoinCode(e.target.value.replace(/\s+/g, '').toUpperCase())}
-                        onKeyDown={(e) => { if (e.key === 'Enter') handleJoinRoom(); }}
-                      />
-                      <button 
-                        id="btn-join" 
-                        className="btn btn-secondary py-3 px-6 rounded-2xl font-semibold text-white tracking-wide bg-gradient-to-r from-cyan-500 to-blue-600 shadow-md shadow-cyan-500/20 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(6,182,212,0.5)] active:scale-95 flex items-center justify-center cursor-pointer disabled:opacity-50 text-sm" 
-                        disabled={isConnecting}
-                        onClick={handleJoinRoom}
-                      >
-                        {isConnecting ? 'Joining… 🎯' : `Join ${selectedTeam === 'teamA' ? 'Team A' : 'Team B'}`}
-                      </button>
-                    </div>
+                    {/* ─── C. SOLO PVE MODE BLOCK ────────────────────────────────── */}
+                    {activeMode === 'pve' && (
+                      <div className="flex flex-col gap-4 animate-fadeIn">
+                        {/* Difficulty Selector */}
+                        <div className="flex flex-col gap-1.5">
+                          <label htmlFor="select-pve-difficulty" className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                            AI Difficulty Level
+                          </label>
+                          <CustomDropdown
+                            id="select-pve-difficulty"
+                            value={pveDifficulty}
+                            onChange={(val) => setPveDifficulty(val)}
+                            options={[
+                              { value: 'easy', label: '🟢 Easy (Common Words & Clues)' },
+                              { value: 'medium', label: '🟡 Medium (Standard Vocabulary)' },
+                              { value: 'hard', label: '🔴 Hard (Complex & Rare Words)' },
+                              { value: 'nightmare', label: '💀 Nightmare (4 Lives, No Clues)' },
+                            ]}
+                          />
+                        </div>
 
-                    <div className="divider"><span>single player</span></div>
+                        {/* Play vs Computer Button */}
+                        <button
+                          id="btn-pve"
+                          type="button"
+                          onClick={() => {
+                            playMechanicalClick();
+                            const name = playerName.trim();
+                            if (!name) {
+                              setLobbyError('Please enter your name first.');
+                              showToast('Please enter your name first! ✏️');
+                              return;
+                            }
+                            setLobbyError('');
+                            startPveGame(pveDifficulty, 1, { human: 0, bot: 0 }, pveMaxRounds);
+                          }}
+                          className="btn btn-pve w-full py-3.5 px-6 rounded-2xl font-bold font-display uppercase tracking-wider text-white bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 shadow-lg shadow-emerald-600/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-emerald-500/50 active:scale-[0.98] flex items-center justify-center gap-2.5 cursor-pointer"
+                        >
+                          <span className="text-xl">🤖</span>
+                          <span>Play vs Computer</span>
+                        </button>
+
+                        <div className="flex items-center justify-between px-1 pt-1 text-[11px] text-slate-400">
+                          <span>Match Length: {pveMaxRounds} Rounds</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              playMechanicalClick();
+                              setShowPveModal(true);
+                            }}
+                            className="text-purple-300 hover:text-purple-200 transition-colors font-semibold cursor-pointer"
+                          >
+                            Configure Match ⚙️
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
-
-                {/* Play vs Computer PvE Button */}
-                <div className="mt-3">
-                  <button
-                    id="btn-pve"
-                    className="btn btn-pve w-full py-3 px-5 rounded-2xl font-semibold text-slate-100 bg-white/5 border border-white/15 backdrop-blur-md transition-all duration-300 hover:bg-white/10 hover:border-purple-400/50 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] flex items-center justify-between group cursor-pointer"
-                    type="button"
-                    onClick={() => setShowPveModal(true)}
-                  >
-                    <span className="pve-icon text-xl">🤖</span>
-                    <span className="pve-text font-medium tracking-wide">Play vs Computer</span>
-                    <span className="pve-badge text-xs px-2.5 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">PvE Mode</span>
-                  </button>
-
-                  {/* Error Banner */}
-                  <div id="lobby-error" className={`error-banner mt-2 ${lobbyError ? '' : 'hidden'}`} role="alert">
-                    {lobbyError}
-                  </div>
-                </div>
-
               </div>
             </div>
 
