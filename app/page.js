@@ -20,6 +20,15 @@ import { ServerlessSocket } from '../lib/serverlessSocket.js';
 import { Lightbulb, Loader2, Crown, Users, Shield } from 'lucide-react';
 import { getRandomWord, isValidWord, getRandomSuggestions, getWordMeaning, validateAndFetchClue } from '../lib/dictionary.js';
 import { TEAM_NAMES } from '../utils/teamNames.js';
+import {
+  INITIAL_IDLE_PHRASES,
+  MEAN_WRONG_PHRASES,
+  DANGER_PHRASES,
+  HAPPY_GUESS_PHRASES,
+  ESCAPE_PHRASES,
+  DEATH_PHRASES,
+  getRandomPhrase
+} from '../lib/stickmanDialogues.js';
 import { getRandomFact } from '../lib/facts.js';
 import { useRandomFacts } from '../hooks/useRandomFacts.js';
 import {
@@ -503,68 +512,6 @@ export default function HangmanDuelApp() {
   }, []);
 
   // ── Canvas Glow & Speech Bubble Helpers ────────────────────────────────────
-  const INITIAL_IDLE_PHRASES = [
-    "Let's see what you got! 🤔",
-    "Pick a letter... save my neck! 🪢",
-    "I'm watching your every move 👀",
-    "Choose wisely, mortal! ⚔️",
-    "Don't mess this up! 😬",
-    "I believe in you... barely 😅",
-    "Type something smart! 🧠",
-    "Show me you know English! 📖"
-  ];
-
-  const MEAN_WRONG_PHRASES = [
-    "Seriously? That letter?! 💀",
-    "My grandma guesses better! 🤦‍♂️",
-    "Are you trying to get me killed?! 😡",
-    "Bro... not even close! 🗑️",
-    "You call that a guess?! 🙄",
-    "Did you close your eyes typing?! 🙈",
-    "Thanks for nothing, genius! 🤡",
-    "Zero braincells detected! 🧠❌",
-    "Are you playing for the opponent?! 😤",
-    "Wow. Absolutely terrible guess 📉",
-    "Do you even know the alphabet?! 🔤",
-    "One step closer to the afterlife! 🪦",
-    "Is this a joke to you?! 😭",
-    "My cat guessed better on the keyboard! 🐱"
-  ];
-
-  const DANGER_PHRASES = [
-    "I'M LITERALLY ABOUT TO DIE! 😱",
-    "ONE MORE WRONG GUESS AND I'M GONE! 💀",
-    "USE YOUR BRAIN PLEASE! 🆘",
-    "I SWEAR IF YOU PICK WRONG AGAIN... 🔥",
-    "I'm writing you out of my will! 📜",
-    "Lord help me, this player is doomed! 🪢"
-  ];
-
-  const HAPPY_GUESS_PHRASES = [
-    "Phew! Finally a braincell! 🎉",
-    "Not bad, smarty pants! ✨",
-    "Keep it going, don't stop! 🚀",
-    "Saved my neck for now! 🙌",
-    "Okay, I take back 10% of what I said 😂",
-    "That's what I'm talking about! 🎯",
-    "Great guess! I live to see another second! 💨"
-  ];
-
-  const ESCAPE_PHRASES = [
-    "Phew, thanks!",
-    "I owe you one!",
-    "Not today, death!",
-    "You saved me! 🎉",
-    "Close call! Thanks!"
-  ];
-
-  const DEATH_PHRASES = [
-    "Noooo, not like this!",
-    "Goodbye, cruel world!",
-    "Tell my mother I tried!",
-    "Aaaagh! The rope snapped!",
-    "I was too young to hang!"
-  ];
 
   const applyGlow = (ctx, color, blur = 10) => {
     ctx.shadowColor = color;
@@ -1054,6 +1001,13 @@ export default function HangmanDuelApp() {
     const startTime = performance.now();
     let callbackFired = false;
 
+    // Display savage final dramatic insult
+    stopDialogue();
+    const deathPhrase = getRandomPhrase(DEATH_PHRASES, currentDialogueRef.current);
+    setCurrentDialogue(deathPhrase);
+    currentDialogueRef.current = deathPhrase;
+    setStickmanMood('mean');
+
     const fireCallback = () => {
       if (!callbackFired) {
         callbackFired = true;
@@ -1307,9 +1261,7 @@ export default function HangmanDuelApp() {
     stopDialogue();
 
     // Pick a celebratory survival speech bubble phrase
-    const escapePhrase = (ESCAPE_PHRASES && ESCAPE_PHRASES.length > 0)
-      ? ESCAPE_PHRASES[Math.floor(Math.random() * ESCAPE_PHRASES.length)]
-      : 'Phew, thanks!';
+    const escapePhrase = getRandomPhrase(ESCAPE_PHRASES, currentDialogueRef.current);
 
     let callbackFired = false;
     const fireCallback = () => {
@@ -1552,45 +1504,48 @@ export default function HangmanDuelApp() {
   const triggerHappyGuess = useCallback(() => {
     if (dialogueTimeoutRef.current) clearTimeout(dialogueTimeoutRef.current);
 
-    const phrase = HAPPY_GUESS_PHRASES[Math.floor(Math.random() * HAPPY_GUESS_PHRASES.length)];
+    const phrase = getRandomPhrase(HAPPY_GUESS_PHRASES, currentDialogueRef.current);
     setCurrentDialogue(phrase);
     setStickmanMood('happy');
     currentDialogueRef.current = phrase;
     stickmanMoodRef.current = 'happy';
 
     dialogueTimeoutRef.current = setTimeout(() => {
-      const idle = INITIAL_IDLE_PHRASES[Math.floor(Math.random() * INITIAL_IDLE_PHRASES.length)];
-      setCurrentDialogue(idle);
-      currentDialogueRef.current = idle;
-      setStickmanMood('neutral');
-      stickmanMoodRef.current = 'neutral';
-    }, 3500);
-  }, [HAPPY_GUESS_PHRASES, INITIAL_IDLE_PHRASES]);
-
-  // ── Trigger Mean / Sarcastic Stickman Roast on Wrong Guess ────────────────
-  const triggerMeanWrongGuess = useCallback((mistakesCount = 1) => {
-    if (dialogueTimeoutRef.current) clearTimeout(dialogueTimeoutRef.current);
-
-    let phrase;
-    if (mistakesCount >= 8) {
-      phrase = DANGER_PHRASES[Math.floor(Math.random() * DANGER_PHRASES.length)];
-    } else {
-      phrase = MEAN_WRONG_PHRASES[Math.floor(Math.random() * MEAN_WRONG_PHRASES.length)];
-    }
-
-    setCurrentDialogue(phrase);
-    setStickmanMood('mean');
-    currentDialogueRef.current = phrase;
-    stickmanMoodRef.current = 'mean';
-
-    dialogueTimeoutRef.current = setTimeout(() => {
-      const idle = INITIAL_IDLE_PHRASES[Math.floor(Math.random() * INITIAL_IDLE_PHRASES.length)];
+      const idle = getRandomPhrase(INITIAL_IDLE_PHRASES, currentDialogueRef.current);
       setCurrentDialogue(idle);
       currentDialogueRef.current = idle;
       setStickmanMood('neutral');
       stickmanMoodRef.current = 'neutral';
     }, 4000);
-  }, [DANGER_PHRASES, MEAN_WRONG_PHRASES, INITIAL_IDLE_PHRASES]);
+  }, []);
+
+  // ── Trigger Mean / Sarcastic Stickman Roast on Wrong Guess ────────────────
+  const triggerMeanWrongGuess = useCallback((mistakesCount = 1) => {
+    if (dialogueTimeoutRef.current) clearTimeout(dialogueTimeoutRef.current);
+
+    const livesLeft = Math.max(0, MAX_LIVES - mistakesCount);
+    let phrase;
+    if (livesLeft <= 1 || mistakesCount >= 8) {
+      phrase = getRandomPhrase(DANGER_PHRASES, currentDialogueRef.current);
+      setStickmanMood('panic');
+      stickmanMoodRef.current = 'panic';
+    } else {
+      phrase = getRandomPhrase(MEAN_WRONG_PHRASES, currentDialogueRef.current);
+      setStickmanMood('mean');
+      stickmanMoodRef.current = 'mean';
+    }
+
+    setCurrentDialogue(phrase);
+    currentDialogueRef.current = phrase;
+
+    dialogueTimeoutRef.current = setTimeout(() => {
+      const idle = getRandomPhrase(INITIAL_IDLE_PHRASES, currentDialogueRef.current);
+      setCurrentDialogue(idle);
+      currentDialogueRef.current = idle;
+      setStickmanMood('neutral');
+      stickmanMoodRef.current = 'neutral';
+    }, 4000);
+  }, []);
 
   // ── Apply Room State Updates ──────────────────────────────────────────────
   const applyState = useCallback((roomData) => {
@@ -1742,29 +1697,74 @@ export default function HangmanDuelApp() {
     }
   }, []);
 
-  // ── Auto-Rotate Dialogues during Guessing Phase (Only after losing 1st life) ─
-  useEffect(() => {
-    if (gameState !== 'guessing') return;
+  // ── 3. Dynamic Stickman Reaction Hook (Guessed Letters & Lives Listener) ───
+  const prevGuessedLettersRef = useRef([]);
 
-    const mistakes = Array.isArray(game?.wrongGuesses) ? game.wrongGuesses.length : 0;
-    if (mistakes === 0) {
-      setCurrentDialogue('');
-      currentDialogueRef.current = '';
-      setStickmanMood('neutral');
+  useEffect(() => {
+    // Only react during active guessing phase
+    if (gameState !== 'guessing' || !game) {
+      prevGuessedLettersRef.current = [];
+      if (dialogueTimeoutRef.current) {
+        clearTimeout(dialogueTimeoutRef.current);
+      }
       return;
     }
 
-    const interval = setInterval(() => {
-      const currentMistakes = Array.isArray(game?.wrongGuesses) ? game.wrongGuesses.length : 0;
-      if (currentMistakes >= 1 && stickmanMoodRef.current === 'neutral') {
-        const next = INITIAL_IDLE_PHRASES[Math.floor(Math.random() * INITIAL_IDLE_PHRASES.length)];
-        setCurrentDialogue(next);
-        currentDialogueRef.current = next;
-      }
-    }, 7000);
+    const currentGuessed = Array.isArray(game.guessedLetters) ? game.guessedLetters : [];
+    const prevGuessed = prevGuessedLettersRef.current;
+    const secretWord = (game.word || '').toUpperCase();
+    const lives = game.livesLeft !== undefined
+      ? game.livesLeft
+      : Math.max(0, MAX_LIVES - (game.wrongGuesses?.length || 0));
 
-    return () => clearInterval(interval);
-  }, [gameState, game?.wrongGuesses, INITIAL_IDLE_PHRASES]);
+    // When a new letter is guessed
+    if (currentGuessed.length > prevGuessed.length) {
+      const latestLetter = currentGuessed[currentGuessed.length - 1];
+
+      // Check if latest guessed letter is in the secret word
+      const isCorrect = secretWord
+        ? secretWord.includes(latestLetter)
+        : Array.isArray(game.wrongGuesses) ? !game.wrongGuesses.includes(latestLetter) : true;
+
+      // Clear any pending idle reset timer
+      if (dialogueTimeoutRef.current) {
+        clearTimeout(dialogueTimeoutRef.current);
+      }
+
+      let selectedPhrase = '';
+
+      // If lives === 1, override and pick from DANGER_PHRASES
+      if (lives === 1) {
+        selectedPhrase = getRandomPhrase(DANGER_PHRASES, currentDialogueRef.current);
+        setStickmanMood('panic');
+        stickmanMoodRef.current = 'panic';
+      } else if (!isCorrect) {
+        // If latest guessed letter is NOT in secretWord
+        selectedPhrase = getRandomPhrase(MEAN_WRONG_PHRASES, currentDialogueRef.current);
+        setStickmanMood('mean');
+        stickmanMoodRef.current = 'mean';
+      } else {
+        // If latest guessed letter IS in secretWord
+        selectedPhrase = getRandomPhrase(HAPPY_GUESS_PHRASES, currentDialogueRef.current);
+        setStickmanMood('happy');
+        stickmanMoodRef.current = 'happy';
+      }
+
+      setCurrentDialogue(selectedPhrase);
+      currentDialogueRef.current = selectedPhrase;
+
+      // Set timeout to return to INITIAL_IDLE_PHRASES state after 4 seconds of inactivity
+      dialogueTimeoutRef.current = setTimeout(() => {
+        const idlePhrase = getRandomPhrase(INITIAL_IDLE_PHRASES, currentDialogueRef.current);
+        setCurrentDialogue(idlePhrase);
+        currentDialogueRef.current = idlePhrase;
+        setStickmanMood('neutral');
+        stickmanMoodRef.current = 'neutral';
+      }, 4000);
+    }
+
+    prevGuessedLettersRef.current = [...currentGuessed];
+  }, [game?.guessedLetters, game?.livesLeft, game?.wrongGuesses, game?.word, gameState]);
 
   // ── Stickman Dialogue Speech Synthesizer ─────────────────────────────────
   // ONLY active during the active guessing phase AND only for the guesser (never in word selector POV)
