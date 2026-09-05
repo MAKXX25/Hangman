@@ -101,8 +101,26 @@ export default function HangmanDuelApp() {
   const [disconnectNotice, setDisconnectNotice] = useState(null); // { name: string, secondsLeft: number }
   const [gameState, setGameState] = useState('waiting'); // waiting | setting | guessing | roundover
   const [players, setPlayers] = useState([]);
+  const [teamA, setTeamA] = useState([]);
+  const [teamB, setTeamB] = useState([]);
+  const [teamScores, setTeamScores] = useState({ teamA: 0, teamB: 0 });
+  const [currentTurnTeam, setCurrentTurnTeam] = useState('teamB');
+  const [wordSettingTeam, setWordSettingTeam] = useState('teamA');
+  const [myTeam, setMyTeam] = useState(null);
+  const [selectedTeam, setSelectedTeam] = useState('teamB');
   const [game, setGame] = useState(null);
-  const isWordSetter = game ? (game.wordSetterId === myPlayerId) : false;
+  const isWordSetter = isPveMode
+    ? false
+    : myTeam
+    ? myTeam === wordSettingTeam
+    : game
+    ? game.wordSetterId === myPlayerId
+    : false;
+  const isMyTeamTurn = isPveMode
+    ? true
+    : myTeam
+    ? myTeam === currentTurnTeam
+    : true;
   const [timerSecondsLeft, setTimerSecondsLeft] = useState(60);
   const [timerTotal, setTimerTotal] = useState(60);
   const [setterWordSubmitted, setSetterWordSubmitted] = useState(false);
@@ -344,6 +362,7 @@ export default function HangmanDuelApp() {
 
   const handlePlayerNameChange = (val) => {
     setPlayerName(val);
+    if (lobbyError) setLobbyError('');
     try {
       localStorage.setItem('hangman_username', val);
     } catch (err) {
@@ -1489,6 +1508,12 @@ export default function HangmanDuelApp() {
     if (!roomData) return;
     setGameState(roomData.state);
     if (roomData.players) setPlayers(roomData.players);
+    if (roomData.teamA) setTeamA(roomData.teamA);
+    if (roomData.teamB) setTeamB(roomData.teamB);
+    if (roomData.teamScores) setTeamScores(roomData.teamScores);
+    if (roomData.currentTurn) setCurrentTurnTeam(roomData.currentTurn);
+    if (roomData.wordSettingTeam) setWordSettingTeam(roomData.wordSettingTeam);
+    if (roomData.myTeam) setMyTeam(roomData.myTeam);
     if (roomData.timerSecondsLeft !== undefined) setTimerSecondsLeft(roomData.timerSecondsLeft);
     if (roomData.timerTotal !== undefined) setTimerTotal(roomData.timerTotal);
 
@@ -1813,6 +1838,16 @@ export default function HangmanDuelApp() {
       setScreen('waiting');
     };
 
+    const onJoinError = (err) => {
+      setIsConnecting(false);
+      const message =
+        typeof err === 'string'
+          ? err
+          : err?.message || 'Name already taken in this room. Please choose another.';
+      setLobbyError(message);
+      showToast(`⚠️ ${message}`, 4500);
+    };
+
     const onErrorMsg = (msg) => {
       setIsConnecting(false);
       const text = typeof msg === 'string' ? msg : msg?.message || 'An error occurred.';
@@ -1862,6 +1897,7 @@ export default function HangmanDuelApp() {
     sock.on('word_validation', onWordValidation);
     sock.on('opponent_left', onOpponentLeft);
     sock.on('error_msg', onErrorMsg);
+    sock.on('join_error', onJoinError);
     sock.on('stats_update', onStatsUpdate);
 
     return () => {
@@ -1883,6 +1919,7 @@ export default function HangmanDuelApp() {
       sock.off('word_validation', onWordValidation);
       sock.off('opponent_left', onOpponentLeft);
       sock.off('error_msg', onErrorMsg);
+      sock.off('join_error', onJoinError);
       sock.off('stats_update', onStatsUpdate);
     };
   }, [applyState, forceResetRoundState, showToast]);
@@ -2104,7 +2141,7 @@ export default function HangmanDuelApp() {
 
       if (sock.connected) {
         showToast('Creating room… 🎮');
-        sock.emit('create_room', { playerName: name, wordPickTime });
+        sock.emit('create_room', { playerName: name, wordPickTime, team: selectedTeam });
         setTimeout(() => { setIsConnecting(false); }, 15000);
         return;
       }
@@ -2128,7 +2165,7 @@ export default function HangmanDuelApp() {
         setConnectionStatus('connected');
         setMyPlayerId(sock.id);
         showToast('Connected! Creating room… 🎮', 2000);
-        sock.emit('create_room', { playerName: name, wordPickTime });
+        sock.emit('create_room', { playerName: name, wordPickTime, team: selectedTeam });
       };
 
       sock.once('connect', onConnectEmit);
@@ -2154,7 +2191,7 @@ export default function HangmanDuelApp() {
           setConnectionStatus('connected');
           setMyPlayerId(p2pSocket.id);
           attachSocketListeners(p2pSocket);
-          p2pSocket.emit('create_room', { playerName: name, wordPickTime });
+          p2pSocket.emit('create_room', { playerName: name, wordPickTime, team: selectedTeam });
         }
       }, 35000);
 
@@ -2169,7 +2206,7 @@ export default function HangmanDuelApp() {
     setConnectionStatus('connected');
     setMyPlayerId(p2pSocket.id);
     attachSocketListeners(p2pSocket);
-    p2pSocket.emit('create_room', { playerName: name, wordPickTime });
+    p2pSocket.emit('create_room', { playerName: name, wordPickTime, team: selectedTeam });
     setTimeout(() => { setIsConnecting(false); }, 15000);
   };
 
@@ -2204,7 +2241,7 @@ export default function HangmanDuelApp() {
 
       if (sock.connected) {
         showToast('Joining game room… 🎯');
-        sock.emit('join_room', { roomCode: code, playerName: name });
+        sock.emit('join_room', { roomCode: code, playerName: name, team: selectedTeam });
         setTimeout(() => { setIsConnecting(false); }, 15000);
         return;
       }
@@ -2227,7 +2264,7 @@ export default function HangmanDuelApp() {
         setConnectionStatus('connected');
         setMyPlayerId(sock.id);
         showToast('Connected! Joining room… 🎯', 2000);
-        sock.emit('join_room', { roomCode: code, playerName: name });
+        sock.emit('join_room', { roomCode: code, playerName: name, team: selectedTeam });
       };
 
       sock.once('connect', onConnectJoin);
@@ -2251,7 +2288,7 @@ export default function HangmanDuelApp() {
           setConnectionStatus('connected');
           setMyPlayerId(p2pSocket.id);
           attachSocketListeners(p2pSocket);
-          p2pSocket.emit('join_room', { roomCode: code, playerName: name });
+          p2pSocket.emit('join_room', { roomCode: code, playerName: name, team: selectedTeam });
         }
       }, 35000);
 
@@ -2266,7 +2303,7 @@ export default function HangmanDuelApp() {
     setConnectionStatus('connected');
     setMyPlayerId(p2pSocket.id);
     attachSocketListeners(p2pSocket);
-    p2pSocket.emit('join_room', { roomCode: code, playerName: name });
+    p2pSocket.emit('join_room', { roomCode: code, playerName: name, team: selectedTeam });
     setTimeout(() => { setIsConnecting(false); }, 15000);
   };
 
@@ -2942,11 +2979,28 @@ export default function HangmanDuelApp() {
                         placeholder="Enter your name…"
                         maxLength={20}
                         autoComplete="off"
-                        className="w-full px-4 py-3 bg-slate-950/70 border border-white/15 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30 rounded-2xl text-white placeholder-slate-400 backdrop-blur-md outline-none transition-all text-sm"
+                        className={`w-full px-4 py-3 bg-slate-950/70 border ${lobbyError ? 'border-red-500/80 focus:border-red-400 focus:ring-2 focus:ring-red-500/30' : 'border-white/15 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30'} rounded-2xl text-white placeholder-slate-400 backdrop-blur-md outline-none transition-all text-sm`}
                         value={playerName}
                         onChange={(e) => handlePlayerNameChange(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter') handleCreateRoom(); }}
                       />
+
+                      {/* ── High-Visibility Red Error Block for Duplicate Name / Join Errors ── */}
+                      {lobbyError && (
+                        <div
+                          id="duplicate-name-error"
+                          className="mt-2.5 p-3 rounded-xl bg-red-950/90 border border-red-500/70 text-red-200 text-xs font-semibold flex items-center gap-2.5 shadow-lg shadow-red-950/50 animate-shake"
+                          role="alert"
+                        >
+                          <span className="text-base flex-shrink-0">⚠️</span>
+                          <div className="flex-1">
+                            <p className="leading-snug">{lobbyError}</p>
+                            <span className="text-[11px] text-red-300/80 font-normal">
+                              Usernames must be unique within the room. Please choose another name.
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Create Room Button */}
@@ -2960,7 +3014,7 @@ export default function HangmanDuelApp() {
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5">
                           <path d="M12 5v14M5 12h14" />
                         </svg>
-                        {isConnecting ? 'Creating Room… 🎮' : 'Create Room'}
+                        {isConnecting ? 'Creating Room… 🎮' : 'Create Room (Host)'}
                       </button>
 
                       {/* Host Settings Accordion */}
@@ -3011,6 +3065,62 @@ export default function HangmanDuelApp() {
 
                     <div className="divider"><span>or join with code</span></div>
 
+                    {/* ── Glassmorphism Team Selection Buttons (Team A vs Team B) ── */}
+                    <div className="team-selection-box flex flex-col gap-1.5 my-1">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                        Select Your Squad (Max 4 per Team)
+                      </label>
+                      <div className="grid grid-cols-2 gap-2.5">
+                        {/* Team A Button */}
+                        <button
+                          type="button"
+                          id="btn-team-a"
+                          className={`p-3 rounded-2xl border transition-all text-left flex flex-col gap-1 cursor-pointer backdrop-blur-md ${
+                            selectedTeam === 'teamA'
+                              ? 'bg-cyan-500/20 border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)] text-white ring-1 ring-cyan-400/50'
+                              : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-white'
+                          }`}
+                          onClick={() => setSelectedTeam('teamA')}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-xs sm:text-sm flex items-center gap-1.5 text-cyan-300">
+                              <span>🛡️</span> TEAM A
+                            </span>
+                            {selectedTeam === 'teamA' && (
+                              <span className="text-[9px] font-mono font-black bg-cyan-400/20 text-cyan-300 px-1.5 py-0.5 rounded border border-cyan-400/40">
+                                SELECTED
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[10.5px] text-slate-400">Word Setters (Max 4)</span>
+                        </button>
+
+                        {/* Team B Button */}
+                        <button
+                          type="button"
+                          id="btn-team-b"
+                          className={`p-3 rounded-2xl border transition-all text-left flex flex-col gap-1 cursor-pointer backdrop-blur-md ${
+                            selectedTeam === 'teamB'
+                              ? 'bg-purple-500/20 border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.4)] text-white ring-1 ring-purple-400/50'
+                              : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-white'
+                          }`}
+                          onClick={() => setSelectedTeam('teamB')}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-xs sm:text-sm flex items-center gap-1.5 text-purple-300">
+                              <span>⚔️</span> TEAM B
+                            </span>
+                            {selectedTeam === 'teamB' && (
+                              <span className="text-[9px] font-mono font-black bg-purple-400/20 text-purple-300 px-1.5 py-0.5 rounded border border-purple-400/40">
+                                SELECTED
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[10.5px] text-slate-400">Challengers (Max 4)</span>
+                        </button>
+                      </div>
+                    </div>
+
                     {/* Join Room Code Row */}
                     <div className="join-row flex gap-2">
                       <input
@@ -3033,7 +3143,7 @@ export default function HangmanDuelApp() {
                         disabled={isConnecting}
                         onClick={handleJoinRoom}
                       >
-                        {isConnecting ? 'Joining… 🎯' : 'Join'}
+                        {isConnecting ? 'Joining… 🎯' : `Join ${selectedTeam === 'teamA' ? 'Team A' : 'Team B'}`}
                       </button>
                     </div>
 
@@ -3635,19 +3745,35 @@ export default function HangmanDuelApp() {
 
           {/* Header Scoreboard (Aesthetic Glassmorphic Duel Badge) */}
           <div id="scoreboard" className="flex items-center gap-1 sm:gap-1.5 px-2 py-0.5 sm:px-3 sm:py-1 rounded-xl bg-[#131124]/90 border border-purple-500/30 backdrop-blur-xl shadow-[0_0_15px_rgba(168,85,247,0.15)] flex-shrink-0 select-none" aria-live="polite">
-            {/* Player 1 Badge */}
-            <div className={`flex items-center gap-1 sm:gap-1.5 px-1.5 py-0.5 sm:px-2 sm:py-0.5 rounded-lg bg-cyan-500/15 border border-cyan-400/30 transition-all ${p1Scored ? 'scale-110 border-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.6)]' : ''}`}>
-              <span className="text-[10px] sm:text-xs font-semibold text-cyan-200 max-w-[44px] sm:max-w-[85px] md:max-w-[120px] truncate">{p1.name}</span>
-              <span className="font-mono text-xs sm:text-sm font-black text-cyan-400 min-w-[16px] sm:min-w-[18px] text-center bg-cyan-950/70 px-1 py-0.5 rounded border border-cyan-500/40 drop-shadow-[0_0_6px_rgba(34,211,238,0.4)]">{p1.score}</span>
+            {/* Team A Badge */}
+            <div className={`flex items-center gap-1 sm:gap-1.5 px-1.5 py-0.5 sm:px-2 sm:py-0.5 rounded-lg transition-all ${
+              currentTurnTeam === 'teamA'
+                ? 'bg-cyan-500/25 border-2 border-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.6)]'
+                : 'bg-cyan-500/10 border border-cyan-400/20 opacity-80'
+            }`}>
+              <span className="text-[10px] sm:text-xs font-bold text-cyan-200 flex items-center gap-1">
+                <span>🛡️</span> {isPveMode ? p1.name : `TEAM A (${teamA.length || 1})`}
+              </span>
+              <span className="font-mono text-xs sm:text-sm font-black text-cyan-400 min-w-[16px] sm:min-w-[18px] text-center bg-cyan-950/70 px-1 py-0.5 rounded border border-cyan-500/40 drop-shadow-[0_0_6px_rgba(34,211,238,0.4)]">
+                {isPveMode ? p1.score : (teamScores.teamA ?? p1.score)}
+              </span>
             </div>
 
             {/* Pulsing VS Divider */}
             <span className="font-mono text-[9px] sm:text-xs font-black text-purple-400/80 px-0.5 animate-pulse">VS</span>
 
-            {/* Player 2 Badge */}
-            <div className={`flex items-center gap-1 sm:gap-1.5 px-1.5 py-0.5 sm:px-2 sm:py-0.5 rounded-lg bg-purple-500/15 border border-purple-400/30 transition-all ${p2Scored ? 'scale-110 border-purple-300 shadow-[0_0_12px_rgba(168,85,247,0.6)]' : ''}`}>
-              <span className="font-mono text-xs sm:text-sm font-black text-purple-400 min-w-[16px] sm:min-w-[18px] text-center bg-purple-950/70 px-1 py-0.5 rounded border border-purple-500/40 drop-shadow-[0_0_6px_rgba(168,85,247,0.4)]">{p2.score}</span>
-              <span className="text-[10px] sm:text-xs font-semibold text-purple-200 max-w-[44px] sm:max-w-[85px] md:max-w-[120px] truncate">{p2.name}</span>
+            {/* Team B Badge */}
+            <div className={`flex items-center gap-1 sm:gap-1.5 px-1.5 py-0.5 sm:px-2 sm:py-0.5 rounded-lg transition-all ${
+              currentTurnTeam === 'teamB'
+                ? 'bg-purple-500/25 border-2 border-purple-400 shadow-[0_0_12px_rgba(168,85,247,0.6)]'
+                : 'bg-purple-500/10 border border-purple-400/20 opacity-80'
+            }`}>
+              <span className="font-mono text-xs sm:text-sm font-black text-purple-400 min-w-[16px] sm:min-w-[18px] text-center bg-purple-950/70 px-1 py-0.5 rounded border border-purple-500/40 drop-shadow-[0_0_6px_rgba(168,85,247,0.4)]">
+                {isPveMode ? p2.score : (teamScores.teamB ?? p2.score)}
+              </span>
+              <span className="text-[10px] sm:text-xs font-bold text-purple-200 flex items-center gap-1">
+                <span>⚔️</span> {isPveMode ? p2.name : `TEAM B (${teamB.length || 1})`}
+              </span>
               {isPveMode && (
                 <span className={`text-[7.5px] sm:text-[8.5px] font-mono font-black tracking-wider uppercase px-1 py-0.5 rounded border shadow-sm ${
                   pveDifficulty === 'easy'
@@ -3731,12 +3857,143 @@ export default function HangmanDuelApp() {
         </header>
 
         <main className="game-main flex-1 min-h-0 w-full overflow-y-auto lg:overflow-hidden flex flex-col items-center justify-between p-1 sm:p-1.5 md:p-2">
+          {/* ─── TEAM VS TEAM TWO-COLUMN ROSTER ───────────────────────────── */}
+          {!isPveMode && (
+            <div className="w-full max-w-7xl mx-auto px-2 py-1 flex-shrink-0">
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                {/* Team A Roster Card */}
+                <div
+                  className={`p-2 sm:p-2.5 rounded-xl border transition-all backdrop-blur-xl ${
+                    currentTurnTeam === 'teamA'
+                      ? 'bg-cyan-950/70 border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)] ring-1 ring-cyan-400/60'
+                      : 'bg-[#121020]/60 border-white/10 opacity-75'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-1 mb-1 pb-1 border-b border-white/10">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm sm:text-base">🛡️</span>
+                      <span className={`font-display font-bold text-xs sm:text-sm tracking-wider uppercase ${currentTurnTeam === 'teamA' ? 'text-cyan-300' : 'text-slate-300'}`}>
+                        TEAM A
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        ({teamA.length}/4)
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {currentTurnTeam === 'teamA' && (
+                        <span className="px-1.5 py-0.5 rounded-full bg-cyan-400/20 text-cyan-300 border border-cyan-400/40 text-[9px] font-mono font-bold animate-pulse flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+                          TURN
+                        </span>
+                      )}
+                      <span className="font-mono text-xs font-black text-cyan-400 bg-cyan-950/90 px-1.5 py-0.5 rounded border border-cyan-500/40">
+                        {teamScores.teamA || 0} PTS
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Members List */}
+                  <div className="flex flex-wrap gap-1">
+                    {teamA.length > 0 ? (
+                      teamA.map((p) => {
+                        const isYou = p.sessionId === myPlayerId || p.id === myPlayerId || p.isYou;
+                        return (
+                          <span
+                            key={p.sessionId || p.id}
+                            className={`inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-semibold transition-all ${
+                              currentTurnTeam === 'teamA'
+                                ? isYou
+                                  ? 'bg-cyan-500/40 text-cyan-100 border border-cyan-300 shadow-sm'
+                                  : 'bg-cyan-950/80 text-cyan-200 border border-cyan-500/40'
+                                : isYou
+                                ? 'bg-cyan-950/40 text-cyan-200 border border-cyan-500/20'
+                                : 'bg-white/5 text-slate-400 border border-white/10'
+                            }`}
+                          >
+                            {p.isHost && <span title="Host">👑</span>}
+                            <span className="truncate max-w-[80px] sm:max-w-[120px]">{p.name}</span>
+                            {isYou && <span className="text-[8.5px] text-cyan-300 font-mono font-normal">(You)</span>}
+                            {!p.connected && <span className="text-[8.5px] text-rose-400" title="Disconnected">🔌</span>}
+                          </span>
+                        );
+                      })
+                    ) : (
+                      <span className="text-[10px] text-slate-500 italic">No players joined yet</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Team B Roster Card */}
+                <div
+                  className={`p-2 sm:p-2.5 rounded-xl border transition-all backdrop-blur-xl ${
+                    currentTurnTeam === 'teamB'
+                      ? 'bg-purple-950/70 border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.4)] ring-1 ring-purple-400/60'
+                      : 'bg-[#121020]/60 border-white/10 opacity-75'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-1 mb-1 pb-1 border-b border-white/10">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm sm:text-base">⚔️</span>
+                      <span className={`font-display font-bold text-xs sm:text-sm tracking-wider uppercase ${currentTurnTeam === 'teamB' ? 'text-purple-300' : 'text-slate-300'}`}>
+                        TEAM B
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        ({teamB.length}/4)
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {currentTurnTeam === 'teamB' && (
+                        <span className="px-1.5 py-0.5 rounded-full bg-purple-400/20 text-purple-300 border border-purple-400/40 text-[9px] font-mono font-bold animate-pulse flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+                          TURN
+                        </span>
+                      )}
+                      <span className="font-mono text-xs font-black text-purple-400 bg-purple-950/90 px-1.5 py-0.5 rounded border border-purple-500/40">
+                        {teamScores.teamB || 0} PTS
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Members List */}
+                  <div className="flex flex-wrap gap-1">
+                    {teamB.length > 0 ? (
+                      teamB.map((p) => {
+                        const isYou = p.sessionId === myPlayerId || p.id === myPlayerId || p.isYou;
+                        return (
+                          <span
+                            key={p.sessionId || p.id}
+                            className={`inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-semibold transition-all ${
+                              currentTurnTeam === 'teamB'
+                                ? isYou
+                                  ? 'bg-purple-500/40 text-purple-100 border border-purple-300 shadow-sm'
+                                  : 'bg-purple-950/80 text-purple-200 border border-purple-500/40'
+                                : isYou
+                                ? 'bg-purple-950/40 text-purple-200 border border-purple-500/20'
+                                : 'bg-white/5 text-slate-400 border border-white/10'
+                            }`}
+                          >
+                            {p.isHost && <span title="Host">👑</span>}
+                            <span className="truncate max-w-[80px] sm:max-w-[120px]">{p.name}</span>
+                            {isYou && <span className="text-[8.5px] text-purple-300 font-mono font-normal">(You)</span>}
+                            {!p.connected && <span className="text-[8.5px] text-rose-400" title="Disconnected">🔌</span>}
+                          </span>
+                        );
+                      })
+                    ) : (
+                      <span className="text-[10px] text-slate-500 italic">No players joined yet</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Role Banner */}
           <div id="role-banner" className="role-banner flex items-center justify-center gap-2 flex-wrap py-0.5 px-3 text-[10px] sm:text-xs my-0 flex-shrink-0" aria-live="polite">
             <span>
               {gameState === 'setting'
-                ? (isWordSetter ? '👑 You are the Word Setter — Choose a secret word' : '⏳ Opponent is choosing a secret word…')
-                : (isWordSetter ? '👁 Watching — You set the word' : '🤔 Guess the secret word!')}
+                ? (isWordSetter ? '👑 You are on the Word Setting Team — Choose a secret word' : '⏳ Opponent Team is choosing a secret word…')
+                : (isWordSetter ? '👁 Watching — Your team set the word' : (isMyTeamTurn ? '🤔 Your Team’s Turn — Guess the secret word!' : '⏳ Opponent Team’s Turn to guess…'))}
             </span>
             {isPveMode && (
               <span className="inline-flex items-center gap-1.5 text-[9px] sm:text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/10 border border-white/15 text-slate-200 shadow-sm">

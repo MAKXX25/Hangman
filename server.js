@@ -150,8 +150,9 @@ function getHiddenWord(word, guessed = []) {
 }
 
 function findPlayer(room, idOrSessionId) {
-  if (!room || !room.players) return null;
-  return room.players.find(
+  if (!room) return null;
+  const all = [...(room.teamA || []), ...(room.teamB || []), ...(room.players || [])];
+  return all.find(
     (p) => p.sessionId === idOrSessionId || p.id === idOrSessionId || p.socketId === idOrSessionId
   );
 }
@@ -189,7 +190,7 @@ function startSettingTimer(io, roomCode) {
       stopSettingTimer(roomCode);
       if (!rooms[roomCode] || rooms[roomCode].state !== 'setting') return;
 
-      // Auto-select a random word if setter runs out of time
+      // Auto-select a random word if setter team runs out of time
       const word = getRandomWord();
       const entry = DICTIONARY_ENTRIES.find((e) => e.word.toLowerCase() === word.toLowerCase());
       rooms[roomCode].game.word = word;
@@ -199,8 +200,8 @@ function startSettingTimer(io, roomCode) {
       io.to(roomCode).emit('timer_expired', { word });
       io.to(roomCode).emit('round_started', {
         wordLength: word.length,
-        wordSetterId: rooms[roomCode].game.wordSetterId,
-        guesserId: rooms[roomCode].game.guesserId,
+        currentTurn: rooms[roomCode].game.currentTurn,
+        wordSettingTeam: rooms[roomCode].game.wordSettingTeam,
       });
       broadcastState(io, rooms[roomCode], roomCode);
       console.log(`⏱ Timer expired for room ${roomCode}. Auto-assigned word: "${word}"`);
@@ -208,30 +209,78 @@ function startSettingTimer(io, roomCode) {
   }, 1000);
 }
 
-// ─── Build Authoritative State Payload ────────────────────────────────────────
+// ─── Build Authoritative State Payload (Team vs Team Format) ─────────────────
 function buildStatePayload(room, roomCode, forPlayer) {
   const timerSecondsLeft = room.timer ? room.timer.secondsLeft : null;
   const timerTotal = (room.settings && room.settings.wordPickTime) || DEFAULT_WORD_PICK_TIME;
 
   const myId = forPlayer ? (forPlayer.sessionId || forPlayer.id) : null;
-  const isWordSetter = room.game && (room.game.wordSetterId === myId);
-  const setterPlayer = room.players.find((p) => (p.sessionId || p.id) === (room.game && room.game.wordSetterId));
-  const guesserPlayer = room.players.find((p) => (p.sessionId || p.id) === (room.game && room.game.guesserId));
+  const teamA = room.teamA || [];
+  const teamB = room.teamB || [];
+  const allPlayers = [...teamA, ...teamB];
+
+  const myTeam = teamA.some((p) => (p.sessionId || p.id) === myId)
+    ? 'teamA'
+    : teamB.some((p) => (p.sessionId || p.id) === myId)
+      ? 'teamB'
+      : null;
+
+  const currentTurn = room.game ? (room.game.currentTurn || 'teamB') : 'teamB';
+  const wordSettingTeam = room.game ? (room.game.wordSettingTeam || 'teamA') : 'teamA';
+
+  const isWordSetter = myTeam === wordSettingTeam;
+  const isMyTeamTurn = myTeam === currentTurn;
 
   return {
     state: room.state,
-    players: room.players.map((p) => {
+    teamA: teamA.map((p) => {
       const pid = p.sessionId || p.id;
       return {
         id: pid,
         sessionId: pid,
         socketId: p.socketId,
         name: p.name,
-        score: p.score,
+        isHost: !!p.isHost,
+        score: p.score || 0,
         connected: p.connected !== false,
+        team: 'teamA',
         isYou: pid === myId,
       };
     }),
+    teamB: teamB.map((p) => {
+      const pid = p.sessionId || p.id;
+      return {
+        id: pid,
+        sessionId: pid,
+        socketId: p.socketId,
+        name: p.name,
+        isHost: !!p.isHost,
+        score: p.score || 0,
+        connected: p.connected !== false,
+        team: 'teamB',
+        isYou: pid === myId,
+      };
+    }),
+    players: allPlayers.map((p) => {
+      const pid = p.sessionId || p.id;
+      const team = teamA.some((m) => (m.sessionId || m.id) === pid) ? 'teamA' : 'teamB';
+      return {
+        id: pid,
+        sessionId: pid,
+        socketId: p.socketId,
+        name: p.name,
+        isHost: !!p.isHost,
+        score: p.score || 0,
+        connected: p.connected !== false,
+        team,
+        isYou: pid === myId,
+      };
+    }),
+    teamScores: room.teamScores || { teamA: 0, teamB: 0 },
+    currentTurn,
+    wordSettingTeam,
+    myTeam,
+    isMyTeamTurn,
     settings: room.settings || { wordPickTime: DEFAULT_WORD_PICK_TIME },
     timerSecondsLeft,
     timerTotal,
@@ -242,10 +291,10 @@ function buildStatePayload(room, roomCode, forPlayer) {
           guessedLetters: room.game.guessedLetters,
           livesLeft: room.game.livesLeft,
           maxLives: MAX_LIVES,
+          currentTurn,
+          wordSettingTeam,
           wordSetterId: room.game.wordSetterId,
           guesserId: room.game.guesserId,
-          setterName: setterPlayer ? setterPlayer.name : 'Word Setter',
-          guesserName: guesserPlayer ? guesserPlayer.name : 'Guesser',
           isWordSetter,
           word: isWordSetter || room.state === 'roundover' ? room.game.word : null,
           meaning: room.game.meaning || '',
@@ -260,7 +309,8 @@ function buildStatePayload(room, roomCode, forPlayer) {
 
 // ─── Broadcast Authoritative State ────────────────────────────────────────────
 function broadcastState(io, room, roomCode) {
-  room.players.forEach((player) => {
+  const allPlayers = [...(room.teamA || []), ...(room.teamB || [])];
+  allPlayers.forEach((player) => {
     if (player.socketId) {
       const payload = buildStatePayload(room, roomCode, player);
       io.to(player.socketId).emit('state_update', payload);
@@ -366,7 +416,8 @@ io.on('connection', (socket) => {
   let existingPlayer = null;
 
   for (const [code, r] of Object.entries(rooms)) {
-    const p = r.players.find((pl) => pl.sessionId === sessionId || pl.id === sessionId);
+    const all = [...(r.teamA || []), ...(r.teamB || [])];
+    const p = all.find((pl) => pl.sessionId === sessionId || pl.id === sessionId);
     if (p) {
       existingRoomCode = code;
       existingRoom = r;
@@ -378,7 +429,6 @@ io.on('connection', (socket) => {
   if (existingRoom && existingPlayer) {
     console.log(`♻️ [Session Rejoin] Player "${existingPlayer.name}" (${sessionId}) reconnected to room ${existingRoomCode}`);
 
-    // Clear any disconnect grace period timer
     if (existingPlayer.disconnectTimeout) {
       clearTimeout(existingPlayer.disconnectTimeout);
       existingPlayer.disconnectTimeout = null;
@@ -391,35 +441,31 @@ io.on('connection', (socket) => {
     socket.data.roomCode = existingRoomCode;
     socket.data.playerName = existingPlayer.name;
 
-    // Notify the room/opponent that player has reconnected
     socket.to(existingRoomCode).emit('player_reconnected', {
       sessionId,
       name: existingPlayer.name,
     });
 
-    // Send authoritative restored state specifically to this player
     const restoredPayload = buildStatePayload(existingRoom, existingRoomCode, existingPlayer);
     socket.emit('game_restored', restoredPayload);
 
-    // If game is in 'setting' state and this player is the setter, re-send suggestions
-    if (
-      existingRoom.state === 'setting' &&
-      existingRoom.game &&
-      (existingRoom.game.wordSetterId === sessionId || existingRoom.game.wordSetterId === existingPlayer.id)
-    ) {
+    // If game in setting phase and reconnecting player is on setting team, send suggestions
+    const settingTeam = existingRoom.game ? (existingRoom.game.wordSettingTeam || 'teamA') : 'teamA';
+    const isSetterMember = (existingRoom[settingTeam] || []).some((m) => m.sessionId === sessionId);
+    if (existingRoom.state === 'setting' && isSetterMember) {
       socket.emit('word_suggestions', {
         suggestions: getRandomSuggestions(12),
       });
     }
 
-    // Broadcast updated state to all participants in room
     broadcastState(io, existingRoom, existingRoomCode);
   }
 
-  // 1. Create Room
-  socket.on('create_room', ({ playerName, wordPickTime }) => {
-    if (!playerName || !playerName.trim()) {
-      socket.emit('error_msg', 'Please enter your name.');
+  // 1. Create Room (Host creates room and selects Team A or Team B)
+  socket.on('create_room', ({ playerName, wordPickTime, team = 'teamA' }) => {
+    const cleanName = (playerName || '').trim();
+    if (!cleanName) {
+      socket.emit('join_error', { message: 'Please enter your name.' });
       return;
     }
 
@@ -433,19 +479,22 @@ io.on('connection', (socket) => {
       ? Number(wordPickTime)
       : DEFAULT_WORD_PICK_TIME;
 
+    const hostTeam = team === 'teamB' ? 'teamB' : 'teamA';
+    const hostPlayer = {
+      sessionId,
+      socketId: socket.id,
+      name: cleanName,
+      isHost: true,
+      score: 0,
+      connected: true,
+      disconnectTimeout: null,
+    };
+
     rooms[roomCode] = {
       state: 'lobby',
-      players: [
-        {
-          id: sessionId,
-          sessionId: sessionId,
-          socketId: socket.id,
-          name: playerName.trim(),
-          score: 0,
-          connected: true,
-          disconnectTimeout: null,
-        },
-      ],
+      teamA: hostTeam === 'teamA' ? [hostPlayer] : [],
+      teamB: hostTeam === 'teamB' ? [hostPlayer] : [],
+      teamScores: { teamA: 0, teamB: 0 },
       game: null,
       timer: null,
       settings: { wordPickTime: pickedTime },
@@ -453,108 +502,133 @@ io.on('connection', (socket) => {
 
     socket.join(roomCode);
     socket.data.roomCode = roomCode;
-    socket.data.playerName = playerName.trim();
+    socket.data.playerName = cleanName;
+    socket.data.team = hostTeam;
 
-    socket.emit('room_created', { roomCode });
+    socket.emit('room_created', { roomCode, team: hostTeam });
     broadcastState(io, rooms[roomCode], roomCode);
-    console.log(`🎮 Room ${roomCode} created by "${playerName.trim()}" (Session: ${sessionId}, timer: ${pickedTime}s)`);
+    console.log(`🎮 Room ${roomCode} created by Host "${cleanName}" on ${hostTeam === 'teamA' ? 'Team A' : 'Team B'} (timer: ${pickedTime}s)`);
   });
 
-  // 2. Join Room
-  socket.on('join_room', ({ roomCode, playerName }) => {
+  // 2. Join Room (Team Selection, Capacity Limit & Unique Name Gatekeeper)
+  socket.on('join_room', ({ roomCode, playerName, team = 'teamB' }) => {
     const code = (roomCode || '').toUpperCase().trim();
-    if (!playerName || !playerName.trim()) {
-      socket.emit('error_msg', 'Please enter your name.');
+    const cleanName = (playerName || '').trim();
+
+    if (!cleanName) {
+      socket.emit('join_error', { message: 'Please enter your name.' });
       return;
     }
     if (!rooms[code]) {
-      socket.emit('error_msg', 'Room not found. Please verify the code.');
+      socket.emit('join_error', { message: 'Room not found. Please verify the code.' });
       return;
     }
 
     const room = rooms[code];
 
-    // Check if player is already registered in this room (reconnection/tab reload during join)
-    const existingIndex = room.players.findIndex((p) => p.sessionId === sessionId || p.id === sessionId);
-    if (existingIndex !== -1) {
-      const p = room.players[existingIndex];
-      if (p.disconnectTimeout) {
-        clearTimeout(p.disconnectTimeout);
-        p.disconnectTimeout = null;
+    // ── The Unique Name Gatekeeper (Case-Insensitive Check) ─────────────────
+    const allNames = [...room.teamA.map((p) => p.name), ...room.teamB.map((p) => p.name)];
+    const isDuplicate = allNames.some(
+      (existingName) => existingName.toLowerCase() === cleanName.toLowerCase()
+    );
+
+    // Allow self-reconnection if same sessionId and name
+    const isSelfReconnection = [...room.teamA, ...room.teamB].some(
+      (p) => p.sessionId === sessionId && p.name.toLowerCase() === cleanName.toLowerCase()
+    );
+
+    if (isDuplicate && !isSelfReconnection) {
+      socket.emit('join_error', {
+        message: 'Name already taken in this room. Please choose another.',
+      });
+      return;
+    }
+
+    // ── Team Capacity Limit (Max 4 players per team) ────────────────────────
+    const targetTeam = team === 'teamA' ? 'teamA' : 'teamB';
+    const targetTeamName = targetTeam === 'teamA' ? 'Team A' : 'Team B';
+
+    if (room[targetTeam].length >= 4 && !isSelfReconnection) {
+      socket.emit('join_error', {
+        message: `${targetTeamName} is full (maximum 4 players per team).`,
+      });
+      return;
+    }
+
+    // Handle re-joining player with existing session
+    const existingPlayer = [...room.teamA, ...room.teamB].find((p) => p.sessionId === sessionId);
+    if (existingPlayer) {
+      if (existingPlayer.disconnectTimeout) {
+        clearTimeout(existingPlayer.disconnectTimeout);
+        existingPlayer.disconnectTimeout = null;
       }
-      p.socketId = socket.id;
-      p.connected = true;
-      p.name = playerName.trim();
+      existingPlayer.socketId = socket.id;
+      existingPlayer.connected = true;
+      existingPlayer.name = cleanName;
       socket.join(code);
       socket.data.roomCode = code;
-      socket.data.playerName = p.name;
+      socket.data.playerName = cleanName;
+      socket.data.team = room.teamA.some((p) => p.sessionId === sessionId) ? 'teamA' : 'teamB';
       broadcastState(io, room, code);
       return;
     }
 
-    if (room.players.length >= 2) {
-      socket.emit('error_msg', 'Room is full (2 players max).');
-      return;
-    }
-    if (room.state !== 'lobby') {
-      socket.emit('error_msg', 'Game already in progress in this room.');
-      return;
-    }
-
-    room.players.push({
-      id: sessionId,
-      sessionId: sessionId,
+    // Add new player to chosen team
+    const newPlayer = {
+      sessionId,
       socketId: socket.id,
-      name: playerName.trim(),
+      name: cleanName,
+      isHost: false,
       score: 0,
       connected: true,
       disconnectTimeout: null,
-    });
+    };
+    room[targetTeam].push(newPlayer);
+
     socket.join(code);
     socket.data.roomCode = code;
-    socket.data.playerName = playerName.trim();
+    socket.data.playerName = cleanName;
+    socket.data.team = targetTeam;
 
-    // Auto-start: Host (Player 1) is Setter, Joiner (Player 2) is Guesser
-    const setterSessionId = room.players[0].sessionId || room.players[0].id;
-    const guesserSessionId = room.players[1].sessionId || room.players[1].id;
+    console.log(`👥 "${cleanName}" joined ${targetTeamName} in room ${code}. Team A: ${room.teamA.length}/4 | Team B: ${room.teamB.length}/4`);
 
-    room.state = 'setting';
-    room.game = {
-      word: null,
-      wordSetterId: setterSessionId,
-      guesserId: guesserSessionId,
-      guessedLetters: [],
-      wrongGuesses: [],
-      livesLeft: MAX_LIVES,
-      roundResult: null,
-    };
+    // Auto-start match when both teams have at least 1 player and room is in lobby
+    if (room.state === 'lobby' && room.teamA.length >= 1 && room.teamB.length >= 1) {
+      room.state = 'setting';
+      room.game = {
+        word: null,
+        wordSettingTeam: 'teamA', // Team A sets first word
+        currentTurn: 'teamB',     // Team B guesses
+        wordSetterId: room.teamA[0].sessionId,
+        guesserId: room.teamB[0].sessionId,
+        guessedLetters: [],
+        wrongGuesses: [],
+        livesLeft: MAX_LIVES,
+        roundResult: null,
+      };
 
-    // Emit game_start to both players
-    io.to(code).emit('game_start', {
-      roomCode: code,
-      wordSetterId: room.game.wordSetterId,
-      guesserId: room.game.guesserId,
-      players: room.players.map((p) => ({
-        id: p.sessionId || p.id,
-        sessionId: p.sessionId || p.id,
-        name: p.name,
-        score: p.score,
-        connected: p.connected !== false,
-      })),
-    });
-
-    broadcastState(io, room, code);
-    startSettingTimer(io, code);
-
-    // Send word suggestions to the word setter's active socket
-    const setterPlayer = room.players.find((p) => (p.sessionId || p.id) === setterSessionId);
-    if (setterPlayer && setterPlayer.socketId) {
-      io.to(setterPlayer.socketId).emit('word_suggestions', {
-        suggestions: getRandomSuggestions(12),
+      io.to(code).emit('game_start', {
+        roomCode: code,
+        currentTurn: room.game.currentTurn,
+        wordSettingTeam: room.game.wordSettingTeam,
+        teamA: room.teamA,
+        teamB: room.teamB,
       });
-    }
 
-    console.log(`👥 "${playerName.trim()}" joined room ${code}. Game started.`);
+      broadcastState(io, room, code);
+      startSettingTimer(io, code);
+
+      // Send word suggestions to all members of the word setting team
+      room.teamA.forEach((member) => {
+        if (member.socketId) {
+          io.to(member.socketId).emit('word_suggestions', {
+            suggestions: getRandomSuggestions(12),
+          });
+        }
+      });
+    } else {
+      broadcastState(io, room, code);
+    }
   });
 
   // 3. Word Suggestions Request
@@ -564,7 +638,7 @@ io.on('connection', (socket) => {
     });
   });
 
-  // 4. Word Setter Submits Word
+  // 4. Word Setter Submits Word (Any member of the setting team)
   socket.on('set_word', ({ word }) => {
     const roomCode = socket.data.roomCode;
     if (!roomCode || !rooms[roomCode]) return;
@@ -576,8 +650,15 @@ io.on('connection', (socket) => {
     }
 
     const currentSessionId = socket.data.sessionId || sessionId;
-    if (room.game.wordSetterId !== currentSessionId && room.game.wordSetterId !== socket.id) {
-      socket.emit('error_msg', 'Only the Word Setter can submit a word.');
+    const settingTeamKey = room.game ? (room.game.wordSettingTeam || 'teamA') : 'teamA';
+    const settingTeam = room[settingTeamKey] || [];
+
+    const isMemberOfSettingTeam = settingTeam.some(
+      (p) => p.sessionId === currentSessionId || p.socketId === socket.id
+    );
+
+    if (!isMemberOfSettingTeam) {
+      socket.emit('error_msg', `Only members of ${settingTeamKey === 'teamA' ? 'Team A' : 'Team B'} can submit a word.`);
       return;
     }
 
@@ -611,12 +692,12 @@ io.on('connection', (socket) => {
 
     io.to(roomCode).emit('round_started', {
       wordLength: clean.length,
-      wordSetterId: room.game.wordSetterId,
-      guesserId: room.game.guesserId,
+      currentTurn: room.game.currentTurn,
+      wordSettingTeam: room.game.wordSettingTeam,
     });
   });
 
-  // 5. Guesser Guesses a Letter
+  // 5. Team Guesses a Letter (Any player on the currently active team)
   socket.on('guess_letter', ({ letter }) => {
     const roomCode = socket.data.roomCode;
     if (!roomCode || !rooms[roomCode]) return;
@@ -628,15 +709,26 @@ io.on('connection', (socket) => {
     }
 
     const currentSessionId = socket.data.sessionId || sessionId;
-    if (room.game.guesserId !== currentSessionId && room.game.guesserId !== socket.id) {
-      socket.emit('error_msg', 'Only the Guesser can guess letters.');
+    const activeTeamKey = room.game.currentTurn || 'teamB';
+    const activeTeamRoster = room[activeTeamKey] || [];
+
+    // Any player whose socket ID / sessionId belongs to the active team is allowed to guess!
+    const isMemberOfActiveTeam = activeTeamRoster.some(
+      (p) => p.sessionId === currentSessionId || p.socketId === socket.id
+    );
+
+    if (!isMemberOfActiveTeam) {
+      socket.emit(
+        'error_msg',
+        `It is not your turn! Only ${activeTeamKey === 'teamA' ? 'Team A' : 'Team B'} can guess right now.`
+      );
       return;
     }
 
     const l = (letter || '').toLowerCase();
     if (!/^[a-z]$/.test(l)) return;
     if (room.game.guessedLetters.includes(l)) {
-      socket.emit('error_msg', `You already guessed "${l.toUpperCase()}".`);
+      socket.emit('error_msg', `"${l.toUpperCase()}" was already guessed.`);
       return;
     }
 
@@ -653,16 +745,24 @@ io.on('connection', (socket) => {
 
     const hidden = getHiddenWord(room.game.word, room.game.guessedLetters);
     if (!hidden.includes('_')) {
-      const guesser = findPlayer(room, room.game.guesserId);
-      if (guesser) guesser.score++;
-      room.game.roundResult = 'guesser_wins';
+      // Guessing team wins round!
+      room.teamScores[activeTeamKey] = (room.teamScores[activeTeamKey] || 0) + 1;
+      activeTeamRoster.forEach((p) => {
+        p.score = (p.score || 0) + 1;
+      });
+      room.game.roundResult = `${activeTeamKey}_wins`;
       room.state = 'roundover';
       globalStats.duelsPlayed++;
       globalStats.wordsGuessed++;
     } else if (room.game.livesLeft <= 0) {
-      const setter = findPlayer(room, room.game.wordSetterId);
-      if (setter) setter.score++;
-      room.game.roundResult = 'setter_wins';
+      // Setting team wins round!
+      const settingTeamKey = room.game.wordSettingTeam || 'teamA';
+      const settingTeamRoster = room[settingTeamKey] || [];
+      room.teamScores[settingTeamKey] = (room.teamScores[settingTeamKey] || 0) + 1;
+      settingTeamRoster.forEach((p) => {
+        p.score = (p.score || 0) + 1;
+      });
+      room.game.roundResult = `${settingTeamKey}_wins`;
       room.state = 'roundover';
       globalStats.duelsPlayed++;
     }
@@ -671,7 +771,7 @@ io.on('connection', (socket) => {
     io.emit('stats_update', getStatsPayload(io));
   });
 
-  // 6. Next Round
+  // 6. Next Round (Swaps Setter Team and Guesser Team)
   socket.on('next_round', () => {
     const roomCode = socket.data.roomCode;
     if (!roomCode || !rooms[roomCode]) return;
@@ -679,14 +779,18 @@ io.on('connection', (socket) => {
 
     if (room.state !== 'roundover') return;
 
-    const prevSetter = room.game.wordSetterId;
-    const prevGuesser = room.game.guesserId;
+    // Swap roles between Team A and Team B
+    const prevSetterTeam = room.game.wordSettingTeam || 'teamA';
+    const nextSetterTeam = prevSetterTeam === 'teamA' ? 'teamB' : 'teamA';
+    const nextGuesserTeam = nextSetterTeam === 'teamA' ? 'teamB' : 'teamA';
 
     room.state = 'setting';
     room.game = {
       word: null,
-      wordSetterId: prevGuesser, // Swap roles
-      guesserId: prevSetter,
+      wordSettingTeam: nextSetterTeam,
+      currentTurn: nextGuesserTeam,
+      wordSetterId: (room[nextSetterTeam][0] || {}).sessionId,
+      guesserId: (room[nextGuesserTeam][0] || {}).sessionId,
       guessedLetters: [],
       wrongGuesses: [],
       livesLeft: MAX_LIVES,
@@ -698,18 +802,22 @@ io.on('connection', (socket) => {
 
     io.to(roomCode).emit('round_transitioning', {
       state: 'setting',
-      wordSetterId: room.game.wordSetterId,
+      wordSettingTeam: room.game.wordSettingTeam,
+      currentTurn: room.game.currentTurn,
     });
 
-    const newSetter = findPlayer(room, room.game.wordSetterId);
-    if (newSetter && newSetter.socketId) {
-      io.to(newSetter.socketId).emit('word_suggestions', {
-        suggestions: getRandomSuggestions(12),
-      });
-    }
+    // Send suggestions to all members of the new setting team
+    const newSettingTeam = room[nextSetterTeam] || [];
+    newSettingTeam.forEach((member) => {
+      if (member.socketId) {
+        io.to(member.socketId).emit('word_suggestions', {
+          suggestions: getRandomSuggestions(12),
+        });
+      }
+    });
   });
 
-  // 7. Explicit Leave Room (User voluntarily clicks Leave Game)
+  // 7. Explicit Leave Room
   socket.on('leave_room', () => {
     const roomCode = socket.data.roomCode;
     const currentSessionId = socket.data.sessionId || sessionId;
@@ -718,35 +826,29 @@ io.on('connection', (socket) => {
     const room = rooms[roomCode];
     stopSettingTimer(roomCode);
 
-    const leavingPlayer = room.players.find(
-      (p) => p.sessionId === currentSessionId || p.socketId === socket.id
-    );
-    if (leavingPlayer && leavingPlayer.disconnectTimeout) {
-      clearTimeout(leavingPlayer.disconnectTimeout);
-    }
+    const filterPlayer = (p) => p.sessionId !== currentSessionId && p.socketId !== socket.id;
+    room.teamA = (room.teamA || []).filter(filterPlayer);
+    room.teamB = (room.teamB || []).filter(filterPlayer);
 
-    room.players = room.players.filter(
-      (p) => p.sessionId !== currentSessionId && p.socketId !== socket.id
-    );
     socket.leave(roomCode);
     socket.data.roomCode = null;
 
-    if (room.players.length === 0) {
+    const remainingCount = room.teamA.length + room.teamB.length;
+    if (remainingCount === 0) {
       delete rooms[roomCode];
-      console.log(`🗑 Room ${roomCode} deleted (player left voluntarily).`);
+      console.log(`🗑 Room ${roomCode} deleted (all players left).`);
     } else {
-      room.state = 'lobby';
-      room.game = null;
-      const remaining = room.players[0];
-      if (remaining && remaining.socketId) {
-        io.to(remaining.socketId).emit('opponent_left');
+      if (room.teamA.length === 0 || room.teamB.length === 0) {
+        room.state = 'lobby';
+        room.game = null;
+        io.to(roomCode).emit('opponent_left');
       }
       broadcastState(io, room, roomCode);
     }
     io.emit('stats_update', getStatsPayload(io));
   });
 
-  // 8. Graceful Disconnect (Handling Refresh, Dropouts & Network Loss)
+  // 8. Graceful Disconnect (60s Reconnection Window for Team Matches)
   socket.on('disconnect', (reason) => {
     const roomCode = socket.data.roomCode;
     const currentSessionId = socket.data.sessionId || sessionId;
@@ -757,7 +859,7 @@ io.on('connection', (socket) => {
       return;
     }
     const room = rooms[roomCode];
-    const player = room.players.find(
+    const player = [...(room.teamA || []), ...(room.teamB || [])].find(
       (p) => p.sessionId === currentSessionId || p.socketId === socket.id
     );
 
@@ -766,7 +868,7 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Lobby Disconnect: Give 30s grace period for host refresh before cleanup
+    // Lobby Disconnect: 30s grace period
     if (room.state === 'lobby') {
       player.connected = false;
       player.socketId = null;
@@ -775,17 +877,16 @@ io.on('connection', (socket) => {
       player.disconnectTimeout = setTimeout(() => {
         if (!rooms[roomCode]) return;
         const currentRoom = rooms[roomCode];
-        const p = currentRoom.players.find((pl) => pl.sessionId === currentSessionId);
-        if (p && !p.connected) {
-          currentRoom.players = currentRoom.players.filter((pl) => pl.sessionId !== currentSessionId);
-          if (currentRoom.players.length === 0) {
-            delete rooms[roomCode];
-            console.log(`🗑 Empty lobby ${roomCode} deleted after 30s timeout.`);
-          } else {
-            broadcastState(io, currentRoom, roomCode);
-          }
-          io.emit('stats_update', getStatsPayload(io));
+        currentRoom.teamA = (currentRoom.teamA || []).filter((p) => p.sessionId !== currentSessionId);
+        currentRoom.teamB = (currentRoom.teamB || []).filter((p) => p.sessionId !== currentSessionId);
+
+        if (currentRoom.teamA.length === 0 && currentRoom.teamB.length === 0) {
+          delete rooms[roomCode];
+          console.log(`🗑 Empty lobby ${roomCode} deleted after 30s timeout.`);
+        } else {
+          broadcastState(io, currentRoom, roomCode);
         }
+        io.emit('stats_update', getStatsPayload(io));
       }, 30000);
 
       broadcastState(io, room, roomCode);
@@ -797,7 +898,6 @@ io.on('connection', (socket) => {
     player.connected = false;
     player.socketId = null;
 
-    // Broadcast player_disconnected event to remaining player
     io.to(roomCode).emit('player_disconnected', {
       sessionId: player.sessionId,
       playerName: player.name,
@@ -805,31 +905,35 @@ io.on('connection', (socket) => {
     });
 
     broadcastState(io, room, roomCode);
-    console.log(`⏳ Player "${player.name}" (${player.sessionId}) disconnected from ${roomCode}. Starting 60s grace timer.`);
+    console.log(`⏳ Player "${player.name}" disconnected from room ${roomCode}. 60s grace period active.`);
 
     if (player.disconnectTimeout) clearTimeout(player.disconnectTimeout);
 
     player.disconnectTimeout = setTimeout(() => {
       if (!rooms[roomCode]) return;
       const currentRoom = rooms[roomCode];
-      const p = currentRoom.players.find((pl) => pl.sessionId === currentSessionId);
+      const p = [...(currentRoom.teamA || []), ...(currentRoom.teamB || [])].find(
+        (pl) => pl.sessionId === currentSessionId
+      );
 
       if (p && !p.connected) {
-        console.log(`⏰ 60s grace period expired for "${p.name}" in room ${roomCode}. Forfeiting.`);
-        stopSettingTimer(roomCode);
+        console.log(`⏰ 60s grace period expired for "${p.name}" in room ${roomCode}.`);
+        currentRoom.teamA = (currentRoom.teamA || []).filter((pl) => pl.sessionId !== currentSessionId);
+        currentRoom.teamB = (currentRoom.teamB || []).filter((pl) => pl.sessionId !== currentSessionId);
 
-        // Find remaining connected opponent
-        const opponent = currentRoom.players.find((pl) => pl.sessionId !== currentSessionId);
-        if (opponent && opponent.connected && opponent.socketId) {
-          io.to(opponent.socketId).emit('player_forfeit', {
-            winner: opponent.name,
-            message: `${p.name} did not reconnect in time. You win by default!`,
+        // If one of the teams now has 0 players, forfeit the match
+        if (currentRoom.teamA.length === 0 || currentRoom.teamB.length === 0) {
+          stopSettingTimer(roomCode);
+          const winningTeam = currentRoom.teamA.length > 0 ? 'Team A' : 'Team B';
+          io.to(roomCode).emit('player_forfeit', {
+            winner: winningTeam,
+            message: `All players on the opposing team disconnected. ${winningTeam} wins!`,
           });
-          io.to(opponent.socketId).emit('opponent_left');
+          io.to(roomCode).emit('opponent_left');
+          delete rooms[roomCode];
+        } else {
+          broadcastState(io, currentRoom, roomCode);
         }
-
-        delete rooms[roomCode];
-        console.log(`🗑 Room ${roomCode} deleted after disconnect timeout.`);
         io.emit('stats_update', getStatsPayload(io));
       }
     }, 60000);
