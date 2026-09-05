@@ -220,6 +220,7 @@ export default function HangmanDuelApp() {
   // Word Setter State
   const [secretWordInput, setSecretWordInput] = useState('');
   const [wordValidationMsg, setWordValidationMsg] = useState('');
+  const setError = (msg) => setWordValidationMsg(msg || '');
   const [suggestions, setSuggestions] = useState([]);
   const [liveWordDef, setLiveWordDef] = useState(null);
   const [isLookingUpDef, setIsLookingUpDef] = useState(false);
@@ -2508,44 +2509,40 @@ export default function HangmanDuelApp() {
   };
 
   // ── 4. Submit Secret Word (Chooser / Word Setter) ─────────────────────────
-  const handleSetWord = async (customWord) => {
-    const word = (customWord || secretWordInput).trim().toUpperCase();
-    if (!word) {
-      setWordValidationMsg('Please enter a word.');
-      return;
-    }
-    if (word.length < 2 || word.length > 20) {
-      setWordValidationMsg('Word must be between 2 and 20 letters.');
-      return;
-    }
+  const handleSetWord = async (customWord = secretWordInput) => {
+    // Sanitize Again: extract input and clean with .trim().toLowerCase()
+    const finalWord = (customWord || secretWordInput || '').trim().toLowerCase();
 
-    // Set loading state to show spinner on submit button
+    // Set isVerifying(true) and clear any previous errors setError(null) at the start
     setIsVerifying(true);
-    setWordValidationMsg('');
+    setError(null);
 
+    // State Management: Wrap the logic in a try/catch/finally block
     try {
-      // Validate word and fetch real definition clue via live Dictionary API
-      const fetchedDefinition = await validateAndFetchClue(word);
-
-      if (!fetchedDefinition) {
-        setIsVerifying(false);
-        setWordValidationMsg('Invalid word. Please enter a real English word.');
-        return;
+      if (!finalWord) {
+        throw new Error("Invalid word");
       }
 
-      setIsVerifying(false);
-      setWordValidationMsg('');
-      setSetterWordSubmitted(true);
+      const clue = await validateAndFetchClue(finalWord);
 
+      // The Check: if (!clue) { throw new Error("Invalid word"); }
+      if (!clue) {
+        throw new Error("Invalid word");
+      }
+
+      // If it passes, emit the sanitized word
       const socket = socketRef.current || getSocket();
       if (socket) {
-        socket.emit('set_secret_word', { word, clue: fetchedDefinition });
-        socket.emit('set_word', { word, clue: fetchedDefinition, meaning: fetchedDefinition });
+        socket.emit("set_secret_word", { word: finalWord, clue });
+        socket.emit("set_word", { word: finalWord, clue, meaning: clue });
       }
+      setSetterWordSubmitted(true);
     } catch (err) {
-      console.error('Word validation error:', err);
+      // Error Catching: In the catch block, set the error state
+      setError("Invalid word. Please enter a real English word.");
+    } finally {
+      // Cleanup: In the finally block, ensure isVerifying(false) is called
       setIsVerifying(false);
-      setWordValidationMsg('Invalid word. Please enter a real English word.');
     }
   };
 
@@ -4459,7 +4456,7 @@ export default function HangmanDuelApp() {
                       if (/^[a-zA-Z]$/.test(e.key) || e.key === 'Backspace' || e.key === ' ') {
                         playMechanicalClick();
                       }
-                      if (e.key === 'Enter' && !isVerifying) handleSetWord();
+                      if (e.key === 'Enter' && !isVerifying) handleSetWord(secretWordInput);
                     }}
                     spellCheck="false"
                   />
@@ -4467,7 +4464,7 @@ export default function HangmanDuelApp() {
                     id="btn-submit-word"
                     className="btn btn-primary min-w-[150px] inline-flex items-center justify-center gap-2"
                     disabled={isVerifying}
-                    onClick={() => handleSetWord()}
+                    onClick={() => handleSetWord(secretWordInput)}
                   >
                     {isVerifying ? (
                       <>
