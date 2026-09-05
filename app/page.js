@@ -63,6 +63,7 @@ export default function HangmanDuelApp() {
   const [activeMode, setActiveMode] = useState('1v1'); // '1v1' | 'team' | 'pve'
   const [lobbyError, setLobbyError] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isJoining, setIsJoining] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('connecting'); // 'connecting' | 'waking_up' | 'connected' | 'missing_env' | 'error'
   const [toastMsg, setToastMsg] = useState('');
   const [toastKey, setToastKey] = useState(0);
@@ -1951,6 +1952,7 @@ export default function HangmanDuelApp() {
 
     const onJoinError = (err) => {
       setIsConnecting(false);
+      setIsJoining(false);
       const message =
         typeof err === 'string'
           ? err
@@ -2326,7 +2328,7 @@ export default function HangmanDuelApp() {
     setTimeout(() => { setIsConnecting(false); }, 15000);
   };
 
-  // ── 2. Join Room (Authoritative Socket.io with Auto-Connect Queue & Timeout) ───
+  // ── 2. Join Room (Authoritative Socket.io with Auto-Connect Queue & Acknowledgment Loop) ───
   const handleJoinRoom = () => {
     const name = playerName.trim();
     const code = (joinCode || '').replace(/\s+/g, '').trim().toUpperCase();
@@ -2345,12 +2347,43 @@ export default function HangmanDuelApp() {
     setLobbyError('');
     setIsPveMode(false);
     setIsConnecting(true);
+    setIsJoining(true);
+
+    // Strict Socket.io Acknowledgment Callback Loop
+    const handleJoinResponse = (response) => {
+      setIsConnecting(false);
+      setIsJoining(false);
+
+      if (!response) {
+        setLobbyError('No response received from game server.');
+        showToast('⚠️ No response received from game server.', 4000);
+        return;
+      }
+
+      if (response.success) {
+        setLobbyError('');
+        const activeRoom = response.room;
+        if (activeRoom) {
+          applyState(activeRoom);
+        }
+        setRoomCode(activeRoom?.roomCode || code);
+        setGameState('waiting');
+        setRoomStatus('waiting');
+        setScreen('waiting');
+        showToast('Joined team room! 🎮', 3000);
+      } else {
+        const errorMsg = response.message || 'Room is full or unavailable.';
+        setLobbyError(errorMsg);
+        showToast(`⚠️ ${errorMsg}`, 4000);
+      }
+    };
 
     if (isBackendConfigured()) {
       const sock = socketRef.current || getSocket();
       if (!sock) {
         setLobbyError('Could not initialize connection to game backend.');
         setIsConnecting(false);
+        setIsJoining(false);
         return;
       }
       socketRef.current = sock;
@@ -2358,8 +2391,11 @@ export default function HangmanDuelApp() {
 
       if (sock.connected) {
         showToast('Joining game room… 🎯');
-        sock.emit('join_room', { roomCode: code, playerName: name, team: chosenTeam });
-        setTimeout(() => { setIsConnecting(false); }, 15000);
+        sock.emit('join_room', { roomCode: code, team: chosenTeam, name, playerName: name }, handleJoinResponse);
+        setTimeout(() => {
+          setIsConnecting(false);
+          setIsJoining(false);
+        }, 15000);
         return;
       }
 
@@ -2381,7 +2417,7 @@ export default function HangmanDuelApp() {
         setConnectionStatus('connected');
         setMyPlayerId(sock.id);
         showToast('Connected! Joining room… 🎯', 2000);
-        sock.emit('join_room', { roomCode: code, playerName: name, team: chosenTeam });
+        sock.emit('join_room', { roomCode: code, team: chosenTeam, name, playerName: name }, handleJoinResponse);
       };
 
       sock.once('connect', onConnectJoin);
@@ -2405,11 +2441,14 @@ export default function HangmanDuelApp() {
           setConnectionStatus('connected');
           setMyPlayerId(p2pSocket.id);
           attachSocketListeners(p2pSocket);
-          p2pSocket.emit('join_room', { roomCode: code, playerName: name, team: chosenTeam });
+          p2pSocket.emit('join_room', { roomCode: code, team: chosenTeam, name, playerName: name }, handleJoinResponse);
         }
       }, 35000);
 
-      setTimeout(() => { setIsConnecting(false); }, 40000);
+      setTimeout(() => {
+        setIsConnecting(false);
+        setIsJoining(false);
+      }, 40000);
       return;
     }
 
@@ -2420,8 +2459,11 @@ export default function HangmanDuelApp() {
     setConnectionStatus('connected');
     setMyPlayerId(p2pSocket.id);
     attachSocketListeners(p2pSocket);
-    p2pSocket.emit('join_room', { roomCode: code, playerName: name, team: chosenTeam });
-    setTimeout(() => { setIsConnecting(false); }, 15000);
+    p2pSocket.emit('join_room', { roomCode: code, team: chosenTeam, name, playerName: name }, handleJoinResponse);
+    setTimeout(() => {
+      setIsConnecting(false);
+      setIsJoining(false);
+    }, 15000);
   };
 
   // ── 3. Start PvE Single-Player vs Computer (Authentic Difficulty + Anti-Repetition) ─
@@ -3283,10 +3325,10 @@ export default function HangmanDuelApp() {
                           <button 
                             id="btn-join" 
                             className="btn btn-primary py-3 px-6 rounded-2xl font-semibold text-white tracking-wide bg-gradient-to-r from-violet-500 to-purple-600 shadow-md shadow-purple-500/20 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] active:scale-95 flex items-center justify-center cursor-pointer disabled:opacity-50 text-sm" 
-                            disabled={isConnecting}
+                            disabled={isConnecting || isJoining}
                             onClick={handleJoinRoom}
                           >
-                            {isConnecting ? 'Joining… 🎯' : 'Join Duel'}
+                            {isConnecting || isJoining ? 'Joining… 🎯' : 'Join Duel'}
                           </button>
                         </div>
                       </div>
@@ -3432,10 +3474,10 @@ export default function HangmanDuelApp() {
                           <button 
                             id="btn-join" 
                             className="btn btn-secondary py-3 px-6 rounded-2xl font-semibold text-white tracking-wide bg-gradient-to-r from-cyan-500 to-blue-600 shadow-md shadow-cyan-500/20 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(6,182,212,0.5)] active:scale-95 flex items-center justify-center cursor-pointer disabled:opacity-50 text-sm" 
-                            disabled={isConnecting}
+                            disabled={isConnecting || isJoining}
                             onClick={handleJoinRoom}
                           >
-                            {isConnecting ? 'Joining… 🎯' : `Join ${selectedTeam === 'teamA' ? (teamNameA || 'Team A') : (teamNameB || 'Team B')}`}
+                            {isConnecting || isJoining ? 'Joining… 🎯' : `Join ${selectedTeam === 'teamA' ? (teamNameA || 'Team A') : (teamNameB || 'Team B')}`}
                           </button>
                         </div>
                       </div>

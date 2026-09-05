@@ -541,17 +541,23 @@ io.on('connection', (socket) => {
     console.log(`🎮 Room ${roomCode} created by Host "${cleanName}" on ${hostTeam === 'teamA' ? 'Team A' : 'Team B'} (timer: ${pickedTime}s)`);
   });
 
-  // 2. Join Room (Team Selection, Capacity Limit & Unique Name Gatekeeper)
-  socket.on('join_room', ({ roomCode, playerName, team = 'teamB' }) => {
+  // 2. Join Room (Team Selection, Capacity Limit & Unique Name Gatekeeper with Acknowledgment Loop)
+  socket.on('join_room', (data, callback) => {
+    const ack = typeof callback === 'function' ? callback : () => {};
+    const { roomCode, playerName, name, team = 'teamB' } = data || {};
     const code = (roomCode || '').toUpperCase().trim();
-    const cleanName = (playerName || '').trim();
+    const cleanName = (playerName || name || '').trim();
 
     if (!cleanName) {
-      socket.emit('join_error', { message: 'Please enter your name.' });
+      const msg = 'Please enter your name.';
+      socket.emit('join_error', { message: msg });
+      ack({ success: false, message: msg });
       return;
     }
     if (!rooms[code]) {
-      socket.emit('join_error', { message: 'Room not found. Please verify the code.' });
+      const msg = 'Room not found. Please verify the code.';
+      socket.emit('join_error', { message: msg });
+      ack({ success: false, message: msg });
       return;
     }
 
@@ -569,9 +575,9 @@ io.on('connection', (socket) => {
     );
 
     if (isDuplicate && !isSelfReconnection) {
-      socket.emit('join_error', {
-        message: 'Name already taken in this room. Please choose another.',
-      });
+      const msg = 'Name already taken in this room. Please choose another.';
+      socket.emit('join_error', { message: msg });
+      ack({ success: false, message: msg });
       return;
     }
 
@@ -580,9 +586,9 @@ io.on('connection', (socket) => {
     const targetTeamName = targetTeam === 'teamA' ? (room.teamNameA || 'Team A') : (room.teamNameB || 'Team B');
 
     if (room[targetTeam].length >= 4 && !isSelfReconnection) {
-      socket.emit('join_error', {
-        message: `${targetTeamName} is full (maximum 4 players per team).`,
-      });
+      const msg = `${targetTeamName} is full (maximum 4 players per team).`;
+      socket.emit('join_error', { message: msg });
+      ack({ success: false, message: msg });
       return;
     }
 
@@ -606,6 +612,8 @@ io.on('connection', (socket) => {
       socket.data.playerName = cleanName;
       socket.data.team = room.teamA.some((p) => p.sessionId === sessionId) ? 'teamA' : 'teamB';
       broadcastState(io, room, code);
+      const updatedRoomState = buildStatePayload(room, code, existingPlayer);
+      ack({ success: true, room: updatedRoomState });
       return;
     }
 
@@ -644,6 +652,9 @@ io.on('connection', (socket) => {
       teamB: room.teamB,
     });
     broadcastState(io, room, code);
+
+    const updatedRoomState = buildStatePayload(room, code, newPlayer);
+    ack({ success: true, room: updatedRoomState });
   });
 
   // 2b. Assign Team Leader (Host Override Event)
