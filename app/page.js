@@ -6,6 +6,7 @@ import Navbar from '../components/Navbar.jsx';
 import InteractiveHeroCard from '../components/InteractiveHeroCard.jsx';
 import CustomDropdown from '../components/CustomDropdown.jsx';
 import WaitingRoomUI from '../components/WaitingRoomUI.jsx';
+import DuelWaitingRoomUI from '../components/DuelWaitingRoomUI.jsx';
 import {
   playMechanicalClick,
   speakDialogue,
@@ -71,6 +72,7 @@ export default function HangmanDuelApp() {
   const [roomCode, setRoomCode] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [activeMode, setActiveMode] = useState('1v1'); // '1v1' | 'team' | 'pve'
+  const [roomMode, setRoomMode] = useState('1v1'); // '1v1' | 'team'
   const [lobbyError, setLobbyError] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
@@ -1546,6 +1548,10 @@ export default function HangmanDuelApp() {
     } else if (['setting', 'guessing', 'roundover', 'gameover'].includes(roomData.state)) {
       setRoomStatus('playing');
     }
+    if (roomData.mode) {
+      setRoomMode(roomData.mode);
+      setActiveMode(roomData.mode);
+    }
     setGameState(roomData.state);
     if (roomData.players) setPlayers(roomData.players);
     if (roomData.teamA) setTeamA(roomData.teamA);
@@ -1867,9 +1873,13 @@ export default function HangmanDuelApp() {
       showToast(`🏆 ${message || 'Opponent did not reconnect. You win by default!'}`, 5000);
     };
 
-    const onRoomCreated = ({ roomCode: code }) => {
+    const onRoomCreated = ({ roomCode: code, mode }) => {
       setIsConnecting(false);
       setRoomCode(code);
+      if (mode) {
+        setRoomMode(mode);
+        setActiveMode(mode);
+      }
       setScreen('waiting');
       setRoomStatus('waiting');
       setGameState('waiting');
@@ -2232,6 +2242,7 @@ export default function HangmanDuelApp() {
     }
 
     const chosenTeam = activeMode === 'team' ? selectedTeam : 'teamA';
+    setRoomMode(activeMode);
     setLobbyError('');
     setIsPveMode(false);
     setIsConnecting(true);
@@ -2248,7 +2259,7 @@ export default function HangmanDuelApp() {
 
       if (sock.connected) {
         showToast('Creating room… 🎮');
-        sock.emit('create_room', { playerName: name, wordPickTime, team: chosenTeam });
+        sock.emit('create_room', { playerName: name, wordPickTime, team: chosenTeam, mode: activeMode });
         setTimeout(() => { setIsConnecting(false); }, 15000);
         return;
       }
@@ -2272,7 +2283,7 @@ export default function HangmanDuelApp() {
         setConnectionStatus('connected');
         setMyPlayerId(sock.id);
         showToast('Connected! Creating room… 🎮', 2000);
-        sock.emit('create_room', { playerName: name, wordPickTime, team: chosenTeam });
+        sock.emit('create_room', { playerName: name, wordPickTime, team: chosenTeam, mode: activeMode });
       };
 
       sock.once('connect', onConnectEmit);
@@ -2298,7 +2309,7 @@ export default function HangmanDuelApp() {
           setConnectionStatus('connected');
           setMyPlayerId(p2pSocket.id);
           attachSocketListeners(p2pSocket);
-          p2pSocket.emit('create_room', { playerName: name, wordPickTime, team: chosenTeam });
+          p2pSocket.emit('create_room', { playerName: name, wordPickTime, team: chosenTeam, mode: activeMode });
         }
       }, 35000);
 
@@ -2313,7 +2324,7 @@ export default function HangmanDuelApp() {
     setConnectionStatus('connected');
     setMyPlayerId(p2pSocket.id);
     attachSocketListeners(p2pSocket);
-    p2pSocket.emit('create_room', { playerName: name, wordPickTime, team: chosenTeam });
+    p2pSocket.emit('create_room', { playerName: name, wordPickTime, team: chosenTeam, mode: activeMode });
     setTimeout(() => { setIsConnecting(false); }, 15000);
   };
 
@@ -2356,6 +2367,10 @@ export default function HangmanDuelApp() {
         setLobbyError('');
         const activeRoom = response.room;
         if (activeRoom) {
+          if (activeRoom.mode) {
+            setRoomMode(activeRoom.mode);
+            setActiveMode(activeRoom.mode);
+          }
           applyState(activeRoom);
         }
         setRoomCode(activeRoom?.roomCode || code);
@@ -4156,47 +4171,7 @@ export default function HangmanDuelApp() {
           <div className="absolute -bottom-32 left-1/3 w-[30rem] h-[30rem] bg-pink-500/20 rounded-full filter blur-3xl opacity-60 animate-blob [animation-delay:4s] mix-blend-screen" />
         </div>
 
-        <WaitingRoomUI
-          roomCode={roomCode}
-          teamA={teamA}
-          teamB={teamB}
-          teamNameA={teamNameA}
-          teamNameB={teamNameB}
-          leaderA={leaderA}
-          leaderB={leaderB}
-          currentSocketId={currentSocketId}
-          myPlayerId={myPlayerId}
-          myTeam={myTeam}
-          isHost={isHost}
-          onToggleReady={handleToggleReady}
-          onSetTeamName={handleSetTeamName}
-          onAssignLeader={handleAssignLeader}
-          onSwitchTeam={handleSwitchTeam}
-          onLeaveRoom={handleLeaveGame}
-          copyRoomCode={copyRoomCode}
-          copyInviteLink={copyInviteLink}
-          shareViaWhatsApp={shareViaWhatsApp}
-          liveTriviaFact={liveTriviaFact}
-          isFactFading={isFactFading}
-          suggestedNames={suggestedNames}
-          onRerollNames={shuffleSuggestedNames}
-        />
-      </div>
-
-      {/* ─── ACTIVE GAME ARENA ────────────────────────────────────────────── */}
-      <div
-        id="screen-game"
-        className={`screen ${screen === 'game' ? 'active' : ''} ${isScreenFlashing ? 'game-losing-flash' : ''}`}
-      >
-        {/* Dynamic Animated Aurora Background Blobs */}
-        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
-          <div className="absolute -top-40 -left-40 w-96 h-96 bg-cyan-500/20 rounded-full filter blur-3xl opacity-60 animate-blob mix-blend-screen" />
-          <div className="absolute top-1/3 -right-20 w-96 h-96 bg-purple-600/25 rounded-full filter blur-3xl opacity-65 animate-blob [animation-delay:2s] mix-blend-screen" />
-          <div className="absolute -bottom-32 left-1/3 w-[30rem] h-[30rem] bg-pink-500/15 rounded-full filter blur-3xl opacity-50 animate-blob [animation-delay:4s] mix-blend-screen" />
-        </div>
-
-        {/* Phase Gatekeeper: If in waiting phase in multiplayer, render WaitingRoomUI */}
-        {!isPveMode && roomStatus === 'waiting' ? (
+        {roomMode === 'team' ? (
           <WaitingRoomUI
             roomCode={roomCode}
             teamA={teamA}
@@ -4222,6 +4197,82 @@ export default function HangmanDuelApp() {
             suggestedNames={suggestedNames}
             onRerollNames={shuffleSuggestedNames}
           />
+        ) : (
+          <DuelWaitingRoomUI
+            roomCode={roomCode}
+            teamA={teamA}
+            teamB={teamB}
+            currentSocketId={currentSocketId}
+            myPlayerId={myPlayerId}
+            isHost={isHost}
+            onToggleReady={handleToggleReady}
+            onLeaveRoom={handleLeaveGame}
+            copyRoomCode={copyRoomCode}
+            copyInviteLink={copyInviteLink}
+            shareViaWhatsApp={shareViaWhatsApp}
+            liveTriviaFact={liveTriviaFact}
+            isFactFading={isFactFading}
+          />
+        )}
+      </div>
+
+      {/* ─── ACTIVE GAME ARENA ────────────────────────────────────────────── */}
+      <div
+        id="screen-game"
+        className={`screen ${screen === 'game' ? 'active' : ''} ${isScreenFlashing ? 'game-losing-flash' : ''}`}
+      >
+        {/* Dynamic Animated Aurora Background Blobs */}
+        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
+          <div className="absolute -top-40 -left-40 w-96 h-96 bg-cyan-500/20 rounded-full filter blur-3xl opacity-60 animate-blob mix-blend-screen" />
+          <div className="absolute top-1/3 -right-20 w-96 h-96 bg-purple-600/25 rounded-full filter blur-3xl opacity-65 animate-blob [animation-delay:2s] mix-blend-screen" />
+          <div className="absolute -bottom-32 left-1/3 w-[30rem] h-[30rem] bg-pink-500/15 rounded-full filter blur-3xl opacity-50 animate-blob [animation-delay:4s] mix-blend-screen" />
+        </div>
+
+        {/* Phase Gatekeeper: If in waiting phase in multiplayer, render WaitingRoomUI or DuelWaitingRoomUI */}
+        {!isPveMode && roomStatus === 'waiting' ? (
+          roomMode === 'team' ? (
+            <WaitingRoomUI
+              roomCode={roomCode}
+              teamA={teamA}
+              teamB={teamB}
+              teamNameA={teamNameA}
+              teamNameB={teamNameB}
+              leaderA={leaderA}
+              leaderB={leaderB}
+              currentSocketId={currentSocketId}
+              myPlayerId={myPlayerId}
+              myTeam={myTeam}
+              isHost={isHost}
+              onToggleReady={handleToggleReady}
+              onSetTeamName={handleSetTeamName}
+              onAssignLeader={handleAssignLeader}
+              onSwitchTeam={handleSwitchTeam}
+              onLeaveRoom={handleLeaveGame}
+              copyRoomCode={copyRoomCode}
+              copyInviteLink={copyInviteLink}
+              shareViaWhatsApp={shareViaWhatsApp}
+              liveTriviaFact={liveTriviaFact}
+              isFactFading={isFactFading}
+              suggestedNames={suggestedNames}
+              onRerollNames={shuffleSuggestedNames}
+            />
+          ) : (
+            <DuelWaitingRoomUI
+              roomCode={roomCode}
+              teamA={teamA}
+              teamB={teamB}
+              currentSocketId={currentSocketId}
+              myPlayerId={myPlayerId}
+              isHost={isHost}
+              onToggleReady={handleToggleReady}
+              onLeaveRoom={handleLeaveGame}
+              copyRoomCode={copyRoomCode}
+              copyInviteLink={copyInviteLink}
+              shareViaWhatsApp={shareViaWhatsApp}
+              liveTriviaFact={liveTriviaFact}
+              isFactFading={isFactFading}
+            />
+          )
         ) : (
           <>
             {/* Header Bar */}

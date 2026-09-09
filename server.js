@@ -234,6 +234,7 @@ function buildStatePayload(room, roomCode, forPlayer) {
   return {
     status: room.status || (room.state === 'lobby' || room.state === 'waiting' ? 'waiting' : 'playing'),
     state: room.state,
+    mode: room.mode || '1v1',
     teamNameA: room.teamNameA || 'Team A',
     teamNameB: room.teamNameB || 'Team B',
     leaderA: room.leaderA || null,
@@ -487,7 +488,7 @@ io.on('connection', (socket) => {
   }
 
   // 1. Create Room (Host creates room and selects Team A or Team B)
-  socket.on('create_room', ({ playerName, wordPickTime, team = 'teamA' }) => {
+  socket.on('create_room', ({ playerName, wordPickTime, team = 'teamA', mode = '1v1' }) => {
     const cleanName = (playerName || '').trim();
     if (!cleanName) {
       socket.emit('join_error', { message: 'Please enter your name.' });
@@ -505,6 +506,7 @@ io.on('connection', (socket) => {
       : DEFAULT_WORD_PICK_TIME;
 
     const hostTeam = team === 'teamB' ? 'teamB' : 'teamA';
+    const roomMode = mode === 'team' ? 'team' : '1v1';
     const hostPlayer = {
       sessionId,
       socketId: socket.id,
@@ -519,6 +521,7 @@ io.on('connection', (socket) => {
     rooms[roomCode] = {
       status: 'waiting',
       state: 'lobby',
+      mode: roomMode,
       teamA: hostTeam === 'teamA' ? [hostPlayer] : [],
       teamB: hostTeam === 'teamB' ? [hostPlayer] : [],
       teamNameA: 'Team A',
@@ -536,9 +539,9 @@ io.on('connection', (socket) => {
     socket.data.playerName = cleanName;
     socket.data.team = hostTeam;
 
-    socket.emit('room_created', { roomCode, team: hostTeam });
+    socket.emit('room_created', { roomCode, team: hostTeam, mode: roomMode });
     broadcastState(io, rooms[roomCode], roomCode);
-    console.log(`🎮 Room ${roomCode} created by Host "${cleanName}" on ${hostTeam === 'teamA' ? 'Team A' : 'Team B'} (timer: ${pickedTime}s)`);
+    console.log(`🎮 Room ${roomCode} (${roomMode} mode) created by Host "${cleanName}" on ${hostTeam === 'teamA' ? 'Team A' : 'Team B'} (timer: ${pickedTime}s)`);
   });
 
   // 2. Join Room (Team Selection, Capacity Limit & Unique Name Gatekeeper with Acknowledgment Loop)
@@ -581,15 +584,25 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // ── Team Capacity Limit (Max 4 players per team) ────────────────────────
-    const targetTeam = team === 'teamA' ? 'teamA' : 'teamB';
-    const targetTeamName = targetTeam === 'teamA' ? (room.teamNameA || 'Team A') : (room.teamNameB || 'Team B');
+    // ── Capacity Limit (1v1: max 2 players total | Team: max 4 players per team) ────
+    if (room.mode === '1v1') {
+      const totalPlayers = (room.teamA?.length || 0) + (room.teamB?.length || 0);
+      if (totalPlayers >= 2 && !isSelfReconnection) {
+        const msg = 'This 1v1 duel room is already full (2/2 players).';
+        socket.emit('join_error', { message: msg });
+        ack({ success: false, message: msg });
+        return;
+      }
+    } else {
+      const targetTeam = team === 'teamA' ? 'teamA' : 'teamB';
+      const targetTeamName = targetTeam === 'teamA' ? (room.teamNameA || 'Team A') : (room.teamNameB || 'Team B');
 
-    if (room[targetTeam].length >= 4 && !isSelfReconnection) {
-      const msg = `${targetTeamName} is full (maximum 4 players per team).`;
-      socket.emit('join_error', { message: msg });
-      ack({ success: false, message: msg });
-      return;
+      if (room[targetTeam].length >= 4 && !isSelfReconnection) {
+        const msg = `${targetTeamName} is full (maximum 4 players per team).`;
+        socket.emit('join_error', { message: msg });
+        ack({ success: false, message: msg });
+        return;
+      }
     }
 
     // Handle re-joining player with existing session
