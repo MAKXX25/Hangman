@@ -1,4 +1,4 @@
-/**
+  /**
  * client.js — Hangman Duel Frontend
  * Handles all Socket.io events and DOM interactions.
  */
