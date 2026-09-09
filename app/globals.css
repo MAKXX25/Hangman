@@ -473,6 +473,17 @@ input[type="text"]:focus {
   box-shadow: 0 6px 20px rgba(244, 63, 94, 0.25);
 }
 
+/* Nightmare Option — volcanic fire palette, distinct from Hard */
+.diff-nightmare { border-color: rgba(251, 146, 60, 0.35); background: rgba(120, 20, 0, 0.15); }
+.diff-nightmare .diff-tag { color: #fb923c; }
+.diff-nightmare .diff-length { background: rgba(251, 146, 60, 0.18); color: #fdba74; border: 1px solid rgba(251, 146, 60, 0.35); }
+.diff-nightmare:hover {
+  background: rgba(251, 146, 60, 0.15);
+  border-color: #fb923c;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 28px rgba(251, 90, 10, 0.4);
+}
+
 .modal-actions {
   display: flex;
   justify-content: center;

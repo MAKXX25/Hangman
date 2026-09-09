@@ -19,6 +19,7 @@ import { getSocket, getSessionId, isBackendConfigured, getBackendUrl } from '../
 import { ServerlessSocket } from '../lib/serverlessSocket.js';
 import { Lightbulb, Loader2, Crown, Users, Shield } from 'lucide-react';
 import { getRandomWord, isValidWord, getRandomSuggestions, getWordMeaning, validateAndFetchClue } from '../lib/dictionary.js';
+import { DIFFICULTY_CONFIG, getDifficultyConfig } from '../lib/difficultyConfig.js';
 import { TEAM_NAMES } from '../utils/teamNames.js';
 import {
   INITIAL_IDLE_PHRASES,
@@ -2482,6 +2483,9 @@ export default function HangmanDuelApp() {
 
   // ── 3. Start PvE Single-Player vs Computer (Authentic Difficulty + Anti-Repetition) ─
   const startPveGame = (difficulty = 'medium', roundNum = 1, scoreSnapshot = null, customMaxRounds = null) => {
+    // ── Step 1: Resolve config from Single Source of Truth ──────────────────
+    const currentConfig = getDifficultyConfig(difficulty);
+
     const name = playerName.trim() || 'You';
     const targetMaxRounds = customMaxRounds || pveMaxRounds;
     if (customMaxRounds) setPveMaxRounds(customMaxRounds);
@@ -2508,10 +2512,19 @@ export default function HangmanDuelApp() {
 
     const currentScore = scoreSnapshot || (roundNum === 1 ? { human: 0, bot: 0 } : pveScore);
 
-    // Pick authentic word using Scrabble letter rarity & shuffle bag
+    // ── Step 2: Pick word from the correct pool ──────────────────────────────
+    // getRandomWord already handles 'nightmare' pool via NIGHTMARE_WORDS
     const wordObj = getRandomWord(difficulty, usedWordsRef.current);
     const chosenWord = (typeof wordObj === 'string' ? wordObj : wordObj.word).toUpperCase();
-    const meaning = (typeof wordObj === 'object' && wordObj.meaning) ? wordObj.meaning : '';
+    const rawMeaning = (typeof wordObj === 'object' && wordObj.meaning) ? wordObj.meaning : '';
+
+    // ── Step 3: Clue — only set when config.hasClues is strictly true ────────
+    let meaning = '';
+    if (currentConfig.hasClues) {
+      // Try the word object's own meaning first (0ms, from curated dictionary)
+      meaning = rawMeaning || getWordMeaning(chosenWord) || '';
+    }
+    // If hasClues is false (hard / nightmare), meaning stays '' — clue box will not render
 
     // Add selected word to shuffle bag tracker
     usedWordsRef.current.push(chosenWord);
@@ -2524,6 +2537,7 @@ export default function HangmanDuelApp() {
     setNewlyGuessedLetters([]);
     setNewlyWrongLetters([]);
 
+    // ── Step 4: Build room state — lives from config.maxLives exclusively ────
     const pveRoom = {
       roomCode: `SOLO-${difficulty.toUpperCase()}`,
       state: 'guessing',
@@ -2534,11 +2548,12 @@ export default function HangmanDuelApp() {
       game: {
         word: chosenWord,
         meaning: meaning,
+        difficulty: difficulty,
         hiddenWord: getHiddenWord(chosenWord, []),
         guessedLetters: [],
         wrongGuesses: [],
-        livesLeft: MAX_LIVES,
-        maxLives: MAX_LIVES,
+        livesLeft: currentConfig.maxLives,  // ← strictly from config, not MAX_LIVES
+        maxLives: currentConfig.maxLives,   // ← strictly from config, not MAX_LIVES
         wordSetterId: 'bot',
         guesserId: 'human',
         setterName: 'Computer 🤖',
@@ -3078,7 +3093,11 @@ export default function HangmanDuelApp() {
 
   const activeHint = game?.hint || game?.meaning || wordMeaning || (cleanWord ? getWordMeaning(cleanWord) : '') || '';
   const clue = activeHint;
-  const isHardDifficulty = (isPveMode && pveDifficulty === 'hard') || (game?.difficulty === 'hard');
+
+  // ── Clue/Hint visibility guard ───────────────────────────────────────────
+  // Derived strictly from DIFFICULTY_CONFIG — covers hard AND nightmare
+  const activeDifficultyConfig = getDifficultyConfig(isPveMode ? pveDifficulty : (game?.difficulty || 'medium'));
+  const isNoClueMode = !activeDifficultyConfig.hasClues; // true for hard & nightmare
 
   return (
     <>
@@ -4693,10 +4712,10 @@ export default function HangmanDuelApp() {
                     <div className="font-mono text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-widest text-slate-400">
                       SECRET WORD ({hiddenWordChars.length} LETTERS)
                     </div>
-                    {isHardDifficulty ? (
+                    {isNoClueMode ? (
                       <span className="px-2 py-0.5 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-300 text-[9px] sm:text-[10px] font-mono font-bold flex items-center gap-1 shadow-sm">
                         <span>🔒</span>
-                        <span>NO HINTS IN HARD MODE</span>
+                        <span>NO HINTS IN {activeDifficultyConfig.id.toUpperCase()} MODE</span>
                       </span>
                     ) : activeHint ? (
                       <button
@@ -4741,8 +4760,8 @@ export default function HangmanDuelApp() {
                     })}
                   </div>
 
-                  {/* Sleek Glassmorphism Clue Banner right below SECRET WORD boxes */}
-                  {!isHardDifficulty && clue && showHint && (
+                  {/* Clue Banner: only rendered when config.hasClues is strictly true */}
+                  {activeDifficultyConfig.hasClues && clue && showHint && (
                     <div className="w-full bg-indigo-950/40 border border-indigo-500/30 rounded-lg p-4 text-center mt-6 backdrop-blur-md flex items-center justify-center gap-2.5 shadow-lg animate-fadeIn">
                       <Lightbulb className="w-5 h-5 text-amber-400 shrink-0" />
                       <p className="text-slate-300 italic text-xs sm:text-sm md:text-base leading-relaxed">
