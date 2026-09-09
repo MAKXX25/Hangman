@@ -39,8 +39,10 @@ export default function HangmanCanvas({
     canvas.width = width;
     canvas.height = height;
 
-    const mistakes = Math.min(Math.max(0, maxLives - livesLeft), 10);
-    const isDead = livesLeft <= 0;
+    const isNightmare = maxLives === 4;
+    const baseMistakes = isNightmare ? 6 : 0;
+    const mistakes = Math.min(Math.max(0, baseMistakes + (maxLives - livesLeft)), 10);
+    const isDead = livesLeft <= 0 || mistakes >= 10;
 
     // If death animation triggered
     if (isRoundOver && roundResult === 'setter_wins') {

@@ -2562,9 +2562,17 @@ export default function HangmanDuelApp() {
       }
     };
 
-    setCurrentDialogue('');
-    currentDialogueRef.current = '';
-    setStickmanMood('neutral');
+    if (difficulty === 'nightmare') {
+      const initialNightmarePhrase = 'I am barely hanging on! Only 4 chances left! 😱';
+      setCurrentDialogue(initialNightmarePhrase);
+      currentDialogueRef.current = initialNightmarePhrase;
+      setStickmanMood('panic');
+      stickmanMoodRef.current = 'panic';
+    } else {
+      setCurrentDialogue('');
+      currentDialogueRef.current = '';
+      setStickmanMood('neutral');
+    }
 
     setRoomCode(pveRoom.roomCode);
     setPlayers(pveRoom.players);
@@ -2992,10 +3000,19 @@ export default function HangmanDuelApp() {
 
     const loop = (now) => {
       const elapsed = now - startTime;
+      const isNightmare =
+        (isPveMode && pveDifficulty === 'nightmare') ||
+        game?.difficulty === 'nightmare' ||
+        game?.maxLives === 4;
+
       const wrongCount = Array.isArray(game?.wrongGuesses)
         ? game.wrongGuesses.length
         : Math.max(0, (game?.maxLives || MAX_LIVES) - (livesLeft ?? MAX_LIVES));
-      const mistakes = Math.min(Math.max(0, wrongCount), 10);
+
+      // In Nightmare mode, the stickman starts with 6 attempts already drawn (head, torso, both arms, both legs)
+      // Exactly reflecting that 6 attempts have passed and only 4 lives remain out of 10.
+      const baseMistakes = isNightmare ? 6 : 0;
+      const mistakes = Math.min(Math.max(0, baseMistakes + wrongCount), 10);
       const isDead = (livesLeft !== undefined && livesLeft <= 0) || mistakes >= 10;
 
       // Only draw continuous idle if not currently running the special death/escape cutscene
@@ -3016,7 +3033,7 @@ export default function HangmanDuelApp() {
     return () => {
       if (animId) cancelAnimationFrame(animId);
     };
-  }, [screen, gameState, livesLeft, stickmanMood, game?.maxLives, drawFrame]);
+  }, [screen, gameState, livesLeft, stickmanMood, game?.maxLives, game?.difficulty, isPveMode, pveDifficulty, drawFrame]);
 
   // Guessed set & collections
   const guessedSet = new Set((game?.guessedLetters || []).map(l => l.toUpperCase()));
@@ -4693,8 +4710,8 @@ export default function HangmanDuelApp() {
                     <canvas id="hangman-canvas" ref={hangmanCanvasRef} width={330} height={360} className="w-full h-full object-contain" />
                   </div>
 
-                  {/* Stickman Live Dialogue Speech Pill - Only show after losing first life (mistakes >= 1) */}
-                  {wrongGuesses.length >= 1 && currentDialogue && (
+                  {/* Stickman Live Dialogue Speech Pill - Show after losing first life or immediately in nightmare mode */}
+                  {(wrongGuesses.length >= 1 || (isPveMode && pveDifficulty === 'nightmare') || game?.difficulty === 'nightmare' || game?.maxLives === 4) && currentDialogue && (
                     <div className={`w-full max-w-[260px] sm:max-w-[320px] px-2.5 py-1 rounded-lg sm:rounded-xl border backdrop-blur-md text-center transition-all duration-300 shadow-sm ${
                       stickmanMood === 'happy'
                         ? 'bg-emerald-950/80 border-emerald-500/40 text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.2)]'
@@ -4890,8 +4907,8 @@ export default function HangmanDuelApp() {
                     <canvas id="hangman-canvas-watch" ref={hangmanWatchCanvasRef} width={330} height={360} className="w-full h-full object-contain" />
                   </div>
 
-                  {/* Stickman Live Dialogue Speech Pill - Only show after losing first life (mistakes >= 1) */}
-                  {wrongGuesses.length >= 1 && currentDialogue && (
+                  {/* Stickman Live Dialogue Speech Pill - Show after losing first life or immediately in nightmare mode */}
+                  {(wrongGuesses.length >= 1 || (isPveMode && pveDifficulty === 'nightmare') || game?.difficulty === 'nightmare' || game?.maxLives === 4) && currentDialogue && (
                     <div className={`w-full max-w-[260px] sm:max-w-[320px] px-2.5 py-1 rounded-lg sm:rounded-xl border backdrop-blur-md text-center transition-all duration-300 shadow-sm ${
                       stickmanMood === 'happy'
                         ? 'bg-emerald-950/80 border-emerald-500/40 text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.2)]'

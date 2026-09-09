@@ -71,7 +71,10 @@ export default function Game({
     ctx.lineJoin = 'round';
 
     // Calculate mistakes (how many parts to draw)
-    const mistakes = Math.max(0, maxLives - lives);
+    // In Nightmare mode (maxLives === 4), the stickman starts with 6 parts already drawn
+    const isNightmare = maxLives === 4;
+    const baseMistakes = isNightmare ? 6 : 0;
+    const mistakes = Math.min(Math.max(0, baseMistakes + (maxLives - lives)), 10);
 
     // Always draw base gallows structure
     ctx.beginPath();
