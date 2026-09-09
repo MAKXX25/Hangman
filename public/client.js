@@ -185,6 +185,24 @@ btnJoin.addEventListener('click', () => {
 inputName.addEventListener('keydown', e => { if (e.key === 'Enter') btnCreate.click(); });
 inputRoomCode.addEventListener('keydown', e => { if (e.key === 'Enter') btnJoin.click(); });
 
+// Auto-join from invite link in public/client.js
+try {
+  if (typeof window !== 'undefined') {
+    const urlParams = new URLSearchParams(window.location.search);
+    const joinParam = urlParams.get('join') || urlParams.get('room');
+    if (joinParam && joinParam.trim().length >= 4) {
+      const cleanJoin = joinParam.trim().toUpperCase().slice(0, 6);
+      if (inputRoomCode) inputRoomCode.value = cleanJoin;
+      if (inputName && !inputName.value.trim()) {
+        inputName.value = 'Player ' + Math.floor(100 + Math.random() * 900);
+      }
+      setTimeout(() => {
+        if (btnJoin) btnJoin.click();
+      }, 300);
+    }
+  }
+} catch (e) {}
+
 // Copy room code
 btnCopyCode.addEventListener('click', () => {
   if (!myRoomCode) return;

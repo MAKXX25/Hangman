@@ -438,40 +438,14 @@ export default function HangmanDuelApp() {
       if (savedName && savedName.trim()) {
         setPlayerName(savedName.trim());
       } else {
-        setPlayerName('Player 1');
+        const defaultName = `Player ${Math.floor(100 + Math.random() * 900)}`;
+        setPlayerName(defaultName);
+        try { localStorage.setItem('hangman_username', defaultName); } catch {}
       }
     } catch {
       setPlayerName('Player 1');
     }
   }, []);
-
-  // ── Auto-Parse ?join=CODE or ?room=CODE invite links ──────────────────────
-  useEffect(() => {
-    try {
-      if (typeof window !== 'undefined') {
-        const urlParams = new URLSearchParams(window.location.search);
-        const codeParam = urlParams.get('join') || urlParams.get('room') || window.location.hash.replace('#room=', '').replace('#', '');
-        if (codeParam && codeParam.trim()) {
-          const cleanCode = codeParam.trim().toUpperCase().slice(0, 6);
-          setJoinCode(cleanCode);
-          showToast(`🎮 Room invite code "${cleanCode}" loaded! Enter your name to join.`, 4000);
-          setTimeout(() => {
-            const inputEl = document.getElementById('input-name');
-            if (inputEl) {
-              try {
-                inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                if (window.innerWidth >= 768) {
-                  inputEl.focus();
-                }
-              } catch {}
-            }
-          }, 400);
-        }
-      }
-    } catch (e) {
-      console.warn('Invite link parsing error:', e);
-    }
-  }, [showToast]);
 
   const handlePlayerNameChange = (val) => {
     setPlayerName(val);
@@ -2344,9 +2318,11 @@ export default function HangmanDuelApp() {
   };
 
   // ── 2. Join Room (Authoritative Socket.io with Auto-Connect Queue & Acknowledgment Loop) ───
-  const handleJoinRoom = () => {
-    const name = playerName.trim();
-    const code = (joinCode || '').replace(/\s+/g, '').trim().toUpperCase();
+  const handleJoinRoom = useCallback((overrideCode = null, overrideName = null) => {
+    const rawName = overrideName !== null ? overrideName : playerName;
+    const name = (rawName || '').trim();
+    const rawCode = overrideCode !== null ? overrideCode : joinCode;
+    const code = (rawCode || '').replace(/\s+/g, '').trim().toUpperCase();
     if (!name) {
       setLobbyError('Please enter your name first.');
       showToast('Please enter your name first! ✏️');
@@ -2363,6 +2339,7 @@ export default function HangmanDuelApp() {
     setIsPveMode(false);
     setIsConnecting(true);
     setIsJoining(true);
+    setRoomCode(code);
 
     // Strict Socket.io Acknowledgment Callback Loop
     const handleJoinResponse = (response) => {
@@ -2385,9 +2362,20 @@ export default function HangmanDuelApp() {
         setGameState('waiting');
         setRoomStatus('waiting');
         setScreen('waiting');
-        showToast('Joined team room! 🎮', 3000);
+        showToast(`Joined room ${activeRoom?.roomCode || code}! 🎮`, 3000);
       } else {
         const errorMsg = response.message || 'Room is full or unavailable.';
+        // If the error was duplicate name, automatically retry once with an appended number!
+        if (errorMsg.toLowerCase().includes('already taken') && !name.match(/\d{2,}$/)) {
+          const newName = `${name} ${Math.floor(10 + Math.random() * 90)}`;
+          setPlayerName(newName);
+          try { localStorage.setItem('hangman_username', newName); } catch {}
+          showToast(`Name taken, joining as "${newName}"… 🔄`, 2000);
+          setTimeout(() => {
+            handleJoinRoom(code, newName);
+          }, 300);
+          return;
+        }
         setLobbyError(errorMsg);
         showToast(`⚠️ ${errorMsg}`, 4000);
       }
@@ -2479,7 +2467,64 @@ export default function HangmanDuelApp() {
       setIsConnecting(false);
       setIsJoining(false);
     }, 15000);
-  };
+  }, [playerName, joinCode, attachSocketListeners, applyState, showToast]);
+
+  // ── Auto-Join Room directly from ?join=CODE or ?room=CODE invite links ─────
+  const autoJoinAttemptedRef = useRef(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (autoJoinAttemptedRef.current) return;
+
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const codeParam =
+        urlParams.get('join') ||
+        urlParams.get('room') ||
+        window.location.hash.replace('#room=', '').replace('#', '');
+
+      if (codeParam && codeParam.trim()) {
+        const cleanCode = codeParam.trim().toUpperCase().slice(0, 6);
+        if (cleanCode.length >= 4) {
+          autoJoinAttemptedRef.current = true;
+
+          // Retrieve or generate guest username
+          let resolvedName = '';
+          try {
+            const saved = localStorage.getItem('hangman_username');
+            if (saved && saved.trim()) {
+              resolvedName = saved.trim();
+            }
+          } catch {}
+
+          if (!resolvedName) {
+            resolvedName = `Player ${Math.floor(100 + Math.random() * 900)}`;
+            try {
+              localStorage.setItem('hangman_username', resolvedName);
+            } catch {}
+          }
+
+          setPlayerName(resolvedName);
+          setJoinCode(cleanCode);
+          setRoomCode(cleanCode);
+
+          // Clean URL params to keep browser address bar clean and avoid re-trigger on reload
+          try {
+            window.history.replaceState({}, document.title, window.location.pathname);
+          } catch {}
+
+          showToast(`🎮 Joining room ${cleanCode}… 🚀`, 2500);
+
+          // Directly join room immediately
+          setTimeout(() => {
+            handleJoinRoom(cleanCode, resolvedName);
+          }, 120);
+        }
+      }
+    } catch (e) {
+      console.warn('Auto-join link parsing error:', e);
+    }
+  }, [handleJoinRoom, showToast]);
 
   // ── 3. Start PvE Single-Player vs Computer (Authentic Difficulty + Anti-Repetition) ─
   const startPveGame = (difficulty = 'medium', roundNum = 1, scoreSnapshot = null, customMaxRounds = null) => {
@@ -2801,6 +2846,11 @@ export default function HangmanDuelApp() {
     setP2Scored(false);
     prevP1ScoreRef.current = null;
     prevP2ScoreRef.current = null;
+    try {
+      if (typeof window !== 'undefined') {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    } catch {}
   };
 
   // Refresh Suggestions Helper
@@ -3209,6 +3259,19 @@ export default function HangmanDuelApp() {
                   </div>
 
                   <div className="lobby-form flex flex-col">
+                    {/* Joining Room Banner (Automatic via Link) */}
+                    {isJoining && (
+                      <div className="mb-4 p-3.5 rounded-2xl bg-gradient-to-r from-purple-950/80 via-indigo-950/70 to-slate-950/90 border border-purple-500/50 text-white flex items-center gap-3 shadow-lg shadow-purple-950/40 animate-pulse">
+                        <Loader2 className="w-5 h-5 text-purple-400 animate-spin flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs sm:text-sm font-semibold text-purple-200">
+                            Connecting you to room <span className="font-mono text-cyan-300 font-bold tracking-wider">{roomCode || joinCode}</span>…
+                          </p>
+                          <p className="text-[11px] text-slate-300">Taking you directly to the match</p>
+                        </div>
+                      </div>
+                    )}
+
                     {/* 1. Global Input: Your Name (Always Visible) */}
                     <div className="input-group flex flex-col gap-1.5 mb-4">
                       <label htmlFor="input-name" className="text-xs font-bold uppercase tracking-wider text-slate-300">
