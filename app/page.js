@@ -3482,12 +3482,10 @@ export default function HangmanDuelApp() {
                             id="select-pve-difficulty"
                             value={pveDifficulty}
                             onChange={(val) => setPveDifficulty(val)}
-                            options={[
-                              { value: 'easy', label: '🟢 Easy (Common Words & Clues)' },
-                              { value: 'medium', label: '🟡 Medium (Standard Vocabulary)' },
-                              { value: 'hard', label: '🔴 Hard (Complex & Rare Words)' },
-                              { value: 'nightmare', label: '💀 Nightmare (4 Lives, No Clues)' },
-                            ]}
+                            options={Object.values(DIFFICULTY_CONFIG).map((config) => ({
+                              value: config.id,
+                              label: config.label,
+                            }))}
                           />
                         </div>
 
@@ -5257,9 +5255,21 @@ export default function HangmanDuelApp() {
               >
                 <div className="diff-header">
                   <span className="diff-tag">💀 Hard</span>
-                  <span className="diff-length">Rare Letters • 🔒 No Hints</span>
+                  <span className="diff-length">10 Lives • Complex Words • 🔒 No Clues</span>
                 </div>
-                <p className="diff-desc">Obscure, low-vowel & high-penalty words (e.g. RHYTHM, JINX, OXYGEN). 🚫 No clues or hints allowed!</p>
+                <p className="diff-desc">Longer, complex vocabulary with standard English patterns. 10 lives given, but clues and hints are strictly disabled!</p>
+              </button>
+
+              <button
+                className="diff-btn diff-nightmare"
+                type="button"
+                onClick={() => startPveGame('nightmare', 1, null, pveMaxRounds)}
+              >
+                <div className="diff-header">
+                  <span className="diff-tag">🔥 Nightmare</span>
+                  <span className="diff-length">4 Lives • Lethal Words • 🔒 No Clues</span>
+                </div>
+                <p className="diff-desc">Notoriously lethal words lacking standard vowels or packed with rare letters (e.g. SYZYGY, RHYTHM, SPHINX). Only 4 lives & zero clues!</p>
               </button>
             </div>
 

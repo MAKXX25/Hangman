@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { DIFFICULTY_CONFIG } from '../lib/difficultyConfig.js';
 
 /**
  * Team vs Team Lobby Component
@@ -224,14 +225,14 @@ export default function Lobby({
             <div className="pve-difficulty-selector">
               <span className="pve-label">BOT DIFFICULTY:</span>
               <div className="difficulty-pills">
-                {['easy', 'medium', 'hard'].map((diff) => (
+                {Object.values(DIFFICULTY_CONFIG).map((cfg) => (
                   <button
-                    key={diff}
+                    key={cfg.id}
                     type="button"
-                    className={`diff-pill ${pveDifficulty === diff ? 'active' : ''}`}
-                    onClick={() => setPveDifficulty(diff)}
+                    className={`diff-pill ${pveDifficulty === cfg.id ? 'active' : ''}`}
+                    onClick={() => setPveDifficulty(cfg.id)}
                   >
-                    {diff.toUpperCase()}
+                    {cfg.id.toUpperCase()}
                   </button>
                 ))}
               </div>
