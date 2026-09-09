@@ -3322,8 +3322,9 @@ export default function HangmanDuelApp() {
 
                         <div className="divider"><span>or join with code</span></div>
 
-                        {/* Team Selection for Join (1v1) */}
-                        <div className="flex flex-col gap-1.5">
+                        {/* Team Selection for Join (1v1) — only shown when typing a code */}
+                        {joinCode.length > 0 && (
+                        <div className="flex flex-col gap-1.5 animate-fadeIn">
                           <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Choose Team to Join</label>
                           <div className="grid grid-cols-2 gap-2">
                             <button
@@ -3360,6 +3361,7 @@ export default function HangmanDuelApp() {
                             </button>
                           </div>
                         </div>
+                        )}
 
                         {/* Standard 1v1 Join Code Row */}
                         <div className="join-row flex gap-2">
