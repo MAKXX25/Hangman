@@ -1963,14 +1963,32 @@ export default function HangmanDuelApp() {
       if (roomState?.status === 'playing' || (roomState?.state && !['lobby', 'waiting'].includes(roomState.state))) {
         setScreen('game');
         setRoomStatus('playing');
-      } else if (roomState?.status === 'waiting' || roomState?.state === 'lobby') {
+        setIsConnecting(false);
+        setIsJoining(false);
+      } else if (roomState?.status === 'waiting' || roomState?.state === 'lobby' || roomState?.state === 'waiting') {
         setRoomStatus('waiting');
+        const myId = socketRef.current?.id || getSessionId();
+        const allP = [...(roomState.teamA || []), ...(roomState.teamB || []), ...(roomState.players || [])];
+        const inRoom = allP.some((p) => p.id === myId || p.sessionId === myId || p.socketId === myId || p.isYou);
+        if (inRoom) {
+          setScreen('waiting');
+          setIsConnecting(false);
+          setIsJoining(false);
+        }
       }
       applyState(roomState);
     };
 
     const onUpdateRoom = (roomData) => {
       if (roomData) {
+        const myId = socketRef.current?.id || getSessionId();
+        const allP = [...(roomData.teamA || []), ...(roomData.teamB || []), ...(roomData.players || [])];
+        const inRoom = allP.some((p) => p.id === myId || p.sessionId === myId || p.socketId === myId || p.isYou);
+        if (inRoom) {
+          setScreen('waiting');
+          setIsConnecting(false);
+          setIsJoining(false);
+        }
         applyState(roomData);
       }
     };
@@ -3369,6 +3387,18 @@ export default function HangmanDuelApp() {
                           </p>
                           <p className="text-[11px] text-slate-300">Taking you directly to the match</p>
                         </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsJoining(false);
+                            setIsConnecting(false);
+                          }}
+                          className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+                          title="Cancel connecting"
+                          aria-label="Cancel"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
                       </div>
                     )}
 

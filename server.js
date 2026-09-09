@@ -584,7 +584,10 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // ── Capacity Limit (1v1: max 2 players total | Team: max 4 players per team) ────
+    // ── Capacity Limit & Target Team Resolution ─────────────────────────────
+    let targetTeam;
+    let targetTeamName;
+
     if (room.mode === '1v1') {
       const totalPlayers = (room.teamA?.length || 0) + (room.teamB?.length || 0);
       if (totalPlayers >= 2 && !isSelfReconnection) {
@@ -593,9 +596,12 @@ io.on('connection', (socket) => {
         ack({ success: false, message: msg });
         return;
       }
+      // For 1v1 mode: seat challenger on the opposing team from host
+      targetTeam = (room.teamA?.length || 0) === 0 ? 'teamA' : 'teamB';
+      targetTeamName = targetTeam === 'teamA' ? (room.teamNameA || 'Team A') : (room.teamNameB || 'Team B');
     } else {
-      const targetTeam = team === 'teamA' ? 'teamA' : 'teamB';
-      const targetTeamName = targetTeam === 'teamA' ? (room.teamNameA || 'Team A') : (room.teamNameB || 'Team B');
+      targetTeam = team === 'teamA' ? 'teamA' : 'teamB';
+      targetTeamName = targetTeam === 'teamA' ? (room.teamNameA || 'Team A') : (room.teamNameB || 'Team B');
 
       if (room[targetTeam].length >= 4 && !isSelfReconnection) {
         const msg = `${targetTeamName} is full (maximum 4 players per team).`;
