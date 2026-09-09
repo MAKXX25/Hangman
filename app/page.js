@@ -4067,8 +4067,25 @@ export default function HangmanDuelApp() {
 
       </div>
 
-      {/* ─── WAITING SCREEN ───────────────────────────────────────────────── */}
-      <div id="screen-waiting" className={`screen ${screen === 'waiting' ? 'active' : ''}`}>
+      <div
+        id="screen-waiting"
+        className={`screen ${screen === 'waiting' ? 'active' : ''} overflow-y-auto overflow-x-hidden`}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          width: '100%',
+          height: '100dvh',
+          maxHeight: '100dvh',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          display: screen === 'waiting' ? 'flex' : 'none',
+          flexDirection: 'column',
+          justifyContent: 'flex-start',
+          alignItems: 'center',
+          padding: '1.5rem 1rem 4rem',
+          WebkitOverflowScrolling: 'touch',
+        }}
+      >
         {/* Dynamic Animated Aurora Background Blobs */}
         <div className="fixed inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
           <div className="absolute -top-40 -left-40 w-96 h-96 bg-cyan-500/25 rounded-full filter blur-3xl opacity-70 animate-blob mix-blend-screen" />

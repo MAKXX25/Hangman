@@ -98,6 +98,18 @@ export default function WaitingRoomUI({
           >
             <MessageCircle className="w-4 h-4" />
           </button>
+
+          {typeof onLeaveRoom === 'function' && (
+            <button
+              type="button"
+              onClick={onLeaveRoom}
+              title="Leave Room"
+              className="p-2.5 px-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Leave</span>
+            </button>
+          )}
         </div>
       </div>
 
