@@ -18,7 +18,7 @@ import {
 } from '../lib/audio.js';
 import { getSocket, getSessionId, isBackendConfigured, getBackendUrl } from '../lib/socket.js';
 import { ServerlessSocket } from '../lib/serverlessSocket.js';
-import { Lightbulb, Loader2, Crown, Users, Shield } from 'lucide-react';
+import { Lightbulb, Loader2, Crown, Users, Shield, User, ArrowRight, X } from 'lucide-react';
 import { getRandomWord, isValidWord, getRandomSuggestions, getWordMeaning, validateAndFetchClue } from '../lib/dictionary.js';
 import { DIFFICULTY_CONFIG, getDifficultyConfig } from '../lib/difficultyConfig.js';
 import { TEAM_NAMES } from '../utils/teamNames.js';
@@ -79,6 +79,13 @@ export default function HangmanDuelApp() {
   const [connectionStatus, setConnectionStatus] = useState('connecting'); // 'connecting' | 'waking_up' | 'connected' | 'missing_env' | 'error'
   const [toastMsg, setToastMsg] = useState('');
   const [toastKey, setToastKey] = useState(0);
+
+  // Set Username Prompt Modal State (when joining a room without a username)
+  const [showUsernameModal, setShowUsernameModal] = useState(false);
+  const [modalUsernameInput, setModalUsernameInput] = useState('');
+  const [modalError, setModalError] = useState('');
+  const [pendingJoinCode, setPendingJoinCode] = useState('');
+  const [pendingAction, setPendingAction] = useState(null); // 'join' | 'create' | null
 
   // Host Advanced Settings
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -437,15 +444,16 @@ export default function HangmanDuelApp() {
   useEffect(() => {
     try {
       const savedName = localStorage.getItem('hangman_username');
-      if (savedName && savedName.trim()) {
+      const isCustomSet = localStorage.getItem('hangman_username_set') === 'true';
+      if (savedName && savedName.trim() && (isCustomSet || !/^Player\s*\d{2,4}$/i.test(savedName.trim()))) {
         setPlayerName(savedName.trim());
       } else {
-        const defaultName = `Player ${Math.floor(100 + Math.random() * 900)}`;
-        setPlayerName(defaultName);
-        try { localStorage.setItem('hangman_username', defaultName); } catch {}
+        // Do NOT silently auto-assign a synthetic 'Player XXX' into localStorage.
+        // Leave empty so visitors who haven't set a username are prompted when joining.
+        setPlayerName('');
       }
     } catch {
-      setPlayerName('Player 1');
+      setPlayerName('');
     }
   }, []);
 
@@ -454,8 +462,65 @@ export default function HangmanDuelApp() {
     if (lobbyError) setLobbyError('');
     try {
       localStorage.setItem('hangman_username', val);
+      if (val.trim()) {
+        localStorage.setItem('hangman_username_set', 'true');
+      } else {
+        localStorage.removeItem('hangman_username_set');
+      }
     } catch (err) {
       console.warn('Could not save username to localStorage:', err);
+    }
+  };
+
+  // ── Handle Confirm Username (Prompt Modal Submission) ──────────────────────
+  const handleConfirmUsername = (e) => {
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
+    const trimmed = modalUsernameInput.trim();
+    if (!trimmed) {
+      setModalError('Please enter a username to continue.');
+      return;
+    }
+    if (trimmed.length < 2) {
+      setModalError('Username must be at least 2 characters.');
+      return;
+    }
+    if (trimmed.length > 20) {
+      setModalError('Username must be 20 characters or less.');
+      return;
+    }
+
+    playMechanicalClick();
+
+    try {
+      localStorage.setItem('hangman_username', trimmed);
+      localStorage.setItem('hangman_username_set', 'true');
+    } catch (err) {
+      console.warn('Could not save username to localStorage:', err);
+    }
+
+    setPlayerName(trimmed);
+    setShowUsernameModal(false);
+    setModalError('');
+
+    const targetCode = pendingJoinCode || joinCode || roomCode;
+    const action = pendingAction;
+    setPendingAction(null);
+    setPendingJoinCode('');
+
+    try {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } catch {}
+
+    if (action === 'create') {
+      showToast(`Welcome, ${trimmed}! Creating room… 🎮`, 2000);
+      setTimeout(() => {
+        handleCreateRoom(trimmed);
+      }, 100);
+    } else if (targetCode && targetCode.length >= 4) {
+      showToast(`Welcome, ${trimmed}! Joining room ${targetCode}… 🚀`, 2500);
+      setTimeout(() => {
+        handleJoinRoom(targetCode, trimmed);
+      }, 100);
     }
   };
 
@@ -2233,11 +2298,15 @@ export default function HangmanDuelApp() {
   }, [gameState, game?.word, game?.livesLeft, pveRound]);
 
   // ── 1. Create Room (Authoritative Socket.io with Auto-Connect Queue & Timeout) ─
-  const handleCreateRoom = () => {
-    const name = playerName.trim();
+  const handleCreateRoom = (overrideName = null) => {
+    const rawName = overrideName !== null ? overrideName : playerName;
+    const name = (rawName || '').trim();
     if (!name) {
-      setLobbyError('Please enter your name first.');
-      showToast('Please enter your name first! ✏️');
+      setPendingAction('create');
+      setPendingJoinCode('');
+      setModalUsernameInput('');
+      setModalError('');
+      setShowUsernameModal(true);
       return;
     }
 
@@ -2335,6 +2404,15 @@ export default function HangmanDuelApp() {
     const rawCode = overrideCode !== null ? overrideCode : joinCode;
     const code = (rawCode || '').replace(/\s+/g, '').trim().toUpperCase();
     if (!name) {
+      if (code && code.length >= 4) {
+        // Player hasn't set a username yet: ask them to set their username first!
+        setPendingJoinCode(code);
+        setPendingAction('join');
+        setModalUsernameInput('');
+        setModalError('');
+        setShowUsernameModal(true);
+        return;
+      }
       setLobbyError('Please enter your name first.');
       showToast('Please enter your name first! ✏️');
       return;
@@ -2503,37 +2581,44 @@ export default function HangmanDuelApp() {
         if (cleanCode.length >= 4) {
           autoJoinAttemptedRef.current = true;
 
-          // Retrieve or generate guest username
+          // Check if the user already has a saved custom username
           let resolvedName = '';
           try {
             const saved = localStorage.getItem('hangman_username');
-            if (saved && saved.trim()) {
+            const isCustomSet = localStorage.getItem('hangman_username_set') === 'true';
+            if (saved && saved.trim() && (isCustomSet || !/^Player\s*\d{2,4}$/i.test(saved.trim()))) {
               resolvedName = saved.trim();
             }
           } catch {}
 
-          if (!resolvedName) {
-            resolvedName = `Player ${Math.floor(100 + Math.random() * 900)}`;
+          if (resolvedName) {
+            // Returning user with username already configured: join directly!
+            setPlayerName(resolvedName);
+            setJoinCode(cleanCode);
+            setRoomCode(cleanCode);
+
+            // Clean URL params to keep browser address bar clean and avoid re-trigger on reload
             try {
-              localStorage.setItem('hangman_username', resolvedName);
+              window.history.replaceState({}, document.title, window.location.pathname);
             } catch {}
+
+            showToast(`🎮 Joining room ${cleanCode}… 🚀`, 2500);
+
+            // Directly join room immediately
+            setTimeout(() => {
+              handleJoinRoom(cleanCode, resolvedName);
+            }, 120);
+          } else {
+            // User hasn't set a username yet:
+            // First thing asked is to set their username!
+            setJoinCode(cleanCode);
+            setRoomCode(cleanCode);
+            setPendingJoinCode(cleanCode);
+            setPendingAction('join');
+            setModalUsernameInput('');
+            setModalError('');
+            setShowUsernameModal(true);
           }
-
-          setPlayerName(resolvedName);
-          setJoinCode(cleanCode);
-          setRoomCode(cleanCode);
-
-          // Clean URL params to keep browser address bar clean and avoid re-trigger on reload
-          try {
-            window.history.replaceState({}, document.title, window.location.pathname);
-          } catch {}
-
-          showToast(`🎮 Joining room ${cleanCode}… 🚀`, 2500);
-
-          // Directly join room immediately
-          setTimeout(() => {
-            handleJoinRoom(cleanCode, resolvedName);
-          }, 120);
         }
       }
     } catch (e) {
@@ -5340,6 +5425,132 @@ export default function HangmanDuelApp() {
       </>
     )}
   </div>
+
+      {/* ─── SET USERNAME MODAL (Prompt when joining or hosting without a username) ──── */}
+      {showUsernameModal && (
+        <div
+          id="modal-username-prompt"
+          className="modal-backdrop z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="username-modal-title"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowUsernameModal(false);
+              setModalError('');
+              setPendingAction(null);
+            }
+          }}
+        >
+          <div className="relative w-full max-w-md p-6 sm:p-8 rounded-3xl bg-[#0f0e1a]/95 border border-purple-500/30 shadow-[0_0_50px_rgba(168,85,247,0.25)] flex flex-col gap-5 text-white backdrop-blur-xl animate-scaleUp">
+            {/* Close Button */}
+            <button
+              id="btn-close-username-modal"
+              type="button"
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
+              onClick={() => {
+                playMechanicalClick();
+                setShowUsernameModal(false);
+                setModalError('');
+                setPendingAction(null);
+              }}
+              aria-label="Close modal"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Glowing Icon & Title */}
+            <div className="flex flex-col items-center text-center gap-3">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-violet-600 via-purple-600 to-cyan-500 p-0.5 shadow-lg shadow-purple-500/30 flex items-center justify-center">
+                <div className="w-full h-full bg-[#0d0d18] rounded-[14px] flex items-center justify-center">
+                  <User className="w-8 h-8 text-purple-400" />
+                </div>
+              </div>
+
+              <div>
+                <h2 id="username-modal-title" className="text-xl sm:text-2xl font-black font-display tracking-tight text-white">
+                  Enter Your Username
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-300 mt-1">
+                  {pendingJoinCode || joinCode ? (
+                    <>
+                      You are about to join room{' '}
+                      <span className="font-mono font-bold text-cyan-300 bg-cyan-950/80 px-2 py-0.5 rounded-lg border border-cyan-500/40 tracking-wider">
+                        {pendingJoinCode || joinCode}
+                      </span>
+                    </>
+                  ) : (
+                    'Set your player name to enter the game'
+                  )}
+                </p>
+              </div>
+            </div>
+
+            {/* Username Input Form */}
+            <form onSubmit={handleConfirmUsername} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="modal-username-input" className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                  Player Username
+                </label>
+                <div className="relative">
+                  <input
+                    id="modal-username-input"
+                    type="text"
+                    placeholder="e.g. CyberNinja, Sarah, Phoenix"
+                    maxLength={20}
+                    autoFocus
+                    autoComplete="off"
+                    value={modalUsernameInput}
+                    onChange={(e) => {
+                      setModalUsernameInput(e.target.value);
+                      if (modalError) setModalError('');
+                    }}
+                    className={`w-full px-4 py-3.5 bg-slate-950/80 border ${
+                      modalError
+                        ? 'border-red-500 focus:border-red-400 focus:ring-2 focus:ring-red-500/30'
+                        : 'border-white/20 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/40'
+                    } rounded-2xl text-white placeholder-slate-500 outline-none transition-all text-sm font-medium`}
+                  />
+                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[11px] font-mono text-slate-500 pointer-events-none">
+                    {modalUsernameInput.length}/20
+                  </span>
+                </div>
+
+                {modalError && (
+                  <p className="text-xs text-red-400 font-medium mt-1 flex items-center gap-1.5">
+                    <span>⚠️</span> {modalError}
+                  </p>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-2.5 mt-2">
+                <button
+                  id="btn-cancel-username"
+                  type="button"
+                  className="w-full sm:w-auto px-5 py-3 rounded-2xl text-slate-300 hover:text-white hover:bg-white/10 text-sm font-semibold transition-all cursor-pointer border border-white/10 order-2 sm:order-1"
+                  onClick={() => {
+                    playMechanicalClick();
+                    setShowUsernameModal(false);
+                    setModalError('');
+                    setPendingAction(null);
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  id="btn-confirm-username"
+                  type="submit"
+                  className="flex-1 py-3 px-6 rounded-2xl font-bold text-white tracking-wide bg-gradient-to-r from-violet-600 via-purple-600 to-cyan-500 shadow-lg shadow-purple-600/30 hover:shadow-purple-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer text-sm order-1 sm:order-2"
+                >
+                  <span>{pendingJoinCode || pendingAction === 'join' ? 'Join Game' : 'Continue'}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* ─── PVE DIFFICULTY & MATCH LENGTH SELECTION MODAL ────────────────── */}
       {showPveModal && (

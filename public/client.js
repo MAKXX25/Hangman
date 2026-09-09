@@ -193,12 +193,14 @@ try {
     if (joinParam && joinParam.trim().length >= 4) {
       const cleanJoin = joinParam.trim().toUpperCase().slice(0, 6);
       if (inputRoomCode) inputRoomCode.value = cleanJoin;
-      if (inputName && !inputName.value.trim()) {
-        inputName.value = 'Player ' + Math.floor(100 + Math.random() * 900);
+      if (inputName && inputName.value.trim()) {
+        setTimeout(() => {
+          if (btnJoin) btnJoin.click();
+        }, 300);
+      } else if (inputName) {
+        inputName.focus();
+        showToast('Please enter your username to join the game! ✏️');
       }
-      setTimeout(() => {
-        if (btnJoin) btnJoin.click();
-      }, 300);
     }
   }
 } catch (e) {}
