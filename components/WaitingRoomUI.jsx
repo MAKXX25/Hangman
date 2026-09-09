@@ -13,10 +13,12 @@ export default function WaitingRoomUI({
   leaderB,
   currentSocketId,
   myPlayerId,
+  myTeam = null,
   isHost,
   onToggleReady,
   onSetTeamName,
   onAssignLeader,
+  onSwitchTeam,
   onLeaveRoom,
   copyRoomCode,
   copyInviteLink,
@@ -443,6 +445,80 @@ export default function WaitingRoomUI({
         </div>
 
       </div>
+
+      {/* ─── Team Switcher: Choose / Switch Your Team ─────────────────── */}
+      {typeof onSwitchTeam === 'function' && (
+        <div className="w-full max-w-2xl animate-fadeIn">
+          <div className="p-4 sm:p-5 rounded-3xl bg-[#0f0f1e]/95 border border-white/10 backdrop-blur-xl shadow-xl flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-base">🔀</span>
+              <h4 className="font-display font-bold text-sm text-white uppercase tracking-wide">
+                Choose Your Team
+              </h4>
+              <span className="ml-auto text-[10px] font-mono text-slate-500">You can switch before the game starts</span>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {/* Team A Switch Button */}
+              <button
+                type="button"
+                id="btn-switch-team-a"
+                disabled={myTeam === 'teamA' || teamA.length >= 4}
+                onClick={() => onSwitchTeam('teamA')}
+                className={`relative p-3.5 rounded-2xl border transition-all flex flex-col gap-1.5 text-left ${
+                  myTeam === 'teamA'
+                    ? 'bg-cyan-500/20 border-cyan-400 ring-1 ring-cyan-400/50 cursor-default'
+                    : teamA.length >= 4
+                    ? 'bg-white/[0.02] border-white/10 opacity-50 cursor-not-allowed'
+                    : 'bg-white/5 border-white/10 hover:bg-cyan-500/10 hover:border-cyan-500/50 cursor-pointer active:scale-[0.98]'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-sm flex items-center gap-1.5 text-cyan-300">🛡️ {teamNameA || 'Team A'}</span>
+                  {myTeam === 'teamA' && (
+                    <span className="text-[9px] font-mono font-black bg-cyan-400/20 text-cyan-300 px-1.5 py-0.5 rounded border border-cyan-400/40">YOU</span>
+                  )}
+                  {teamA.length >= 4 && myTeam !== 'teamA' && (
+                    <span className="text-[9px] font-mono font-black bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded border border-red-500/30">FULL</span>
+                  )}
+                </div>
+                <span className="text-[11px] text-slate-400">Word Setters · {teamA.length}/4 players</span>
+                {myTeam !== 'teamA' && teamA.length < 4 && (
+                  <span className="text-[10px] font-bold text-cyan-400 mt-0.5">→ Switch to this team</span>
+                )}
+              </button>
+
+              {/* Team B Switch Button */}
+              <button
+                type="button"
+                id="btn-switch-team-b"
+                disabled={myTeam === 'teamB' || teamB.length >= 4}
+                onClick={() => onSwitchTeam('teamB')}
+                className={`relative p-3.5 rounded-2xl border transition-all flex flex-col gap-1.5 text-left ${
+                  myTeam === 'teamB'
+                    ? 'bg-purple-500/20 border-purple-400 ring-1 ring-purple-400/50 cursor-default'
+                    : teamB.length >= 4
+                    ? 'bg-white/[0.02] border-white/10 opacity-50 cursor-not-allowed'
+                    : 'bg-white/5 border-white/10 hover:bg-purple-500/10 hover:border-purple-500/50 cursor-pointer active:scale-[0.98]'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-sm flex items-center gap-1.5 text-purple-300">⚔️ {teamNameB || 'Team B'}</span>
+                  {myTeam === 'teamB' && (
+                    <span className="text-[9px] font-mono font-black bg-purple-400/20 text-purple-300 px-1.5 py-0.5 rounded border border-purple-400/40">YOU</span>
+                  )}
+                  {teamB.length >= 4 && myTeam !== 'teamB' && (
+                    <span className="text-[9px] font-mono font-black bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded border border-red-500/30">FULL</span>
+                  )}
+                </div>
+                <span className="text-[11px] text-slate-400">Challengers · {teamB.length}/4 players</span>
+                {myTeam !== 'teamB' && teamB.length < 4 && (
+                  <span className="text-[10px] font-bold text-purple-400 mt-0.5">→ Switch to this team</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ─── Bottom Center: Massive Glowing READY UP Button ──────────── */}
       <div className="w-full max-w-lg flex flex-col items-center gap-3 pt-2">

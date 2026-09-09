@@ -691,6 +691,56 @@ io.on('connection', (socket) => {
     broadcastState(io, room, roomCode);
   });
 
+  // 2b-2. Switch Team (Any Player, Waiting Phase Only)
+  socket.on('switch_team', (data, callback) => {
+    const ack = typeof callback === 'function' ? callback : () => {};
+    const roomCode = socket.data.roomCode;
+    if (!roomCode || !rooms[roomCode]) {
+      ack({ success: false, message: 'Room not found.' });
+      return;
+    }
+    const room = rooms[roomCode];
+
+    // Only allowed before the game starts
+    if (room.status !== 'waiting') {
+      ack({ success: false, message: 'Cannot switch teams once the game has started.' });
+      return;
+    }
+
+    const targetTeam = data?.team === 'teamA' ? 'teamA' : 'teamB';
+    const fromTeam = targetTeam === 'teamA' ? 'teamB' : 'teamA';
+
+    // Find the player in either team
+    let player = room[fromTeam].find((p) => p.socketId === socket.id || p.sessionId === sessionId);
+    if (!player) {
+      // Already on target team
+      ack({ success: true });
+      return;
+    }
+
+    // Check target team capacity
+    if (room[targetTeam].length >= 4) {
+      const targetName = targetTeam === 'teamA' ? (room.teamNameA || 'Team A') : (room.teamNameB || 'Team B');
+      ack({ success: false, message: `${targetName} is full (max 4 players).` });
+      return;
+    }
+
+    // Move player
+    room[fromTeam] = room[fromTeam].filter((p) => p.socketId !== socket.id && p.sessionId !== sessionId);
+    room[targetTeam].push(player);
+    socket.data.team = targetTeam;
+
+    // Fix leaders: if moved player was leader of old team, clear it; auto-assign if new team has no leader
+    if (fromTeam === 'teamA' && room.leaderA === socket.id) room.leaderA = room.teamA[0]?.socketId || null;
+    if (fromTeam === 'teamB' && room.leaderB === socket.id) room.leaderB = room.teamB[0]?.socketId || null;
+    if (targetTeam === 'teamA' && !room.leaderA) room.leaderA = socket.id;
+    if (targetTeam === 'teamB' && !room.leaderB) room.leaderB = socket.id;
+
+    console.log(`🔀 "${player.name}" switched from ${fromTeam} → ${targetTeam} in room ${roomCode}`);
+    broadcastState(io, room, roomCode);
+    ack({ success: true });
+  });
+
   // 2c. Set Team Name (Leader Only Event)
   socket.on('set_team_name', ({ team, name }) => {
     const roomCode = socket.data.roomCode;

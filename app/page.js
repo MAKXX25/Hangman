@@ -211,6 +211,20 @@ export default function HangmanDuelApp() {
     }
   };
 
+  const handleSwitchTeam = (targetTeam) => {
+    playMechanicalClick();
+    const socket = socketRef.current || getSocket();
+    if (!socket) return;
+    socket.emit('switch_team', { team: targetTeam }, (res) => {
+      if (res?.success) {
+        setMyTeam(targetTeam);
+        showToast(`Switched to ${targetTeam === 'teamA' ? '🛡️ Team A' : '⚔️ Team B'}!`, 2500);
+      } else {
+        showToast(`⚠️ ${res?.message || 'Could not switch team.'}`, 3500);
+      }
+    });
+  };
+
   // ── Reconnection Grace Period Countdown ────────────────────────────────────
   useEffect(() => {
     if (!disconnectNotice) return;
@@ -2343,7 +2357,7 @@ export default function HangmanDuelApp() {
       return;
     }
 
-    const chosenTeam = selectedTeam || 'teamB';
+    const chosenTeam = 'teamB'; // players pick their team inside the waiting room
     setLobbyError('');
     setIsPveMode(false);
     setIsConnecting(true);
@@ -3322,48 +3336,7 @@ export default function HangmanDuelApp() {
 
                         <div className="divider"><span>or join with code</span></div>
 
-                        {/* Team Selection for Join (1v1) — only shown when typing a code */}
-                        {joinCode.length > 0 && (
-                        <div className="flex flex-col gap-1.5 animate-fadeIn">
-                          <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Choose Team to Join</label>
-                          <div className="grid grid-cols-2 gap-2">
-                            <button
-                              type="button"
-                              id="btn-join-team-a"
-                              className={`p-2.5 rounded-xl border transition-all text-left flex flex-col gap-0.5 cursor-pointer backdrop-blur-md ${
-                                selectedTeam === 'teamA'
-                                  ? 'bg-cyan-500/20 border-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.35)] text-white ring-1 ring-cyan-400/50'
-                                  : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-white'
-                              }`}
-                              onClick={() => { playMechanicalClick(); setSelectedTeam('teamA'); }}
-                            >
-                              <div className="flex items-center justify-between">
-                                <span className="font-bold text-xs flex items-center gap-1 text-cyan-300">🛡️ Team A</span>
-                                {selectedTeam === 'teamA' && <span className="text-[8px] font-mono font-black bg-cyan-400/20 text-cyan-300 px-1 py-0.5 rounded border border-cyan-400/40">✓</span>}
-                              </div>
-                              <span className="text-[10px] text-slate-500">Word Setters</span>
-                            </button>
-                            <button
-                              type="button"
-                              id="btn-join-team-b"
-                              className={`p-2.5 rounded-xl border transition-all text-left flex flex-col gap-0.5 cursor-pointer backdrop-blur-md ${
-                                selectedTeam === 'teamB'
-                                  ? 'bg-purple-500/20 border-purple-400 shadow-[0_0_12px_rgba(168,85,247,0.35)] text-white ring-1 ring-purple-400/50'
-                                  : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-white'
-                              }`}
-                              onClick={() => { playMechanicalClick(); setSelectedTeam('teamB'); }}
-                            >
-                              <div className="flex items-center justify-between">
-                                <span className="font-bold text-xs flex items-center gap-1 text-purple-300">⚔️ Team B</span>
-                                {selectedTeam === 'teamB' && <span className="text-[8px] font-mono font-black bg-purple-400/20 text-purple-300 px-1 py-0.5 rounded border border-purple-400/40">✓</span>}
-                              </div>
-                              <span className="text-[10px] text-slate-500">Challengers</span>
-                            </button>
-                          </div>
-                        </div>
-                        )}
-
-                        {/* Standard 1v1 Join Code Row */}
+                        {/* 1v1 Join Code Row — team chosen inside the waiting room */}
                         <div className="join-row flex gap-2">
                           <input
                             id="input-room-code"
@@ -3379,13 +3352,13 @@ export default function HangmanDuelApp() {
                             onChange={(e) => setJoinCode(e.target.value.replace(/\s+/g, '').toUpperCase())}
                             onKeyDown={(e) => { if (e.key === 'Enter') handleJoinRoom(); }}
                           />
-                          <button 
-                            id="btn-join" 
-                            className="btn btn-primary py-3 px-6 rounded-2xl font-semibold text-white tracking-wide bg-gradient-to-r from-violet-500 to-purple-600 shadow-md shadow-purple-500/20 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] active:scale-95 flex items-center justify-center cursor-pointer disabled:opacity-50 text-sm" 
+                          <button
+                            id="btn-join"
+                            className="btn btn-primary py-3 px-6 rounded-2xl font-semibold text-white tracking-wide bg-gradient-to-r from-violet-500 to-purple-600 shadow-md shadow-purple-500/20 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] active:scale-95 flex items-center justify-center cursor-pointer disabled:opacity-50 text-sm"
                             disabled={isConnecting || isJoining}
                             onClick={handleJoinRoom}
                           >
-                            {isConnecting || isJoining ? 'Joining… 🎯' : `Join ${selectedTeam === 'teamA' ? 'Team A' : 'Team B'}`}
+                            {isConnecting || isJoining ? 'Joining… 🎯' : 'Join Duel'}
                           </button>
                         </div>
                       </div>
@@ -3448,71 +3421,9 @@ export default function HangmanDuelApp() {
                           </div>
                         </div>
 
-                        {/* Select Your Squad Toggle Boxes */}
-                        <div className="team-selection-box flex flex-col gap-1.5 my-1">
-                          <label className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                            Select Your Squad (Max 4 per Team)
-                          </label>
-                          <div className="grid grid-cols-2 gap-2.5">
-                            {/* Team A Button */}
-                            <button
-                              type="button"
-                              id="btn-team-a"
-                              className={`p-3 rounded-2xl border transition-all text-left flex flex-col gap-1 cursor-pointer backdrop-blur-md ${
-                                selectedTeam === 'teamA'
-                                  ? 'bg-cyan-500/20 border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)] text-white ring-1 ring-cyan-400/50'
-                                  : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-white'
-                              }`}
-                              onClick={() => {
-                                playMechanicalClick();
-                                setSelectedTeam('teamA');
-                              }}
-                            >
-                              <div className="flex items-center justify-between">
-                                <span className="font-bold text-xs sm:text-sm flex items-center gap-1.5 text-cyan-300">
-                                  <span>🛡️</span> {teamNameA || 'TEAM A'}
-                                </span>
-                                {selectedTeam === 'teamA' && (
-                                  <span className="text-[9px] font-mono font-black bg-cyan-400/20 text-cyan-300 px-1.5 py-0.5 rounded border border-cyan-400/40">
-                                    SELECTED
-                                  </span>
-                                )}
-                              </div>
-                              <span className="text-[10.5px] text-slate-400">Word Setters (Max 4)</span>
-                            </button>
-
-                            {/* Team B Button */}
-                            <button
-                              type="button"
-                              id="btn-team-b"
-                              className={`p-3 rounded-2xl border transition-all text-left flex flex-col gap-1 cursor-pointer backdrop-blur-md ${
-                                selectedTeam === 'teamB'
-                                  ? 'bg-purple-500/20 border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.4)] text-white ring-1 ring-purple-400/50'
-                                  : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-white'
-                              }`}
-                              onClick={() => {
-                                playMechanicalClick();
-                                setSelectedTeam('teamB');
-                              }}
-                            >
-                              <div className="flex items-center justify-between">
-                                <span className="font-bold text-xs sm:text-sm flex items-center gap-1.5 text-purple-300">
-                                  <span>⚔️</span> {teamNameB || 'TEAM B'}
-                                </span>
-                                {selectedTeam === 'teamB' && (
-                                  <span className="text-[9px] font-mono font-black bg-purple-400/20 text-purple-300 px-1.5 py-0.5 rounded border border-purple-400/40">
-                                    SELECTED
-                                  </span>
-                                )}
-                              </div>
-                              <span className="text-[10.5px] text-slate-400">Challengers (Max 4)</span>
-                            </button>
-                          </div>
-                        </div>
-
                         <div className="divider"><span>or join team with code</span></div>
 
-                        {/* Join Team Room Code Row */}
+                        {/* Team Join Row — team chosen inside the waiting room */}
                         <div className="join-row flex gap-2">
                           <input
                             id="input-room-code"
@@ -3528,13 +3439,13 @@ export default function HangmanDuelApp() {
                             onChange={(e) => setJoinCode(e.target.value.replace(/\s+/g, '').toUpperCase())}
                             onKeyDown={(e) => { if (e.key === 'Enter') handleJoinRoom(); }}
                           />
-                          <button 
-                            id="btn-join" 
-                            className="btn btn-secondary py-3 px-6 rounded-2xl font-semibold text-white tracking-wide bg-gradient-to-r from-cyan-500 to-blue-600 shadow-md shadow-cyan-500/20 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(6,182,212,0.5)] active:scale-95 flex items-center justify-center cursor-pointer disabled:opacity-50 text-sm" 
+                          <button
+                            id="btn-join"
+                            className="btn btn-secondary py-3 px-6 rounded-2xl font-semibold text-white tracking-wide bg-gradient-to-r from-cyan-500 to-blue-600 shadow-md shadow-cyan-500/20 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(6,182,212,0.5)] active:scale-95 flex items-center justify-center cursor-pointer disabled:opacity-50 text-sm"
                             disabled={isConnecting || isJoining}
                             onClick={handleJoinRoom}
                           >
-                            {isConnecting || isJoining ? 'Joining… 🎯' : `Join ${selectedTeam === 'teamA' ? (teamNameA || 'Team A') : (teamNameB || 'Team B')}`}
+                            {isConnecting || isJoining ? 'Joining… 🎯' : 'Join Room'}
                           </button>
                         </div>
                       </div>
@@ -4135,10 +4046,12 @@ export default function HangmanDuelApp() {
           leaderB={leaderB}
           currentSocketId={currentSocketId}
           myPlayerId={myPlayerId}
+          myTeam={myTeam}
           isHost={isHost}
           onToggleReady={handleToggleReady}
           onSetTeamName={handleSetTeamName}
           onAssignLeader={handleAssignLeader}
+          onSwitchTeam={handleSwitchTeam}
           onLeaveRoom={handleLeaveGame}
           copyRoomCode={copyRoomCode}
           copyInviteLink={copyInviteLink}
@@ -4174,10 +4087,12 @@ export default function HangmanDuelApp() {
             leaderB={leaderB}
             currentSocketId={currentSocketId}
             myPlayerId={myPlayerId}
+            myTeam={myTeam}
             isHost={isHost}
             onToggleReady={handleToggleReady}
             onSetTeamName={handleSetTeamName}
             onAssignLeader={handleAssignLeader}
+            onSwitchTeam={handleSwitchTeam}
             onLeaveRoom={handleLeaveGame}
             copyRoomCode={copyRoomCode}
             copyInviteLink={copyInviteLink}
