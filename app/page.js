@@ -2317,8 +2317,8 @@ export default function HangmanDuelApp() {
 
   // ── 1. Create Room (Authoritative Socket.io with Auto-Connect Queue & Timeout) ─
   const handleCreateRoom = (overrideName = null) => {
-    const rawName = overrideName !== null ? overrideName : playerName;
-    const name = (rawName || '').trim();
+    const rawName = typeof overrideName === 'string' ? overrideName : playerName;
+    const name = (typeof rawName === 'string' ? rawName : '').trim();
     if (!name) {
       setPendingAction('create');
       setPendingJoinCode('');
@@ -2343,6 +2343,10 @@ export default function HangmanDuelApp() {
       }
       socketRef.current = sock;
       attachSocketListeners(sock);
+
+      if (!sock.connected && typeof sock.connect === 'function') {
+        sock.connect();
+      }
 
       if (sock.connected) {
         showToast('Creating room… 🎮');
@@ -2375,6 +2379,12 @@ export default function HangmanDuelApp() {
 
       sock.once('connect', onConnectEmit);
 
+      const isLocal = typeof window !== 'undefined' && (
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1'
+      );
+      const fallbackMs = isLocal ? 4000 : 35000;
+
       // Progress toasts during Render cold boot
       progressTimer1 = setTimeout(() => {
         if (!sock.connected) showToast('Still waking up server… (~15s left) 🚀', 6000);
@@ -2384,7 +2394,7 @@ export default function HangmanDuelApp() {
         if (!sock.connected) showToast('Almost ready, finalizing connection… ⚡', 6000);
       }, 22000);
 
-      // 35-second safety timeout
+      // Safety timeout -> fallback to P2P if unreachable
       timeoutId = setTimeout(() => {
         clearAllTimers();
         sock.off('connect', onConnectEmit);
@@ -2398,9 +2408,9 @@ export default function HangmanDuelApp() {
           attachSocketListeners(p2pSocket);
           p2pSocket.emit('create_room', { playerName: name, wordPickTime, team: chosenTeam, mode: activeMode });
         }
-      }, 35000);
+      }, fallbackMs);
 
-      setTimeout(() => { setIsConnecting(false); }, 40000);
+      setTimeout(() => { setIsConnecting(false); }, fallbackMs + 5000);
       return;
     }
 
@@ -2417,10 +2427,10 @@ export default function HangmanDuelApp() {
 
   // ── 2. Join Room (Authoritative Socket.io with Auto-Connect Queue & Acknowledgment Loop) ───
   const handleJoinRoom = useCallback((overrideCode = null, overrideName = null) => {
-    const rawName = overrideName !== null ? overrideName : playerName;
-    const name = (rawName || '').trim();
-    const rawCode = overrideCode !== null ? overrideCode : joinCode;
-    const code = (rawCode || '').replace(/\s+/g, '').trim().toUpperCase();
+    const rawName = typeof overrideName === 'string' ? overrideName : playerName;
+    const name = (typeof rawName === 'string' ? rawName : '').trim();
+    const rawCode = typeof overrideCode === 'string' ? overrideCode : joinCode;
+    const code = (typeof rawCode === 'string' ? rawCode : '').replace(/\s+/g, '').trim().toUpperCase();
     if (!name) {
       if (code && code.length >= 4) {
         // Player hasn't set a username yet: ask them to set their username first!
@@ -2503,6 +2513,10 @@ export default function HangmanDuelApp() {
       socketRef.current = sock;
       attachSocketListeners(sock);
 
+      if (!sock.connected && typeof sock.connect === 'function') {
+        sock.connect();
+      }
+
       if (sock.connected) {
         showToast('Joining game room… 🎯');
         sock.emit('join_room', { roomCode: code, team: chosenTeam, name, playerName: name }, handleJoinResponse);
@@ -2536,6 +2550,12 @@ export default function HangmanDuelApp() {
 
       sock.once('connect', onConnectJoin);
 
+      const isLocal = typeof window !== 'undefined' && (
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1'
+      );
+      const fallbackMs = isLocal ? 4000 : 35000;
+
       progressTimer1 = setTimeout(() => {
         if (!sock.connected) showToast('Still waking up server… (~15s left) 🚀', 6000);
       }, 10000);
@@ -2557,12 +2577,12 @@ export default function HangmanDuelApp() {
           attachSocketListeners(p2pSocket);
           p2pSocket.emit('join_room', { roomCode: code, team: chosenTeam, name, playerName: name }, handleJoinResponse);
         }
-      }, 35000);
+      }, fallbackMs);
 
       setTimeout(() => {
         setIsConnecting(false);
         setIsJoining(false);
-      }, 40000);
+      }, fallbackMs + 5000);
       return;
     }
 
@@ -3513,7 +3533,7 @@ export default function HangmanDuelApp() {
                             id="btn-create"
                             className={`btn btn-primary w-full py-3.5 px-6 rounded-2xl font-bold font-display uppercase tracking-wider text-white bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 shadow-lg shadow-purple-600/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-purple-500/50 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer ${isConnecting ? 'loading' : ''}`}
                             disabled={isConnecting}
-                            onClick={handleCreateRoom}
+                            onClick={() => handleCreateRoom()}
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5">
                               <path d="M12 5v14M5 12h14" />
@@ -3585,7 +3605,7 @@ export default function HangmanDuelApp() {
                             id="btn-join"
                             className="btn btn-primary py-3 px-6 rounded-2xl font-semibold text-white tracking-wide bg-gradient-to-r from-violet-500 to-purple-600 shadow-md shadow-purple-500/20 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] active:scale-95 flex items-center justify-center cursor-pointer disabled:opacity-50 text-sm"
                             disabled={isConnecting || isJoining}
-                            onClick={handleJoinRoom}
+                            onClick={() => handleJoinRoom()}
                           >
                             {isConnecting || isJoining ? 'Joining… 🎯' : 'Join Duel'}
                           </button>
@@ -3602,7 +3622,7 @@ export default function HangmanDuelApp() {
                             id="btn-create-team"
                             className={`btn w-full py-3.5 px-6 rounded-2xl font-bold font-display uppercase tracking-wider text-white bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 shadow-lg shadow-cyan-600/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-cyan-500/50 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer ${isConnecting ? 'loading' : ''}`}
                             disabled={isConnecting}
-                            onClick={handleCreateRoom}
+                            onClick={() => handleCreateRoom()}
                           >
                             <Users className="w-5 h-5" />
                             {isConnecting ? 'Creating Team Room… 🛡️' : 'Create Team Room (Host)'}
@@ -3672,7 +3692,7 @@ export default function HangmanDuelApp() {
                             id="btn-join"
                             className="btn btn-secondary py-3 px-6 rounded-2xl font-semibold text-white tracking-wide bg-gradient-to-r from-cyan-500 to-blue-600 shadow-md shadow-cyan-500/20 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(6,182,212,0.5)] active:scale-95 flex items-center justify-center cursor-pointer disabled:opacity-50 text-sm"
                             disabled={isConnecting || isJoining}
-                            onClick={handleJoinRoom}
+                            onClick={() => handleJoinRoom()}
                           >
                             {isConnecting || isJoining ? 'Joining… 🎯' : 'Join Room'}
                           </button>
