@@ -149,12 +149,13 @@ export default function CustomDropdown({
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         style={{
+          backgroundColor: '#131124',
           borderColor: isOpen
             ? currentMeta?.accentColor || 'rgba(168, 85, 247, 0.6)'
-            : undefined,
+            : 'rgba(255, 255, 255, 0.12)',
         }}
-        className={`w-full bg-[#151424]/90 backdrop-blur-xl border border-white/10 rounded-2xl px-3.5 py-2.5 text-white flex items-center justify-between gap-3 hover:border-white/20 transition-all duration-200 cursor-pointer focus:outline-none shadow-lg group ${
-          isOpen ? 'ring-2 ring-purple-500/20 shadow-[0_0_20px_rgba(0,0,0,0.6)]' : ''
+        className={`w-full bg-[#131124] border rounded-2xl px-3.5 py-2.5 text-white flex items-center justify-between gap-3 hover:border-white/25 transition-all duration-200 cursor-pointer focus:outline-none shadow-xl group ${
+          isOpen ? 'ring-2 ring-purple-500/30 shadow-[0_0_24px_rgba(0,0,0,0.8)]' : ''
         }`}
       >
         <div className="flex items-center gap-3 min-w-0 flex-1 text-left">
@@ -199,12 +200,13 @@ export default function CustomDropdown({
         </div>
       </button>
 
-      {/* Floating Glassmorphism Menu */}
+      {/* Solid Opaque Floating Menu (Zero Bleed-Through) */}
       {isOpen && (
         <ul
           role="listbox"
           tabIndex={-1}
-          className="absolute top-full left-0 mt-2 w-full z-50 bg-[#0d0c18]/98 backdrop-blur-2xl border border-white/15 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.85)] overflow-hidden p-1.5 space-y-1 animate-fadeIn divide-y divide-white/5"
+          style={{ backgroundColor: '#131124', opacity: 1 }}
+          className="absolute top-full left-0 mt-2 w-full z-50 bg-[#131124] border border-white/20 rounded-2xl shadow-[0_24px_60px_rgba(0,0,0,0.95)] overflow-hidden p-2 space-y-1.5 animate-fadeIn"
         >
           {options.map((opt) => {
             const isSelected = String(opt.value) === String(selectedValue);
@@ -216,10 +218,11 @@ export default function CustomDropdown({
                 role="option"
                 aria-selected={isSelected}
                 onClick={() => handleSelect(opt.value)}
+                style={{ backgroundColor: isSelected ? '#1e1a38' : '#17152b' }}
                 className={`px-3 py-2.5 rounded-xl text-sm flex items-center justify-between gap-3 transition-all duration-150 cursor-pointer select-none group border ${
                   isSelected
-                    ? 'bg-white/10 border-white/20 text-white shadow-sm'
-                    : `border-transparent text-slate-300 hover:text-white ${meta?.containerClass || 'hover:bg-white/5'}`
+                    ? 'border-purple-500/50 text-white shadow-md'
+                    : `border-white/5 text-slate-300 hover:text-white hover:border-white/20 hover:bg-[#201d3d] ${meta?.containerClass || ''}`
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1 text-left">
