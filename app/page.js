@@ -3485,6 +3485,12 @@ export default function HangmanDuelApp() {
                             options={Object.values(DIFFICULTY_CONFIG).map((config) => ({
                               value: config.id,
                               label: config.label,
+                              emoji: config.emoji,
+                              name: config.name,
+                              subtitle: config.subtitle,
+                              badge: config.badge,
+                              color: config.color,
+                              badgeBg: config.badgeBg,
                             }))}
                           />
                         </div>

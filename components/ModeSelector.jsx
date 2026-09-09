@@ -40,7 +40,7 @@ export default function ModeSelector({
               value={config.id}
               className="bg-[#12111f] text-slate-200 py-1"
             >
-              {config.label}
+              {config.emoji ? `${config.emoji} ` : ''}{config.label}
             </option>
           ))}
         </select>
