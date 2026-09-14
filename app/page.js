@@ -3346,7 +3346,7 @@ export default function HangmanDuelApp() {
         />
 
         {/* ─── 2. HERO SECTION ────────────────────────────────────────── */}
-        <section id="hero" className="relative z-10 pt-12 pb-20 md:pt-20 md:pb-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <section id="hero" className="relative z-30 pt-12 pb-20 md:pt-20 md:pb-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="text-center max-w-4xl mx-auto mb-14">
             
             {/* Top Pill Badge */}

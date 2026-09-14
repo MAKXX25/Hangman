@@ -206,7 +206,7 @@ export default function CustomDropdown({
           role="listbox"
           tabIndex={-1}
           style={{ backgroundColor: '#131124', opacity: 1 }}
-          className="absolute top-full left-0 mt-2 w-full z-50 bg-[#131124] border border-white/20 rounded-2xl shadow-[0_24px_60px_rgba(0,0,0,0.95)] overflow-hidden p-2 space-y-1.5 animate-fadeIn"
+          className="absolute top-full left-0 mt-2 w-full z-50 bg-[#131124] border border-white/20 rounded-2xl shadow-[0_24px_60px_rgba(0,0,0,0.95)] overflow-y-auto overflow-x-hidden max-h-[260px] p-2 space-y-1.5 animate-fadeIn scrollbar-thin scrollbar-thumb-purple-500/30 scrollbar-track-transparent"
         >
           {options.map((opt) => {
             const isSelected = String(opt.value) === String(selectedValue);
