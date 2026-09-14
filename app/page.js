@@ -3346,33 +3346,33 @@ export default function HangmanDuelApp() {
         />
 
         {/* ─── 2. HERO SECTION ────────────────────────────────────────── */}
-        <section id="hero" className="relative z-30 pt-12 pb-20 md:pt-20 md:pb-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-          <div className="text-center max-w-4xl mx-auto mb-14">
+        <section id="hero" className="relative z-30 pt-8 pb-14 sm:pt-12 sm:pb-20 md:pt-20 md:pb-28 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+          <div className="text-center max-w-4xl mx-auto mb-8 sm:mb-14">
             
             {/* Top Pill Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-yellow-400/10 border border-yellow-400/25 backdrop-blur-sm text-yellow-400 text-xs font-mono-code font-bold tracking-widest uppercase mb-6 shadow-sm shadow-yellow-500/10">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 sm:px-4 sm:py-1.5 rounded-full bg-yellow-400/10 border border-yellow-400/25 backdrop-blur-sm text-yellow-400 text-[11px] sm:text-xs font-mono-code font-bold tracking-widest uppercase mb-4 sm:mb-6 shadow-sm shadow-yellow-500/10">
               <span>⚡ MULTIPLAYER WORD DUEL</span>
             </div>
 
             {/* Headline in Subtle Pixel Font */}
-            <h1 className="font-pixel text-2xl sm:text-4xl md:text-[44px] lg:text-[48px] font-semibold text-white tracking-normal leading-[1.28] mb-5">
+            <h1 className="font-pixel text-2xl sm:text-4xl md:text-[44px] lg:text-[48px] font-semibold text-white tracking-normal leading-[1.28] mb-4 sm:mb-5">
               <span className="block">Guess the word.</span>
               <span className="block mt-1 sm:mt-1.5">Save the stickman.</span>
               <span className="block mt-1 sm:mt-1.5">Win the duel.</span>
             </h1>
 
             {/* Subheadline */}
-            <p className="max-w-2xl mx-auto text-sm sm:text-base text-slate-300 font-normal leading-relaxed">
+            <p className="max-w-2xl mx-auto text-xs sm:text-sm md:text-base text-slate-300 font-normal leading-relaxed px-1">
               Challenge a friend in real time, outsmart the AI in solo mode, or create a room and duel anyone with the code. Every wrong guess brings the noose closer.
             </p>
           </div>
 
           {/* Hero Content: Side-by-Side Launcher Card & Live Game Graphic */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch max-w-6xl mx-auto">
             
             {/* Left Col: Interactive Duel Launcher & Room Creator */}
-            <div id="lobby-launcher" className="lg:col-span-6 w-full flex flex-col">
-              <div className="relative bg-[#11101d]/90 border border-white/15 shadow-2xl rounded-3xl p-6 sm:p-8 backdrop-blur-xl w-full flex-1 flex flex-col justify-between transition-all duration-300">
+            <div id="lobby-launcher" className="lg:col-span-6 w-full flex flex-col relative z-30">
+              <div className="relative z-30 bg-[#11101d]/90 border border-white/15 shadow-2xl rounded-3xl p-4 sm:p-6 md:p-8 backdrop-blur-xl w-full flex-1 flex flex-col justify-between transition-all duration-300">
                 
                 <div>
                   <div className="flex items-center gap-3 mb-6 pb-4 border-b border-white/10">
@@ -3466,7 +3466,7 @@ export default function HangmanDuelApp() {
                     </div>
 
                     {/* 2. The Segmented Tab Controller (The UI Switcher) */}
-                    <div className="flex p-1 space-x-1 bg-[#0a0a0f] border border-white/10 rounded-xl mb-6 select-none">
+                    <div className="flex p-1 space-x-1 bg-[#0a0a0f] border border-white/10 rounded-xl mb-4 sm:mb-6 select-none">
                       <button
                         type="button"
                         id="tab-1v1"
@@ -3475,14 +3475,14 @@ export default function HangmanDuelApp() {
                           setActiveMode('1v1');
                           setLobbyError('');
                         }}
-                        className={`w-full rounded-lg py-2.5 text-sm transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5 ${
+                        className={`w-full rounded-lg py-2 sm:py-2.5 px-1 sm:px-2 text-xs sm:text-sm transition-all duration-200 cursor-pointer flex items-center justify-center gap-1 sm:gap-1.5 ${
                           activeMode === '1v1'
                             ? 'bg-white/10 text-white shadow-sm font-medium'
                             : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
                         }`}
                       >
                         <span>⚔️</span>
-                        <span>1v1 Duel</span>
+                        <span className="whitespace-nowrap">1v1 Duel</span>
                       </button>
 
                       <button
@@ -3493,14 +3493,14 @@ export default function HangmanDuelApp() {
                           setActiveMode('team');
                           setLobbyError('');
                         }}
-                        className={`w-full rounded-lg py-2.5 text-sm transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5 ${
+                        className={`w-full rounded-lg py-2 sm:py-2.5 px-1 sm:px-2 text-xs sm:text-sm transition-all duration-200 cursor-pointer flex items-center justify-center gap-1 sm:gap-1.5 ${
                           activeMode === 'team'
                             ? 'bg-white/10 text-white shadow-sm font-medium'
                             : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
                         }`}
                       >
                         <span>🛡️</span>
-                        <span>Team Mode</span>
+                        <span className="whitespace-nowrap">Team Mode</span>
                       </button>
 
                       <button
@@ -3511,14 +3511,14 @@ export default function HangmanDuelApp() {
                           setActiveMode('pve');
                           setLobbyError('');
                         }}
-                        className={`w-full rounded-lg py-2.5 text-sm transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5 ${
+                        className={`w-full rounded-lg py-2 sm:py-2.5 px-1 sm:px-2 text-xs sm:text-sm transition-all duration-200 cursor-pointer flex items-center justify-center gap-1 sm:gap-1.5 ${
                           activeMode === 'pve'
                             ? 'bg-white/10 text-white shadow-sm font-medium'
                             : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
                         }`}
                       >
                         <span>🤖</span>
-                        <span>Solo PvE</span>
+                        <span className="whitespace-nowrap">Solo PvE</span>
                       </button>
                     </div>
 
@@ -3767,7 +3767,7 @@ export default function HangmanDuelApp() {
             </div>
 
             {/* Right Col: Dynamic Interactive Hangman Preview Card */}
-            <div className="lg:col-span-6 w-full flex flex-col">
+            <div className="lg:col-span-6 w-full flex flex-col relative z-10">
               <InteractiveHeroCard
                 onPlayNow={() => {
                   const el = document.getElementById('input-name');

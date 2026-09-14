@@ -140,7 +140,7 @@ export default function CustomDropdown({
   const currentMeta = resolveOptionMeta(currentOption);
 
   return (
-    <div ref={dropdownRef} className={`relative w-full ${className}`}>
+    <div ref={dropdownRef} className={`relative w-full ${isOpen ? 'z-50' : 'z-20'} ${className}`}>
       {/* Trigger Button */}
       <button
         type="button"
@@ -206,7 +206,7 @@ export default function CustomDropdown({
           role="listbox"
           tabIndex={-1}
           style={{ backgroundColor: '#131124', opacity: 1 }}
-          className="absolute top-full left-0 mt-2 w-full z-50 bg-[#131124] border border-white/20 rounded-2xl shadow-[0_24px_60px_rgba(0,0,0,0.95)] overflow-y-auto overflow-x-hidden max-h-[260px] p-2 space-y-1.5 animate-fadeIn scrollbar-thin scrollbar-thumb-purple-500/30 scrollbar-track-transparent"
+          className="absolute top-full left-0 mt-2 w-full z-50 bg-[#131124] border border-white/20 rounded-2xl shadow-[0_24px_60px_rgba(0,0,0,0.95)] overflow-y-auto overflow-x-hidden max-h-[260px] p-1.5 sm:p-2 space-y-1 sm:space-y-1.5 animate-fadeIn scrollbar-thin scrollbar-thumb-purple-500/30 scrollbar-track-transparent ring-1 ring-white/10"
         >
           {options.map((opt) => {
             const isSelected = String(opt.value) === String(selectedValue);
@@ -219,7 +219,7 @@ export default function CustomDropdown({
                 aria-selected={isSelected}
                 onClick={() => handleSelect(opt.value)}
                 style={{ backgroundColor: isSelected ? '#1e1a38' : '#17152b' }}
-                className={`px-3 py-2.5 rounded-xl text-sm flex items-center justify-between gap-3 transition-all duration-150 cursor-pointer select-none group border ${
+                className={`px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm flex items-center justify-between gap-2.5 sm:gap-3 transition-all duration-150 cursor-pointer select-none group border ${
                   isSelected
                     ? 'border-purple-500/50 text-white shadow-md'
                     : `border-white/5 text-slate-300 hover:text-white hover:border-white/20 hover:bg-[#201d3d] ${meta?.containerClass || ''}`
